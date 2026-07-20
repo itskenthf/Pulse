@@ -30,7 +30,12 @@ In progress. Per the reference doc's widget development order (§9):
    Needs `CRON_SECRET` set in Vercel and as a GitHub Actions secret, plus a
    `PULSE_URL` repo variable, before the scheduler actually runs — see
    README.
-2. [ ] Greeting
+2. [x] Greeting — `packages/widgets/greeting`: time-of-day message
+   personalized by name, no adapter needed (pure local computation).
+   Confirms "add a widget = add a file" — only shell change was
+   registering it in `apps/web/src/lib/register-widgets.ts` and adding the
+   package dependency. Resolves the greeting's hour in a saved IANA time
+   zone (default `Asia/Manila`) since the server itself runs in UTC.
 3. [ ] Clock
 4. [ ] Calendar (first OAuth widget — Google)
 5. [ ] GitHub (second OAuth provider)

@@ -54,3 +54,39 @@ lists every env var the app reads. Any new env var a widget or adapter
 introduces must be added there too, or `next build` will fail to see it —
 this is a common trap worth remembering as OAuth providers are added in
 Phase 1.
+
+## 2026-07-20 — `@auth/supabase-adapter` requires the legacy `service_role` key, not the new `sb_secret_...` key
+
+Supabase now issues two key formats: the new "Publishable/Secret" keys
+(`sb_publishable_...` / `sb_secret_...`) shown by default in Settings → API
+Keys, and the original "Legacy" `anon`/`service_role` JWT-style keys under a
+separate tab. `@auth/supabase-adapter` was built against the legacy format —
+using the new `sb_secret_...` key for `SUPABASE_SERVICE_ROLE_KEY` caused
+every adapter call (creating the user record on first sign-in) to fail with
+a generic, undiagnosable `AdapterError`. No outgoing request even appeared
+in Vercel's function logs, suggesting the client-construction step itself
+was silently misbehaving rather than getting a normal HTTP rejection.
+
+**Decision:** `SUPABASE_SERVICE_ROLE_KEY` must be the legacy `service_role`
+JWT (starts with `eyJ...`, found under Settings → API Keys → "Legacy anon,
+service_role API keys"), not the new `sb_secret_...` key, until
+`@auth/supabase-adapter` confirms support for the new format. This only
+affects the adapter's own env var — `packages/database`'s
+`createServiceClient()` (used directly by our own code, not by the adapter)
+hasn't been tested against the new key format and may or may not have the
+same issue; revisit if/when that client is actually used by a widget's
+fetch job in Phase 1.
+
+Two other things were fixed alongside this before the login gate passed,
+neither of which turned out to be the root cause but are worth keeping in
+mind:
+- Supabase's Data API only serves schemas listed under Settings → Data API →
+  "Exposed schemas." `next_auth` (the adapter's schema) must be added there
+  — it isn't by default, only `public` and `graphql_public` are.
+- Stale PKCE cookies from earlier failed sign-in attempts (especially across
+  different domain aliases of the same Vercel project) can cause a separate
+  `invalid_grant` / "code_verifier did not match" error. Testing in a fresh
+  incognito window avoids this. Also: pin the app to exactly one domain —
+  `AUTH_URL`, the GitHub OAuth App's URLs, and the browser URL used for
+  testing must all match exactly, including which of a project's multiple
+  `*.vercel.app` aliases is used.

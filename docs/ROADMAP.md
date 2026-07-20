@@ -12,15 +12,12 @@ and §18 — this doc tracks live status against them.
 - [x] Core DB schema migrations written (`supabase/migrations/`)
 - [x] Supabase project created
 - [x] GitHub OAuth App registered
-- [x] Deployed to Vercel (`https://pulse.vercel.app`, also aliased at
-      `https://[redacted-old-domain]` — pick one as canonical, see
-      `docs/DECISIONS.md`)
-- [ ] **Gate:** log in with GitHub, see your own name echoed back — currently
-      failing with a NextAuth `Configuration` error post-callback, under
-      investigation
+- [x] Deployed to Vercel (`https://[redacted-old-domain]`)
+- [x] **Gate:** log in with GitHub, see your own name echoed back — confirmed
 
-Infra is provisioned and deployed; the login gate itself isn't confirmed
-working yet — don't mark Phase 0 done until it is.
+**Phase 0 is complete.** Next up: Phase 1, starting with the weather
+widget (no auth — proves the SDK/render pattern) per the widget
+development order in the reference doc §9.
 
 ## Phase 1 — MVP (read-only dashboard)
 

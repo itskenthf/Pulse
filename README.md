@@ -46,15 +46,23 @@ docs/         Architecture, roadmap, design system, decisions
    ```
 
 2. Copy `.env.example` to `apps/web/.env.local` and fill in the values:
-   - `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` — from your Supabase
-     project's API settings. Server-only, never expose these to the client.
+   - `SUPABASE_URL` — Settings → Data API → Project URL (or derive it from
+     your project ID: `https://<project-id>.supabase.co`).
+   - `SUPABASE_SERVICE_ROLE_KEY` — Settings → API Keys → **"Legacy anon,
+     service_role API keys"** tab → `service_role` (a JWT starting with
+     `eyJ...`). Use the legacy key, not the newer `sb_secret_...` one —
+     `@auth/supabase-adapter` doesn't work with the new format yet, see
+     `docs/DECISIONS.md`. Server-only, never expose this to the client.
    - `AUTH_SECRET` — generate with `npx auth secret`.
    - `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` — from a GitHub OAuth App
      (github.com/settings/developers). Set the callback URL to
      `http://localhost:3000/api/auth/callback/github` for local dev.
 
 3. Apply the SQL migrations in `supabase/migrations/` to your Supabase
-   project, in order, via the Supabase SQL editor or CLI.
+   project, in order, via the Supabase SQL editor or CLI. Then go to
+   Settings → Data API → Exposed schemas and add `next_auth` — it isn't
+   exposed by default, only `public` and `graphql_public` are, and the auth
+   adapter can't read/write its tables until it's added.
 
 4. Run the dev server:
 
@@ -63,7 +71,10 @@ docs/         Architecture, roadmap, design system, decisions
    ```
 
 5. Open `http://localhost:3000` and sign in with GitHub — this is the
-   Phase 0 gate: you should see your own name echoed back.
+   Phase 0 gate: you should see your own name echoed back. If you get a
+   generic Auth.js error, check `docs/DECISIONS.md` for the specific
+   gotchas above (legacy key, exposed schema, and — if deploying to
+   multiple domains — cookie/domain mismatches).
 
 ## Development
 

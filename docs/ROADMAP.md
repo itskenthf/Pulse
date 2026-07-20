@@ -10,14 +10,17 @@ and §18 — this doc tracks live status against them.
 - [x] Widget SDK contract defined (`packages/sdk`)
 - [x] Auth.js wired with GitHub as first provider
 - [x] Core DB schema migrations written (`supabase/migrations/`)
-- [ ] Supabase project created (manual — needs your account)
-- [ ] GitHub OAuth App registered (manual — needs your account)
-- [ ] Deployed to Vercel
-- [ ] **Gate:** log in with GitHub, see your own name echoed back
+- [x] Supabase project created
+- [x] GitHub OAuth App registered
+- [x] Deployed to Vercel (`https://pulse.vercel.app`, also aliased at
+      `https://pulse-plum-seven.vercel.app` — pick one as canonical, see
+      `docs/DECISIONS.md`)
+- [ ] **Gate:** log in with GitHub, see your own name echoed back — currently
+      failing with a NextAuth `Configuration` error post-callback, under
+      investigation
 
-The code side of Phase 0 is done and builds/typechecks cleanly. What's left
-requires accounts only you can create — see the "Manual setup" section in
-the root `README.md` for exact steps.
+Infra is provisioned and deployed; the login gate itself isn't confirmed
+working yet — don't mark Phase 0 done until it is.
 
 ## Phase 1 — MVP (read-only dashboard)
 

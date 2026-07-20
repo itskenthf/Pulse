@@ -162,3 +162,23 @@ repeated. Anyone applying migrations by hand (SQL Editor rather than the
 Supabase CLI) needs to run every migration file, including this one — it's
 easy to assume `service_role` "just works" and skip straight to writing
 app code against a new table.
+
+## 2026-07-20 — Clock widget renders client-side instead of using widget_cache
+
+Every widget so far follows fetch → cache → render on a cron/manual-refresh
+cycle. A live clock can't work that way: caching "the current time" and
+refreshing it every 15-30 minutes would display a frozen, increasingly
+wrong time between refreshes, defeating the entire point of a clock.
+
+**Decision:** `packages/widgets/clock`'s `render()` returns a client
+component (`clock-display.tsx`, `"use client"`) that ticks every second
+using the browser's own clock via `setInterval`, entirely bypassing
+`widget_cache` for the actual displayed value. `fetchData()` still exists
+(the `Widget` interface requires it) but does nothing beyond
+`ensureWidgetRegistered` — there's no real external data source. The only
+thing that goes through the normal settings pipeline is the user's
+timezone/12h-vs-24h preference. This is the first widget where "fetches
+real data" (§7 definition of done) is satisfied only nominally; treating
+that DoD item as strictly mandatory for every future widget would be wrong
+— some widgets (a clock, a quick-launch link list) legitimately have
+nothing to fetch.

@@ -36,7 +36,12 @@ In progress. Per the reference doc's widget development order (§9):
    registering it in `apps/web/src/lib/register-widgets.ts` and adding the
    package dependency. Resolves the greeting's hour in a saved IANA time
    zone (default `Asia/Manila`) since the server itself runs in UTC.
-3. [ ] Clock
+3. [x] Clock — `packages/widgets/clock`: the first widget where
+   `render()` ticks client-side every second (`"use client"` +
+   `setInterval`) instead of displaying cached data — caching "the time"
+   on a 15-30 min cron cycle would just show a frozen, wrong clock between
+   refreshes. `fetchData()` still exists (SDK contract requirement) but is
+   a no-op; the real per-widget state is the timezone/12h-24h setting.
 4. [ ] Calendar (first OAuth widget — Google)
 5. [ ] GitHub (second OAuth provider)
 6. [ ] Tasks

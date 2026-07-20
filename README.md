@@ -15,20 +15,24 @@ against.
 
 ```
 apps/
-  web/        Next.js app (App Router) — the dashboard shell, auth, routing
-  desktop/    Tauri wrapper around the web build (added in Phase 1 week 3)
+  web/                Next.js app (App Router) — dashboard shell, auth, routing, cron route
 packages/
-  ui/         Shared design system components
-  widgets/    One package per widget (calendar, github, spotify, ...)
-  sdk/        Widget interface/contract — what the shell depends on
-  adapters/   One adapter per external service (auth, API calls, normalization)
-  auth/       Auth.js configuration
-  database/   Supabase client + schema
-  shared/     Cross-cutting utilities
+  ui/                 Shared design system components (WidgetCard, ActionForm)
+  sdk/                Widget interface/contract — what the shell depends on
+  auth/               Auth.js configuration
+  database/           Supabase client, widget_cache/widget_settings/user helpers
+  widgets/
+    weather/          First widget — see docs/ROADMAP.md for what's next
+  adapters/
+    weather/          Open-Meteo client (owns the external API call + normalization)
 supabase/
-  migrations/ SQL migrations, applied in order
-docs/         Architecture, roadmap, design system, decisions
+  migrations/         SQL migrations, applied in order
+docs/                 Architecture, roadmap, design system, decisions
 ```
+
+New widgets each get their own `packages/widgets/<name>` and, if they talk
+to an external service, `packages/adapters/<name>` — see
+`docs/ARCHITECTURE.md` for the exact steps.
 
 ## Requirements
 
@@ -75,6 +79,26 @@ docs/         Architecture, roadmap, design system, decisions
    generic Auth.js error, check `docs/DECISIONS.md` for the specific
    gotchas above (legacy key, exposed schema, and — if deploying to
    multiple domains — cookie/domain mismatches).
+
+## Widget refresh scheduler (GitHub Actions)
+
+Widgets refresh on their own schedule via a GitHub Actions workflow
+(`.github/workflows/refresh-widgets.yml`), not Vercel Cron — see
+`docs/DECISIONS.md` for why. To turn it on:
+
+1. Generate a secret: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`.
+2. Add it as `CRON_SECRET` in Vercel → Settings → Environment Variables,
+   and redeploy.
+3. In the GitHub repo → Settings → Secrets and variables → Actions:
+   - Add a **repository secret** named `CRON_SECRET` with the same value.
+   - Add a **repository variable** named `PULSE_URL` set to your deployed
+     URL (e.g. `https://[redacted-old-domain]`, no trailing slash).
+4. The workflow runs every 30 minutes automatically. You can also trigger
+   it manually from the Actions tab ("Run workflow") to test it
+   immediately rather than waiting.
+
+Without this, widgets still work via the manual "Refresh" button on each
+card — the scheduler just means you don't have to click it yourself.
 
 ## Development
 

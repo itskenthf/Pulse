@@ -13,6 +13,8 @@
     "@pulse/auth": "workspace:*",
     "@pulse/database": "workspace:*",
     "@pulse/sdk": "workspace:*",
+    "@pulse/ui": "workspace:*",
+    "@pulse/widget-weather": "workspace:*",
     "next": "16.2.10",
     "next-auth": "5.0.0-beta.31",
     "react": "19.2.4",

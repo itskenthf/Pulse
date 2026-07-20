@@ -6,35 +6,42 @@ sync with the actual code as it's built.
 
 ## Monorepo layout
 
-pnpm workspaces + Turborepo. `pnpm-workspace.yaml` includes `apps/*` and
-`packages/*`. Each package/app has its own `package.json` and depends on
+pnpm workspaces + Turborepo. `pnpm-workspace.yaml` includes `apps/*`,
+`packages/*`, `packages/widgets/*`, and `packages/adapters/*` (nested globs
+need to be listed explicitly — pnpm doesn't recurse `packages/*`
+automatically). Each package/app has its own `package.json` and depends on
 others via `workspace:*` — Turborepo figures out build order from that
 dependency graph (`turbo.json`'s `dependsOn: ["^build"]`).
 
-- `apps/web` — the Next.js shell: auth, routing, the widget grid, layout.
-  Never imports a specific widget's internals — only `@pulse/sdk`'s
-  `registerWidget` / `getAllWidgets`.
+- `apps/web` — the Next.js shell: auth, routing, the widget grid, the cron
+  route. Never imports a specific widget's internals — only `@pulse/sdk`'s
+  `registerWidget` / `getAllWidgets`, plus each widget's single top-level
+  export (e.g. `weatherWidget` from `@pulse/widget-weather`).
 - `packages/sdk` — the `Widget` interface (see below) and the in-memory
   registry. This is the only contract the shell depends on.
-- `packages/auth` — Auth.js configuration (providers, adapter). Exported as
-  `authConfig`, consumed by `apps/web/src/auth.ts`.
-- `packages/database` — Supabase client factory. `createServiceClient()` is
-  server-only (uses the service role key, bypasses RLS) — never import it
-  into a client component.
-- `packages/widgets/*` — one package per widget, added as each widget is
-  built (Phase 1). Not scaffolded ahead of need.
-- `packages/adapters/*` — one package per external service (GitHub, Google,
-  Spotify, Weather, YouTube). Added alongside the first widget that needs
-  them.
-- `packages/ui` — shared design system components (the one reusable card
-  component from §19, etc.). Added when the shell needs its first shared
-  component beyond raw Tailwind.
+- `packages/auth` — Auth.js configuration (providers, adapter, the
+  `session.user.id` type augmentation). Exported as `authConfig`, consumed
+  by `apps/web/src/auth.ts`.
+- `packages/database` — Supabase client factory plus generic
+  `widget_cache`/`widget_settings`/`widget_registry`/user helpers that any
+  widget's fetch/settings code reuses (`readWidgetCache`, `writeWidgetCache`,
+  `readWidgetSettings`, `writeWidgetSettings`, `ensureWidgetRegistered`,
+  `listUserIds`). `createServiceClient()` is server-only (uses the service
+  role key, bypasses RLS) — never import it into a client component.
+- `packages/widgets/*` — one package per widget. `packages/widgets/weather`
+  is the reference implementation — copy its shape for the next one.
+- `packages/adapters/*` — one package per external service. Owns the actual
+  HTTP call and response normalization; widgets never fetch raw API
+  responses themselves.
+- `packages/ui` — shared design system components: `WidgetCard` (the one
+  reusable card from §19) and `ActionForm` (generic `useActionState` wiring
+  — pending/error UI — reused for every widget action, not just weather's).
 
 ## Widget SDK contract
 
 ```ts
 // packages/sdk/src/widget.ts
-export interface Widget<TData = unknown, TSettings = Record<string, never>> {
+export interface Widget<TData = unknown, TSettings = Record<string, unknown>> {
   id: string;
   name: string;
   size: WidgetSize; // "sm" | "md" | "lg"
@@ -42,9 +49,16 @@ export interface Widget<TData = unknown, TSettings = Record<string, never>> {
   fetchData(context: WidgetFetchContext): Promise<TData>;
   render(props: WidgetRenderProps<TData, TSettings>): ReactNode;
   settings?(): TSettings;
+  parseSettingsForm?(formData: FormData): TSettings;
   permissions?(): string[];
 }
 ```
+
+`render()` receives `{ data, settings, actions }` — `actions.refresh` and
+`actions.updateSettings` are server actions the **shell** constructs
+(session lookup + cache/settings writes happen in `apps/web`) and hands
+down, so a widget never needs to import auth or database code to trigger
+them. See `docs/DECISIONS.md` for why this was added.
 
 The shell only ever calls `registerWidget(SomeWidget)` and later
 `getAllWidgets()` to render the grid. It never imports a widget's
@@ -54,25 +68,36 @@ add a file" true.
 ## Data flow: cron-first, never direct
 
 ```
-External API → Scheduler (cron) → widget_cache (Supabase) → Dashboard read
+External API → Scheduler (GitHub Actions) → widget_cache (Supabase) → Dashboard read
 ```
 
-`fetchData()` is only ever called by the scheduler, never by the client.
-The dashboard always reads from `widget_cache` — it never calls an external
-API directly. This is what keeps every device consistent and avoids rate
-limits. The scheduler mechanism (Vercel Cron, Supabase Edge Functions,
-GitHub Actions) is an implementation detail behind this boundary and can be
-swapped without touching any widget.
+`fetchData()` is only ever called by the scheduler (`apps/web/src/app/api/cron/route.ts`,
+triggered by `.github/workflows/refresh-widgets.yml`) or by a user-triggered
+manual refresh — never automatically by the client on render. The dashboard
+always reads from `widget_cache`. This is what keeps every device
+consistent and avoids rate limits. GitHub Actions was picked over Vercel
+Cron specifically because Vercel's Hobby tier only allows daily cron jobs —
+see `docs/DECISIONS.md`. The scheduler is still just an implementation
+detail behind the `GET /api/cron` boundary and can be swapped again without
+touching any widget.
 
-## Adding a widget (once Phase 1 begins)
+## Adding a widget
 
-1. Create `packages/widgets/<name>/` with `widget.ts`, `component.tsx`,
-   `types.ts`, `fetch.ts`, `settings.ts`, `icon.tsx`.
+1. Create `packages/widgets/<name>/` — use `packages/widgets/weather` as
+   the template: `constants.ts`, `types.ts`, `settings.ts` (defaults +
+   `parseSettingsForm`), `fetch.ts` (calls an adapter, reads settings,
+   calls `ensureWidgetRegistered`), `icon.tsx`, `component.tsx` (wraps
+   `WidgetCard`/`ActionForm` from `@pulse/ui`), `widget.ts` (implements
+   `Widget`), `index.ts`.
 2. If it talks to a new external service, add `packages/adapters/<service>/`
    — auth, requests, response normalization live there, not in the widget.
-3. Implement the `Widget` interface in `widget.ts`, call `registerWidget()`.
-4. Wire `fetch.ts` into the scheduler so it writes to `widget_cache`.
-5. Confirm it meets every item in the reference doc's definition of done
+3. In `apps/web/src/lib/register-widgets.ts`, import the widget's package
+   and call `registerWidget()`.
+4. Add the new package to `apps/web/package.json` dependencies.
+5. Nothing else to wire — the dashboard page, cron route, and refresh/settings
+   actions in `apps/web/src/app/actions/widgets.ts` are all already generic
+   over every registered widget.
+6. Confirm it meets every item in the reference doc's definition of done
    (§7) before calling it finished — including dark mode and responsive
    layout, not just "it fetches data."
 

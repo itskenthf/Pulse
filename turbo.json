@@ -12,7 +12,8 @@
         "AUTH_SECRET",
         "AUTH_URL",
         "AUTH_GITHUB_ID",
-        "AUTH_GITHUB_SECRET"
+        "AUTH_GITHUB_SECRET",
+        "CRON_SECRET"
       ]
     },
     "dev": {

@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      '@types/node':
+        specifier: ^22
+        version: 22.20.1
       prettier:
         specifier: ^3.4.2
         version: 3.9.5
@@ -29,6 +32,12 @@ importers:
       '@pulse/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@pulse/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@pulse/widget-weather':
+        specifier: workspace:*
+        version: link:../../packages/widgets/weather
       next:
         specifier: 16.2.10
         version: 16.2.10(@babel/core@7.29.7)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -67,6 +76,12 @@ importers:
         specifier: ^5
         version: 5.9.3
 
+  packages/adapters/weather:
+    devDependencies:
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
   packages/auth:
     dependencies:
       '@auth/supabase-adapter':
@@ -95,6 +110,47 @@ importers:
 
   packages/sdk:
     dependencies:
+      react:
+        specifier: ^19
+        version: 19.2.4
+    devDependencies:
+      '@types/react':
+        specifier: ^19
+        version: 19.2.17
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
+  packages/ui:
+    dependencies:
+      '@pulse/sdk':
+        specifier: workspace:*
+        version: link:../sdk
+      react:
+        specifier: ^19
+        version: 19.2.4
+    devDependencies:
+      '@types/react':
+        specifier: ^19
+        version: 19.2.17
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
+  packages/widgets/weather:
+    dependencies:
+      '@pulse/adapter-weather':
+        specifier: workspace:*
+        version: link:../../adapters/weather
+      '@pulse/database':
+        specifier: workspace:*
+        version: link:../../database
+      '@pulse/sdk':
+        specifier: workspace:*
+        version: link:../../sdk
+      '@pulse/ui':
+        specifier: workspace:*
+        version: link:../../ui
       react:
         specifier: ^19
         version: 19.2.4

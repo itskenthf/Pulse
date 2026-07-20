@@ -19,4 +19,10 @@ export const authConfig: NextAuthConfig = {
   session: {
     strategy: "database",
   },
+  callbacks: {
+    session({ session, user }) {
+      session.user.id = user.id;
+      return session;
+    },
+  },
 };

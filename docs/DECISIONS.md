@@ -140,3 +140,25 @@ become generic rather than collapsing every widget to that default,
 otherwise a widget with a concrete settings type couldn't be registered at
 all (a real TypeScript variance error caught while wiring weather, not a
 hypothetical one).
+
+## 2026-07-20 — `service_role` needs explicit GRANTs on tables created via raw SQL
+
+Every table in `0001_core_schema.sql` was created by running SQL directly
+in Supabase's SQL Editor. That's different from creating a table through
+Supabase's Table Editor UI, which quietly applies a standard set of grants
+(to `anon`, `authenticated`, `service_role`) as part of its own tooling.
+Raw SQL doesn't get that — ownership goes to `postgres`, and no other role
+has any access until explicitly granted. This surfaced as
+`permission denied for table widget_settings` from `service_role` itself,
+which is surprising at first since `service_role` is supposed to bypass
+RLS unconditionally — but this wasn't an RLS rejection (Postgres phrases
+those as "new row violates row-level security policy"), it was a plain
+missing GRANT, a layer below RLS entirely.
+
+**Decision:** `0002_grant_service_role.sql` grants `service_role` full
+access to all tables/sequences/routines in `public`, plus sets default
+privileges so tables created by *future* migrations don't need this
+repeated. Anyone applying migrations by hand (SQL Editor rather than the
+Supabase CLI) needs to run every migration file, including this one — it's
+easy to assume `service_role` "just works" and skip straight to writing
+app code against a new table.

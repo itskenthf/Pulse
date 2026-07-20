@@ -1,0 +1,24 @@
+name: Refresh widget cache
+
+# Vercel's Hobby tier only allows daily cron jobs, too infrequent for the
+# per-widget refresh intervals in docs/PROJECT_REFERENCE.md §4. The
+# reference doc explicitly allows swapping Vercel Cron for GitHub Actions
+# without changing any widget — see docs/DECISIONS.md.
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call /api/cron
+        run: |
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${PULSE_URL}/api/cron"
+        env:
+          PULSE_URL: ${{ vars.PULSE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}

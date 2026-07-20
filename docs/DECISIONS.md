@@ -90,3 +90,53 @@ mind:
   `AUTH_URL`, the GitHub OAuth App's URLs, and the browser URL used for
   testing must all match exactly, including which of a project's multiple
   `*.vercel.app` aliases is used.
+
+## 2026-07-20 — GitHub Actions as the scheduler, not Vercel Cron
+
+The reference doc wants weather refreshed every 30-60 min (§4), but
+Vercel's Hobby (free) tier only allows cron jobs to run once per day —
+building a Vercel Cron for this would silently not deliver the refresh
+interval the doc asks for. §5 explicitly anticipates swapping schedulers
+("swap Vercel Cron for GitHub Actions, say") without touching any widget,
+so this isn't a deviation from the architecture, just exercising the
+flexibility it already designed in.
+
+**Decision:** `.github/workflows/refresh-widgets.yml` runs every 30 min and
+calls `GET /api/cron` with a bearer token (`CRON_SECRET`, checked in the
+route handler). The route iterates every user in `next_auth.users` and
+every registered widget, calling `fetchData()` + writing `widget_cache` for
+each. Requires two things set outside the codebase: `CRON_SECRET` as a
+Vercel env var (same value the route checks against) and as a GitHub
+Actions repo secret, plus a `PULSE_URL` repo variable pointing at the
+deployed app. If Pulse ever moves to Vercel Pro, this can be swapped for
+native Vercel Cron by pointing `vercel.json` at the same route — the route
+itself doesn't care who calls it, only that the bearer token matches.
+
+## 2026-07-20 — Widget SDK gained `actions` (render props) and `parseSettingsForm`
+
+Building the first real widget (weather) surfaced a real gap: a widget's
+`render()` needs a way to trigger a refresh or save settings, but a widget
+package can never import `apps/web`'s server actions or auth logic without
+inverting the dependency graph (`apps/web` depends on widget packages, not
+the reverse).
+
+**Decision:** the shell constructs generic, already-bound server actions
+(session lookup + cache/settings writes happen in `apps/web`, not in the
+widget) and passes them into `render()` via a new `actions` prop
+(`WidgetRenderProps.actions: { refresh, updateSettings? }`). Widgets stay
+fully decoupled from auth/data-layer mechanics — they just call the action
+they're handed. A new optional `parseSettingsForm?(formData): TSettings`
+was added to the `Widget` interface so each widget still owns validating
+its own settings input, while the shell's settings-save action stays
+generic (works for any widget that defines it, doesn't special-case
+weather). This is the "improve the SDK after every completed widget"
+principle (reference doc §13) applied literally — done during the first
+widget because the gap was real, not speculative.
+
+A related fix: `Widget`'s default `TSettings` changed from
+`Record<string, never>` (unusable — allows no real properties) to
+`Record<string, unknown>`, and `registerWidget`/`getAllWidgets` needed to
+become generic rather than collapsing every widget to that default,
+otherwise a widget with a concrete settings type couldn't be registered at
+all (a real TypeScript variance error caught while wiring weather, not a
+hypothetical one).

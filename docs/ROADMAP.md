@@ -10,14 +10,14 @@ and §18 — this doc tracks live status against them.
 - [x] Widget SDK contract defined (`packages/sdk`)
 - [x] Auth.js wired with GitHub as first provider
 - [x] Core DB schema migrations written (`supabase/migrations/`)
-- [ ] Supabase project created (manual — needs your account)
-- [ ] GitHub OAuth App registered (manual — needs your account)
-- [ ] Deployed to Vercel
-- [ ] **Gate:** log in with GitHub, see your own name echoed back
+- [x] Supabase project created
+- [x] GitHub OAuth App registered
+- [x] Deployed to Vercel (`https://[redacted-old-domain]`)
+- [x] **Gate:** log in with GitHub, see your own name echoed back — confirmed
 
-The code side of Phase 0 is done and builds/typechecks cleanly. What's left
-requires accounts only you can create — see the "Manual setup" section in
-the root `README.md` for exact steps.
+**Phase 0 is complete.** Next up: Phase 1, starting with the weather
+widget (no auth — proves the SDK/render pattern) per the widget
+development order in the reference doc §9.
 
 ## Phase 1 — MVP (read-only dashboard)
 

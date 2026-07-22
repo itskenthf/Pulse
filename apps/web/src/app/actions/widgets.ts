@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getWidget } from "@pulse/sdk";
 import type { WidgetActionState } from "@pulse/sdk";
-import { writeWidgetSettings } from "@pulse/database";
+import { ensureWidgetRegistered, writeWidgetSettings } from "@pulse/database";
 import { auth } from "@/auth";
 import { refreshWidget } from "@/lib/refresh-widget";
 import "@/lib/register-widgets";
@@ -47,6 +47,10 @@ export async function updateWidgetSettingsAction(
   }
 
   try {
+    // widget_settings has a foreign key to widget_registry — a widget whose
+    // first-ever interaction is a settings save (rather than a fetch, which
+    // registers it) would otherwise fail the constraint.
+    await ensureWidgetRegistered(widget.id, widget.name);
     await writeWidgetSettings(session.user.id, widgetId, settings);
     // Settings changed — refresh immediately so the new location shows up
     // without waiting for the next scheduled run.

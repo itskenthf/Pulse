@@ -42,8 +42,17 @@ In progress. Per the reference doc's widget development order (§9):
    on a 15-30 min cron cycle would just show a frozen, wrong clock between
    refreshes. `fetchData()` still exists (SDK contract requirement) but is
    a no-op; the real per-widget state is the timezone/12h-24h setting.
-4. [ ] Calendar (first OAuth widget — Google)
-5. [ ] GitHub (second OAuth provider)
+4. [~] Calendar (first OAuth widget — Google) — **deferred by Ken**: needs
+   Google Cloud Console setup time (consent screen, test users, scopes).
+   Skipped ahead to GitHub; revisit when there's time for the manual setup.
+5. [x] GitHub — `packages/widgets/github` + `packages/adapters/github`:
+   contribution counts (today / this week / this year) plus a 12-week mini
+   heatmap, via GitHub's GraphQL `contributionsCollection`. Scoped down
+   from the original "commits + open PRs" concept at Ken's request — kept
+   deliberately simple. Reuses the login token from `next_auth.accounts`
+   (`readProviderAccessToken` in `packages/database`) — no scope change,
+   no second OAuth flow, no settings. Establishes the "widget using the
+   login provider's token" pattern that Spotify/Google widgets will follow.
 6. [ ] Tasks
 7. [ ] Email (Gmail readonly)
 8. [ ] Focus timer (first write-back)

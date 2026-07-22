@@ -15,6 +15,7 @@
     "@pulse/sdk": "workspace:*",
     "@pulse/ui": "workspace:*",
     "@pulse/widget-clock": "workspace:*",
+    "@pulse/widget-github": "workspace:*",
     "@pulse/widget-greeting": "workspace:*",
     "@pulse/widget-weather": "workspace:*",
     "next": "16.2.10",

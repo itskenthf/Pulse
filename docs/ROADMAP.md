@@ -61,6 +61,15 @@ In progress. Per the reference doc's widget development order (§9):
 11. [ ] YouTube
 12. [ ] Quick launch
 
+Pulled forward from the §10 backlog at Ken's request:
+
+- [x] Steam (recently played) — `packages/widgets/steam` +
+  `packages/adapters/steam`: top 5 games from the last 2 weeks via
+  `GetRecentlyPlayedGames` (official endpoint, API key auth — no OAuth).
+  Needs `STEAM_API_KEY` in Vercel and the user's SteamID64 in widget
+  settings; the Steam profile's "Game details" privacy must be Public or
+  the API silently returns an empty list (the empty state says so).
+
 **Gate to move on:** the Phase 1 success gates in the reference doc §18 —
 daily use for two consecutive weeks, trusted data, at least one widget
 replacing a separately-checked tool.

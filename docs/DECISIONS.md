@@ -235,3 +235,30 @@ would be worse than a smaller set of widgets actually checked daily.
 Remaining active Phase 1 target: **Quote → Quick launch → Spotify**, in
 that order (two zero-setup widgets first, the OAuth-requiring one last).
 See `docs/ROADMAP.md` for the full rationale per dropped widget.
+
+## 2026-07-23 — Quote widget: curated themes, no attribution, no quote API
+
+Ken explicitly rejected generic motivational quotes and a live quote API,
+picking 7 specific themes instead (coffee, dev humor, gaming, minimalism,
+relationship, programming, stoicism) and asking for no author names shown
+at all — kept deliberately minimal.
+
+**Sourcing, for the record** (not shown in the UI, but worth documenting
+since the quotes were hand-picked rather than pulled from a verified
+source): Stoicism and Programming entries are real, well-documented
+quotes from real people. Gaming entries are real lines from real games.
+Coffee and Developer-humor entries mostly circulate as anonymous internet
+folklore with no verifiable original author, so none of those were pinned
+on a specific real person. A couple of well-known but disputed
+attributions (e.g. the "simplicity is the ultimate sophistication" line
+often wrongly credited to Leonardo da Vinci) were deliberately left out
+rather than repeated. Since no attribution renders in the UI, this is
+purely an internal accuracy note for whoever edits `quotes.ts` later.
+
+**Decision:** static list in `packages/widgets/quote/src/quotes.ts`
+(~40 quotes), each tagged with a `category` field for future filtering
+even though no settings/filter UI exists yet — free to add since it's
+just a data label already known at authoring time, not speculative
+infrastructure. `fetchData()` picks randomly on every call (cron and
+manual refresh both rotate it), skipping an immediate repeat of the
+previous cached quote.

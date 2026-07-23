@@ -109,7 +109,17 @@ on building them in order:
 
 **Remaining active target for Phase 1**, in the order Ken wants them:
 
-1. [ ] Quote — static/rotating curated list, no external service
+1. [x] Quote — `packages/widgets/quote`: ~40 hand-curated quotes across 7
+   themes Ken picked (coffee, dev humor, gaming, minimalism, relationship,
+   programming, stoicism) — deliberately not generic motivational quotes,
+   and no attribution shown (kept minimal per Ken's request; see
+   `docs/DECISIONS.md` for sourcing notes on the ones with real quotes
+   behind them). No adapter — static local data. Picks a random quote on
+   every `fetchData()` call (cron *and* manual refresh both rotate it,
+   avoids repeating the immediately-previous pick) rather than locking to
+   one quote per calendar day, so the "Shuffle" button is actually useful.
+   A second clean confirmation of the normal fetch → cache → render
+   pattern, alongside Clock's deliberate exception to it.
 2. [ ] Quick launch — configurable shortcut links, no data source
 3. [ ] Spotify — third OAuth provider, needs a Spotify Developer app
 

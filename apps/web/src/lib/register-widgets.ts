@@ -5,6 +5,7 @@ import { clockWidget } from "@pulse/widget-clock";
 import { githubWidget } from "@pulse/widget-github";
 import { steamWidget } from "@pulse/widget-steam";
 import { quoteWidget } from "@pulse/widget-quote";
+import { quickLaunchWidget } from "@pulse/widget-quick-launch";
 
 // Side-effect import target: the shell only ever calls registerWidget(),
 // never imports a widget's internals directly (reference doc §5).
@@ -14,3 +15,4 @@ registerWidget(clockWidget);
 registerWidget(githubWidget);
 registerWidget(steamWidget);
 registerWidget(quoteWidget);
+registerWidget(quickLaunchWidget);

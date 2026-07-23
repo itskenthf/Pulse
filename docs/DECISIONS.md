@@ -262,3 +262,57 @@ just a data label already known at authoring time, not speculative
 infrastructure. `fetchData()` picks randomly on every call (cron and
 manual refresh both rotate it), skipping an immediate repeat of the
 previous cached quote.
+
+## 2026-07-23 — Spotify widget: custom OAuth connect flow, not a NextAuth provider
+
+Spotify is Pulse's third OAuth-backed integration, and the first one that
+isn't also the login provider — you're already signed in via GitHub, and
+need to *separately* authorize Spotify and have that connection attach to
+your existing account, not create a second disconnected user. Auth.js
+doesn't have a first-class "link an additional provider to the currently
+signed-in user" flow; getting this right through NextAuth's own
+`signIn`/adapter callbacks would mean depending on account-linking
+behavior in a beta library (`next-auth@5.0.0-beta.31`) that isn't clearly
+documented for this exact case — a real risk of silently creating a
+duplicate user or linking the wrong account.
+
+**Decision:** Spotify is *not* registered as a NextAuth provider at all.
+Instead, two plain route handlers own the whole flow end to end:
+
+- `GET /api/connect/spotify` — requires an existing Pulse session, sets a
+  short-lived signed state cookie (CSRF protection), redirects to
+  Spotify's own `/authorize` endpoint with `user-top-read` scope (read-
+  only, no playback control).
+- `GET /api/auth/callback/spotify` — verifies the state cookie, exchanges
+  the code for tokens directly against Spotify's token endpoint
+  (`packages/adapters/spotify`), fetches the Spotify profile id, and
+  writes the tokens into `next_auth.accounts` itself via
+  `upsertProviderAccount()` (`packages/database`) — the same table
+  Auth.js's adapter uses for GitHub, but written to directly rather than
+  through the adapter. Because this all happens in one browser round trip,
+  the Pulse session cookie is still present when the callback fires, so
+  `auth()` reliably identifies which user is connecting — no separate
+  state-to-user mapping needed.
+
+This callback route deliberately lives at `/api/auth/callback/spotify` —
+under next-auth's own path — purely so the redirect URI registered in the
+Spotify dashboard matches what a NextAuth provider would have used; it has
+nothing to do with next-auth's `[...nextauth]` catch-all route, and Next.js
+correctly resolves the specific segment ahead of the catch-all (confirmed:
+both appear as separate routes in the build output).
+
+**Token refresh** is handled in the widget's own `fetch.ts`, not the
+adapter's connect flow: Spotify access tokens expire in ~1h, shorter than
+the 30 min scheduler interval is forgiving of only by luck, so every fetch
+checks expiry (with a 60s safety margin) and calls
+`refreshAccessToken()` + re-persists via `upsertProviderAccount()` before
+fetching top tracks if needed. If refresh fails or no refresh token is
+stored, `fetchData()` returns `{ connected: false }` — a valid data state,
+not a thrown error — so the widget's render() can show a "Connect Spotify"
+button distinctly from a generic error banner.
+
+**Scope note:** the `/api/connect/spotify` and `/api/auth/callback/spotify`
+routes are Spotify-specific, not a generic `/api/connect/[provider]`
+mechanism. Generalizing now would be premature — only one widget needs
+this pattern. If a second custom-OAuth widget is ever added, extract the
+shared parts then, not speculatively now.

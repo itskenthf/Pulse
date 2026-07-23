@@ -182,3 +182,56 @@ real data" (§7 definition of done) is satisfied only nominally; treating
 that DoD item as strictly mandatory for every future widget would be wrong
 — some widgets (a clock, a quick-launch link list) legitimately have
 nothing to fetch.
+
+## 2026-07-22 — GitHub widget scoped down to contributions, reusing the login token
+
+The original build-order description (§9) frames the GitHub widget as
+"current project — commits, open PRs." Implementing that as planned would
+have needed the `repo` OAuth scope (broad — "full control of private
+repositories" on the consent screen) and a re-authorization prompt at next
+login, since the login provider's default scope only covers profile/email.
+
+**Decision, at Ken's request:** scope it down to contribution counts
+(today/this-week/this-year) plus a 12-week mini heatmap via GitHub's
+GraphQL `contributionsCollection` instead. This needs only `read:user`,
+which the existing login token already has — no scope change, no
+re-authorization, no settings UI at all (contributions are account-wide).
+`packages/database/src/accounts.ts` (`readProviderAccessToken`) was added
+as the reusable way for any widget to read a stored login-provider token;
+Spotify and any future GitHub-repo-specific widget will reuse this same
+`next_auth.accounts` read pattern rather than requiring their own OAuth
+plumbing where the login provider's token already covers it.
+
+## 2026-07-22 — Steam widget pulled forward from the §10 backlog
+
+The reference doc's own sequencing note (§10, §20) says not to build
+backlog widgets until the core 12 are in daily use. Ken asked for Steam
+specifically (recently played games) ahead of that. Judged as a
+reasonable exception rather than a process break: Steam requires no OAuth
+(API key + a public SteamID64), so it doesn't compete for scarce
+OAuth/consent-screen effort the way Calendar/Spotify do, and the doc's own
+principle (§13: "every new feature must justify its maintenance cost")
+is about avoiding low-value scope creep, not about rigid ordering — a
+widget Ken will actually use daily clears that bar regardless of its
+position in §9's list. `packages/adapters/steam` + `packages/widgets/steam`
+follow the exact weather-widget shape (adapter owns the HTTP call, widget
+owns fetch/cache/settings/render).
+
+## 2026-07-22 — Phase 1 rescoped: Tasks, Focus timer, Habits, Email, YouTube dropped
+
+After 5 widgets shipped, Ken reviewed the remaining build order (§9) and
+concluded several of the planned widgets don't fit how he actually wants
+to use Pulse long-term: Tasks (doesn't use any task tool), Focus timer,
+Habits, Email, and YouTube. Calendar stays in its existing deferred state.
+
+**Decision:** these are dropped from *active* scope, not removed from the
+codebase or the reference doc — the architecture doesn't care what order
+widgets are built in (each is an isolated package), so reviving any of
+them later costs nothing beyond the widget's own build time. This is
+exactly the reference doc's own philosophy applied honestly (§13:
+"optimize for daily usability, not feature count"; "every new feature must
+justify its maintenance cost") — a complete checklist of unused widgets
+would be worse than a smaller set of widgets actually checked daily.
+Remaining active Phase 1 target: **Quote → Quick launch → Spotify**, in
+that order (two zero-setup widgets first, the OAuth-requiring one last).
+See `docs/ROADMAP.md` for the full rationale per dropped widget.

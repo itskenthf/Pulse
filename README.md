@@ -1,15 +1,15 @@
 # Pulse
 
-A personal "life OS" dashboard — the daily tools Ken checks every morning
-(calendar, email, GitHub, weather, focus time, habits) rendered as
-independent widgets on one screen, kept in sync across desktop, mobile, and
-browser.
+A personal "life OS" dashboard — the daily tools Ken checks every morning,
+rendered as independent widgets on one screen, kept in sync across desktop,
+mobile, and browser. Live at
+[pulse-plum-seven.vercel.app](https://pulse-plum-seven.vercel.app).
 
 Pulse is not a dashboard with features bolted on — it's a shell that renders
 widgets. The shell knows how to register and lay out a widget; it knows
-nothing about calendars, GitHub, or Spotify. See `docs/ARCHITECTURE.md` for
-why, and `docs/PROJECT_REFERENCE.md` for the full spec this project is built
-against.
+nothing about weather, GitHub, or Steam. See `docs/ARCHITECTURE.md` for why,
+and `docs/PROJECT_REFERENCE.md` for the full spec this project is built
+against. Current widget lineup and what's next: `docs/ROADMAP.md`.
 
 ## Project structure
 
@@ -20,26 +20,36 @@ packages/
   ui/                 Shared design system components (WidgetCard, ActionForm)
   sdk/                Widget interface/contract — what the shell depends on
   auth/               Auth.js configuration
-  database/           Supabase client, widget_cache/widget_settings/user helpers
+  database/           Supabase client, widget_cache/widget_settings/registry/account/user helpers
   widgets/
-    weather/          First widget — see docs/ROADMAP.md for what's next
+    weather/          Location-based current conditions (Open-Meteo)
+    greeting/         Time-of-day message, no external service
+    clock/            Live client-ticking clock, no external service
+    github/           Contribution counts + mini heatmap (reuses your GitHub login token)
+    steam/            Recently played games
   adapters/
-    weather/          Open-Meteo client (owns the external API call + normalization)
+    weather/          Open-Meteo client
+    github/           GitHub GraphQL contributions client
+    steam/            Steam Web API client
 supabase/
   migrations/         SQL migrations, applied in order
 docs/                 Architecture, roadmap, design system, decisions
 ```
 
-New widgets each get their own `packages/widgets/<name>` and, if they talk
-to an external service, `packages/adapters/<name>` — see
-`docs/ARCHITECTURE.md` for the exact steps.
+See `docs/ROADMAP.md` for what's live vs. planned. New widgets each get
+their own `packages/widgets/<name>` and, if they talk to an external
+service, `packages/adapters/<name>` — see `docs/ARCHITECTURE.md` for the
+exact steps.
 
 ## Requirements
 
 - Node.js 22+
 - pnpm 10+ (`corepack enable` will pick up the pinned version)
 - A Supabase project (Postgres only — see `docs/DECISIONS.md`)
-- A GitHub OAuth App (first login provider)
+- A GitHub OAuth App (login provider — also powers the GitHub widget, no
+  extra setup needed for that one)
+- A Steam Web API key, only if you want the Steam widget — see "Widgets
+  needing extra setup" below
 
 ## Setup
 
@@ -99,6 +109,29 @@ Widgets refresh on their own schedule via a GitHub Actions workflow
 
 Without this, widgets still work via the manual "Refresh" button on each
 card — the scheduler just means you don't have to click it yourself.
+Confirmed working: the scheduler runs every 30 minutes and refreshes every
+registered widget for every user.
+
+## Widgets needing extra setup
+
+Most widgets work automatically once you're signed in — they use either no
+external service (Greeting, Clock) or the token you already got from
+signing in with GitHub (the GitHub widget). A couple need something extra:
+
+- **Steam** — needs a Steam Web API key and your SteamID64:
+  1. Get a key at [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey)
+     (any domain value is accepted; requires a non-"limited" Steam account,
+     i.e. one that's made at least one purchase).
+  2. Add it as `STEAM_API_KEY` in Vercel → Settings → Environment
+     Variables (and `turbo.json`'s `build.env` already lists it — no code
+     change needed for a fresh deploy), then redeploy.
+  3. On the dashboard, open the Steam card's Settings and enter your
+     17-digit SteamID64 (look it up at [steamid.io](https://steamid.io) if
+     your profile uses a custom URL).
+  4. Your Steam profile's **Game details** privacy must be set to Public
+     — Steam silently returns an empty list otherwise, with no error.
+- **Calendar, Email, YouTube (Google-backed widgets)** — deferred, not yet
+  built. See `docs/ROADMAP.md`.
 
 ## Development
 

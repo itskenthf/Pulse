@@ -27,9 +27,8 @@ In progress. Per the reference doc's widget development order (§9):
    from `widget_cache`, manual refresh + settings (location), and a
    GitHub Actions scheduler calling `/api/cron` every 30 min (Vercel Cron's
    Hobby tier can't go more frequent than daily — see `docs/DECISIONS.md`).
-   Needs `CRON_SECRET` set in Vercel and as a GitHub Actions secret, plus a
-   `PULSE_URL` repo variable, before the scheduler actually runs — see
-   README.
+   `CRON_SECRET`/`PULSE_URL` are now set — **scheduler confirmed running**
+   every 30 min for every widget. See README if setting this up fresh.
 2. [x] Greeting — `packages/widgets/greeting`: time-of-day message
    personalized by name, no adapter needed (pure local computation).
    Confirms "add a widget = add a file" — only shell change was
@@ -53,22 +52,42 @@ In progress. Per the reference doc's widget development order (§9):
    (`readProviderAccessToken` in `packages/database`) — no scope change,
    no second OAuth flow, no settings. Establishes the "widget using the
    login provider's token" pattern that Spotify/Google widgets will follow.
-6. [ ] Tasks
-7. [ ] Email (Gmail readonly)
-8. [ ] Focus timer (first write-back)
-9. [ ] Habits
-10. [ ] Spotify (third OAuth provider)
-11. [ ] YouTube
-12. [ ] Quick launch
 
-Pulled forward from the §10 backlog at Ken's request:
+Also shipped, pulled forward from the §10 backlog at Ken's request:
 
 - [x] Steam (recently played) — `packages/widgets/steam` +
   `packages/adapters/steam`: top 5 games from the last 2 weeks via
   `GetRecentlyPlayedGames` (official endpoint, API key auth — no OAuth).
   Needs `STEAM_API_KEY` in Vercel and the user's SteamID64 in widget
   settings; the Steam profile's "Game details" privacy must be Public or
-  the API silently returns an empty list (the empty state says so).
+  the API silently returns an empty list (the empty state says so). Also
+  surfaced a real bug fixed alongside it: any widget whose *first-ever*
+  interaction is a settings save (rather than a fetch) violated a foreign
+  key, since `widget_registry` rows were only ever created inside
+  `fetchData()`. `updateWidgetSettingsAction` now calls
+  `ensureWidgetRegistered()` itself — see `docs/DECISIONS.md`.
+
+### Phase 1 rescoped (2026-07-22)
+
+Ken reviewed the remaining build order and decided the following aren't
+useful to him long-term — dropped from active scope, not deleted from the
+plan; trivial to revive later since nothing about the architecture depends
+on building them in order:
+
+- [~] Tasks — skipped, doesn't track tasks in any tool
+- [~] Email (Gmail readonly) — blocked behind the same Google Cloud setup
+  as Calendar anyway
+- [~] Focus timer — dropped
+- [~] Habits — dropped
+- [~] YouTube — blocked behind Google Cloud setup, dropped
+- [~] Calendar (Google) — stays deferred, revisit if/when there's time for
+  the Google Cloud Console setup
+
+**Remaining active target for Phase 1**, in the order Ken wants them:
+
+1. [ ] Quote — static/rotating curated list, no external service
+2. [ ] Quick launch — configurable shortcut links, no data source
+3. [ ] Spotify — third OAuth provider, needs a Spotify Developer app
 
 **Gate to move on:** the Phase 1 success gates in the reference doc §18 —
 daily use for two consecutive weeks, trusted data, at least one widget

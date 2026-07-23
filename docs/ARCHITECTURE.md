@@ -26,8 +26,13 @@ dependency graph (`turbo.json`'s `dependsOn: ["^build"]`).
   `widget_cache`/`widget_settings`/`widget_registry`/user helpers that any
   widget's fetch/settings code reuses (`readWidgetCache`, `writeWidgetCache`,
   `readWidgetSettings`, `writeWidgetSettings`, `ensureWidgetRegistered`,
-  `listUserIds`). `createServiceClient()` is server-only (uses the service
-  role key, bypasses RLS) — never import it into a client component.
+  `listUserIds`, `readProviderAccessToken`). `createServiceClient()` is
+  server-only (uses the service role key, bypasses RLS) — never import it
+  into a client component. `readProviderAccessToken(userId, provider)`
+  reads a stored OAuth token from `next_auth.accounts` — this is how a
+  widget gets API access for a service the user already signed in with
+  (the GitHub widget uses this; Spotify will too), without a second OAuth
+  connection.
 - `packages/widgets/*` — one package per widget. `packages/widgets/weather`
   is the reference implementation — copy its shape for the next one.
 - `packages/adapters/*` — one package per external service. Owns the actual
@@ -115,7 +120,18 @@ for the adapter's schema. `apps/web/src/auth.ts` exports `auth`, `signIn`,
 schema (owned by `@auth/supabase-adapter`, not hand-edited). `0001` is
 Pulse's application schema per the reference doc §8: one generic
 `widget_cache` table keyed by `(user_id, widget_id)` rather than a table per
-data source, so adding a widget never requires a migration.
+data source, so adding a widget never requires a migration. `0002` grants
+`service_role` access to everything in `public` — tables created via raw
+SQL in the Supabase SQL Editor don't get the grants Supabase's Table
+Editor UI applies automatically (see `docs/DECISIONS.md`).
+
+Note: `widget_settings.widget_id` and `widget_cache.widget_id` both
+foreign-key to `widget_registry.id`. A widget's registry row is created
+lazily by `ensureWidgetRegistered()` — called from both `fetchData()` (via
+each widget's `fetch.ts`) and the shell's settings-save action
+(`apps/web/src/app/actions/widgets.ts`), so a widget works correctly
+regardless of whether its first-ever interaction is a fetch or a settings
+save.
 
 ## Event bus
 

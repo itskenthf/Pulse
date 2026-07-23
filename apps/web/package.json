@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@pulse/adapter-spotify": "workspace:*",
     "@pulse/auth": "workspace:*",
     "@pulse/database": "workspace:*",
     "@pulse/sdk": "workspace:*",
@@ -19,6 +20,7 @@
     "@pulse/widget-greeting": "workspace:*",
     "@pulse/widget-quick-launch": "workspace:*",
     "@pulse/widget-quote": "workspace:*",
+    "@pulse/widget-spotify": "workspace:*",
     "@pulse/widget-steam": "workspace:*",
     "@pulse/widget-weather": "workspace:*",
     "next": "16.2.10",

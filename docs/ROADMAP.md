@@ -91,6 +91,16 @@ min without manual clicks — confirmed working):
 4. Your Steam profile's **Game details** privacy must be Public — Steam
    silently returns an empty list otherwise, with no error.
 
+**Spotify widget**:
+1. Create an app at [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard).
+2. Add Redirect URI: `<your deployed URL>/api/auth/callback/spotify`
+   (click **Add**, not just type it in the field).
+3. Under "Which API/SDKs are you planning to use?", check **Web API** only.
+4. Save, then copy the **Client ID** and **Client Secret** from the app's dashboard.
+5. Add both as `AUTH_SPOTIFY_ID`/`AUTH_SPOTIFY_SECRET` in Vercel → Settings
+   → Environment Variables, redeploy.
+6. On the dashboard, click **Connect Spotify** on the card, authorize.
+
 ### Phase 1 rescoped (2026-07-22)
 
 Ken reviewed the remaining build order and decided the following aren't
@@ -128,7 +138,17 @@ on building them in order:
    every other widget uses, no new client-side array-editing UI needed.
    Pure config, no adapter, no external call at all — `fetchData()` is
    nominal like Clock's.
-3. [ ] Spotify — third OAuth provider, needs a Spotify Developer app
+3. [x] Spotify — `packages/widgets/spotify` + `packages/adapters/spotify`:
+   top 5 tracks (medium-term/~6-month window), `user-top-read` scope only.
+   Third OAuth-backed widget, and the first where the OAuth provider isn't
+   also the login provider — handled with a custom "Connect Spotify" flow
+   (`/api/connect/spotify` + `/api/auth/callback/spotify`) rather than a
+   NextAuth provider, plus token-refresh logic in the widget's own
+   `fetch.ts` since Spotify access tokens expire hourly. See
+   `docs/DECISIONS.md` for the full reasoning. Needs `AUTH_SPOTIFY_ID`/
+   `AUTH_SPOTIFY_SECRET` in Vercel — see "Setup notes" above.
+
+**Phase 1's rescoped target is now fully built: 8/8.**
 
 **Gate to move on:** the Phase 1 success gates in the reference doc §18 —
 daily use for two consecutive weeks, trusted data, at least one widget

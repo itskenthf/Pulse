@@ -14,7 +14,9 @@
         "AUTH_GITHUB_ID",
         "AUTH_GITHUB_SECRET",
         "CRON_SECRET",
-        "STEAM_API_KEY"
+        "STEAM_API_KEY",
+        "AUTH_SPOTIFY_ID",
+        "AUTH_SPOTIFY_SECRET"
       ]
     },
     "dev": {

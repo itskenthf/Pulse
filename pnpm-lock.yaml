@@ -44,6 +44,9 @@ importers:
       '@pulse/widget-greeting':
         specifier: workspace:*
         version: link:../../packages/widgets/greeting
+      '@pulse/widget-quick-launch':
+        specifier: workspace:*
+        version: link:../../packages/widgets/quick-launch
       '@pulse/widget-quote':
         specifier: workspace:*
         version: link:../../packages/widgets/quote
@@ -212,6 +215,28 @@ importers:
         version: 5.9.3
 
   packages/widgets/greeting:
+    dependencies:
+      '@pulse/database':
+        specifier: workspace:*
+        version: link:../../database
+      '@pulse/sdk':
+        specifier: workspace:*
+        version: link:../../sdk
+      '@pulse/ui':
+        specifier: workspace:*
+        version: link:../../ui
+      react:
+        specifier: ^19
+        version: 19.2.4
+    devDependencies:
+      '@types/react':
+        specifier: ^19
+        version: 19.2.17
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
+  packages/widgets/quick-launch:
     dependencies:
       '@pulse/database':
         specifier: workspace:*

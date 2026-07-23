@@ -67,6 +67,30 @@ Also shipped, pulled forward from the §10 backlog at Ken's request:
   `fetchData()`. `updateWidgetSettingsAction` now calls
   `ensureWidgetRegistered()` itself — see `docs/DECISIONS.md`.
 
+### Setup notes for specific features
+
+**GitHub Actions scheduler** (keeps every widget auto-refreshing every 30
+min without manual clicks — confirmed working):
+1. Generate a secret: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`.
+2. Add it as `CRON_SECRET` in Vercel → Settings → Environment Variables, redeploy.
+3. In the GitHub repo → Settings → Secrets and variables → Actions: add a
+   **repository secret** `CRON_SECRET` (same value), and a **repository
+   variable** `PULSE_URL` set to the deployed URL (no trailing slash).
+4. Runs automatically every 30 min; trigger manually from the Actions tab
+   ("Run workflow") to test immediately. Without this, widgets still work
+   via each card's manual "Refresh" button.
+
+**Steam widget**:
+1. Get a key at [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey)
+   (any domain value accepted; requires a non-"limited" Steam account —
+   i.e. one that's made at least one purchase).
+2. Add it as `STEAM_API_KEY` in Vercel → Settings → Environment Variables, redeploy.
+3. On the dashboard, open the Steam card's Settings and enter your
+   17-digit SteamID64 ([steamid.io](https://steamid.io) helps if your
+   profile uses a custom URL).
+4. Your Steam profile's **Game details** privacy must be Public — Steam
+   silently returns an empty list otherwise, with no error.
+
 ### Phase 1 rescoped (2026-07-22)
 
 Ken reviewed the remaining build order and decided the following aren't

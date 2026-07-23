@@ -6,6 +6,29 @@ sync with the actual code as it's built.
 
 ## Monorepo layout
 
+```
+apps/
+  web/                Next.js app (App Router) — dashboard shell, auth, routing, cron route
+packages/
+  ui/                 Shared design system components (WidgetCard, ActionForm)
+  sdk/                Widget interface/contract — what the shell depends on
+  auth/               Auth.js configuration
+  database/           Supabase client, widget_cache/widget_settings/registry/account/user helpers
+  widgets/
+    weather/          Location-based current conditions (Open-Meteo)
+    greeting/         Time-of-day message, no external service
+    clock/            Live client-ticking clock, no external service
+    github/           Contribution counts + mini heatmap (reuses your GitHub login token)
+    steam/            Recently played games
+  adapters/
+    weather/          Open-Meteo client
+    github/           GitHub GraphQL contributions client
+    steam/            Steam Web API client
+supabase/
+  migrations/         SQL migrations, applied in order
+docs/                 Architecture, roadmap, design system, decisions
+```
+
 pnpm workspaces + Turborepo. `pnpm-workspace.yaml` includes `apps/*`,
 `packages/*`, `packages/widgets/*`, and `packages/adapters/*` (nested globs
 need to be listed explicitly — pnpm doesn't recurse `packages/*`

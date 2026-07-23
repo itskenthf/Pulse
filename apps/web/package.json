@@ -17,6 +17,7 @@
     "@pulse/widget-clock": "workspace:*",
     "@pulse/widget-github": "workspace:*",
     "@pulse/widget-greeting": "workspace:*",
+    "@pulse/widget-quote": "workspace:*",
     "@pulse/widget-steam": "workspace:*",
     "@pulse/widget-weather": "workspace:*",
     "next": "16.2.10",

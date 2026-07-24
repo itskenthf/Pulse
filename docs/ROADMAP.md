@@ -150,6 +150,18 @@ on building them in order:
 
 **Phase 1's rescoped target is now fully built: 8/8.**
 
+**Also added, beyond the rescoped 8, at Ken's request:**
+
+- [x] Calendar (date display) — `packages/widgets/calendar-date`: plain
+  text "today's date" (e.g. "Thursday, July 24, 2026"), no grid, no
+  navigation. Deliberately **not** the deferred Google Calendar
+  integration — this is a completely different, zero-setup widget that
+  happens to share the "Calendar" name in the UI. Same shape as Greeting:
+  pure local computation, timezone-aware (server runs UTC), no adapter.
+  Package/widget id is `calendar-date` (not `calendar`) specifically so a
+  real Google Calendar widget can use the plain `calendar` id later
+  without a rename or collision.
+
 **Gate to move on:** the Phase 1 success gates in the reference doc §18 —
 daily use for two consecutive weeks, trusted data, at least one widget
 replacing a separately-checked tool.

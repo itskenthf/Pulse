@@ -73,9 +73,11 @@ dependency graph (`turbo.json`'s `dependsOn: ["^build"]`).
   — the light/medium/heavy glass materials every surface builds on, plus
   `GLASS_HOVER`/`SPRING_PRESS` motion classnames), `WidgetCard` (the one
   reusable glass card, with an `accent` prop for the icon-glow identity
-  treatment), and `ActionForm` (generic `useActionState` wiring — pending/
-  error UI, plus an icon-only `variant` for refresh buttons — reused for
-  every widget action).
+  treatment), `ActionForm` (generic `useActionState` wiring — pending/error
+  UI, with `text`/`icon`/`menu` variants), and `WidgetMenu` (the "⋯"
+  overflow menu — Refresh + Settings — every widget's `WidgetCard` `action`
+  slot uses; dropdown visibility is CSS `:focus-within`, not a backdrop —
+  see docs/DECISIONS.md's 2026-07-24 refinement entry for why).
 
 ## Widget SDK contract
 

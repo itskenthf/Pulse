@@ -237,6 +237,45 @@ and every implementation decision recorded in `docs/DECISIONS.md`. Summary:
   `docs/DESIGN_SYSTEM.md` as the actual design system, keeping only the
   structural/layout decisions that doc doesn't cover.
 
+### Refinement pass (2026-07-24): glass fix, real widget polish, overflow menus
+
+Ken judged the Liquid Glass redesign "a major improvement" but flagged
+specific gaps: the glass looked solid white, Steam's bars looked
+Material-Design, GitHub (the largest widget) under-used its space, and the
+sidebar "still feels disconnected." Explicit instruction: polish/consistency
+only, no further layout redesign. Full root-cause investigation and every
+decision in `docs/DECISIONS.md`. Summary:
+
+- **Fixed the glass rendering bug**: root-caused via a real screenshot
+  (not guessing) to fill opacity too high (55–80%) combined with background
+  blobs not vibrant/close enough to actually read through the cards.
+  Lowered fill opacity (`packages/ui/src/glass.ts`) and strengthened the
+  background blobs (`apps/web/src/app/page.tsx`) — color now genuinely
+  bleeds through every card.
+- **Steam's progress bars** rebuilt: glass track, gradient+glow fill, a
+  CSS keyframe grow-in animation, larger game art (`packages/widgets/steam/src/playtime-bar.tsx`).
+- **GitHub widget** enlarged and given more to show: heatmap window
+  20 weeks (was 12), bigger cells, plus **current streak** and **longest
+  streak** — both computed from data already fetched, no new API call
+  (`packages/widgets/github/src/streaks.ts`). "Latest repository/commit"
+  considered and deliberately deferred — needs a new GitHub API call,
+  which is a feature addition, not polish.
+- **Every widget's action slot is now a single "⋯" overflow menu**
+  (`packages/ui/src/widget-menu.tsx`) instead of a bare refresh icon plus
+  (for Steam/Quick Launch) a separate below-card Settings toggle.
+- **Fixed dropdown click-outside-to-close** for both the profile menu and
+  the new widget overflow menus — root cause was backdrop-blur on an
+  ancestor breaking `position: fixed` backdrops (see docs/DECISIONS.md).
+  Switched both to CSS `:focus-within`, no client JS.
+- **Desktop navigation**: the pinned sidebar rail replaced with a floating
+  bottom-center glass dock — Ken's explicit ask after judging the rail
+  "disconnected." Tablet drawer and mobile bottom nav unchanged.
+- Radius/motion consistency audit across nav chrome (a couple of
+  `rounded-lg` outliers bumped to the same `rounded-xl` used everywhere
+  else).
+- Spotify's "now playing" emphasis treatment and the commit-signature stop
+  hook were explicitly out of scope for this pass, per Ken's instruction.
+
 **Gate to move on:** the Phase 1 success gates in the reference doc §18 —
 daily use for two consecutive weeks, trusted data, at least one widget
 replacing a separately-checked tool.

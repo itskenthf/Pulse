@@ -46,13 +46,20 @@ export async function fetchHeroData(context: WidgetFetchContext): Promise<HeroDa
   const name = await readUserName(context.userId);
   const greeting = name ? `${GREETINGS[period]}, ${name}` : GREETINGS[period];
 
-  const dateFormatted = new Intl.DateTimeFormat("en-US", {
+  // "Friday · 24 July" — short and conversational, not the full
+  // "Friday, July 24, 2026" a form field would use.
+  const weekday = new Intl.DateTimeFormat("en-US", {
     timeZone: HERO_TIME_ZONE,
     weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
   }).format(now);
+  const day = new Intl.DateTimeFormat("en-US", { timeZone: HERO_TIME_ZONE, day: "numeric" }).format(
+    now,
+  );
+  const month = new Intl.DateTimeFormat("en-US", {
+    timeZone: HERO_TIME_ZONE,
+    month: "long",
+  }).format(now);
+  const dateFormatted = `${weekday} · ${day} ${month}`;
 
   const weather = await fetchCurrentWeather({
     latitude: WEATHER_LATITUDE,

@@ -533,3 +533,66 @@ across every widget switches to a minimal circular-arrow SVG button
 (`aria-label`/`title` carry the accessible name), while "Save" (settings
 forms) keeps the text variant, since that's a distinct, deliberate action a
 user takes after filling out a form and benefits from a clear label.
+
+## 2026-07-24 — Redesign v4: masonry layout, sidebar returns, card accents, warmer copy
+
+**Context:** Ken reviewed the live deploy and reported two things beyond
+the specific asks below: the Hero banner appeared to be missing, and the
+page felt too empty. On investigation, Hero itself is correctly registered
+and shipped (PR #17) — the most likely explanation is that `hero` is a
+brand-new `widget_cache` row (the old `greeting`/`weather`/`quote`/`clock`/
+`calendar-date` ids don't carry over), so until the next cron run or a
+manual refresh, `data` is `null` and only the "Hello" fallback headline and
+tagline render — everything else in Hero is gated on `data &&`. Not a bug,
+but a real first-load gap worth knowing about; a manual refresh on the
+banner fixes it immediately.
+
+**1. Masonry-style layout.** The previous `grid grid-cols-1 sm:grid-cols-2
+lg:grid-cols-3` lays out cards in uniform rows — a short card (Quick
+Launch) leaves visible empty space below it if its row-mate (Steam) is
+taller. Switched to CSS multi-column (`columns-1 sm:columns-2
+lg:columns-3`, each card `mb-4 break-inside-avoid`) — genuine masonry-style
+packing without a JS library. (True CSS Grid `masonry` track sizing exists
+in spec but isn't broadly supported across browsers yet, so multi-column is
+the practical choice.)
+
+**2. Sidebar reverses an earlier decision.** The 2026-07-24 redesign-v3
+entry (and reference doc §19) explicitly ruled out a sidebar nav, reasoning
+Pulse is a single-page app with nothing to navigate between. Ken directly
+asked for one back, as a placeholder for future sections — this is new,
+explicit direction, not a silent contradiction, so implemented without
+further back-and-forth (still flagged as a reversal here per CLAUDE.md's
+spirit of recording real architectural decisions with reasoning). Built as
+a 64px icon rail: "Dashboard" is the only real, active item; "Tasks" and
+"Habits" are visibly disabled with a "coming soon" title and no `href` —
+UI signposting, not scaffolded feature infrastructure (no new routes, no
+new DB tables, no backend logic) — keeps faith with the project's
+"don't scaffold future features ahead of need" rule while still giving Ken
+the visual placeholder he asked for.
+
+**3. Card accents.** "Every widget is white" — added `WidgetCard`'s
+`accent?: "blue" | "green" | "indigo" | "none"` prop, a `border-l-4` colored
+left border rather than recoloring the whole card (keeps the light-blue
+theme's restraint). Assigned by feel where Ken didn't specify exactly:
+GitHub blue (matches its existing icon badge), Spotify green (nods to
+Spotify's own brand color), Steam indigo (a distinct darker blue). Left
+Quick Launch unaccented rather than inventing a color with no rationale.
+Ken's list also named "Weather" (sky gradient) and "Calendar" (purple) —
+both no longer exist as separate cards, having been folded into Hero in
+the v3 redesign. Rather than resurrecting them as cards (which would undo
+that merge), applied the same "give it a color" intent to Hero's internal
+sections instead: the weather line sits in a sky-gradient chip, the
+date/time line gets a small violet accent dot.
+
+**4. Profile menu + greeting copy.** Replaced the "Signed in as X / Sign
+out" text row with a `<details>`-based dropdown pill (avatar from the
+GitHub OAuth profile image if present, else an initial-letter badge),
+containing a disabled "Settings" placeholder and the real "Sign out" —
+addresses the specific "feels like an admin dashboard" critique. Built as
+`<details>`, not a `useState` client component, so the header stays a
+server component. Hero's date line shortened from the full
+"Friday, July 24, 2026" to "Friday · 24 July," and the flat tagline
+"Continue working on Pulse" became "Continue where you left off." — Ken
+gave two alternative greeting styles as examples; this keeps the first
+one's headline+date structure (already in place) and borrows the second
+one's warmer tagline phrase, rather than picking one wholesale.

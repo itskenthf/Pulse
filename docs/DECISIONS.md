@@ -316,3 +316,43 @@ routes are Spotify-specific, not a generic `/api/connect/[provider]`
 mechanism. Generalizing now would be premature — only one widget needs
 this pattern. If a second custom-OAuth widget is ever added, extract the
 shared parts then, not speculatively now.
+
+## 2026-07-25 — Fix: Tailwind v4 wasn't scanning any workspace package
+
+**Every widget rendered with default browser styles in production** —
+no rounded corners, no borders, no dark mode, nothing — despite the code
+correctly using Tailwind classes throughout `packages/ui` and every
+`packages/widgets/*` component. Confirmed by grepping the built CSS:
+classes used only in the shell (`apps/web/src/app/page.tsx`, e.g.
+`rounded-md`) were present, but classes used only inside a widget package
+(`rounded-xl` from `WidgetCard`, `tabular-nums` from the clock display,
+`emerald-*` from the GitHub heatmap) were completely absent.
+
+**Root cause:** Tailwind v4's automatic source detection explicitly skips
+anything under a `node_modules` directory. In a pnpm workspace, every
+`@pulse/*` package is consumed through a `node_modules` symlink — even
+though the real, editable `.tsx` source lives in `packages/*`, not a build
+artifact — so Tailwind's scanner never saw it. This had been silently
+broken since the very first widget (weather) and went unnoticed because
+the *shell's own* Tailwind classes (sign-in button, layout) always worked
+fine, making the page look "styled enough" at a glance without close
+inspection — the failure was invisible in isolation, only obvious once
+directly compared against the intended design.
+
+**Decision:** added explicit `@source` directives to
+`apps/web/src/app/globals.css` pointing at `packages/ui/src` and
+`packages/widgets/**`, forcing Tailwind to scan them regardless of the
+`node_modules` heuristic. Verified two ways: grepped the built CSS for the
+four previously-missing classes above (all now present), and rendered
+Weather/GitHub/Clock's real components with mock data on a temporary route
+to visually confirm cards actually show rounded corners, borders, and
+correct spacing — then deleted that route before committing (verification
+artifact, not part of the app).
+
+**Anyone adding a new widget package should be aware this class of bug can
+recur**: if a brand-new *directory* is added under `packages/widgets/` or
+`packages/ui` that doesn't match the existing `@source` globs (e.g. a
+differently-nested structure), its classes would silently drop out of the
+build the same way, with no error — only a visually broken/unstyled
+result. Worth a quick visual check after adding any new package with
+Tailwind classes, not just a green typecheck/build.

@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+/*
+ * Tailwind v4's automatic source detection skips anything under
+ * node_modules — including pnpm's symlinked workspace packages, even
+ * though the real .tsx source lives in packages/*, not a build artifact.
+ * Without these, every className used only inside a widget or @pulse/ui
+ * component (rounded-xl, tabular-nums, emerald-*, etc.) is silently
+ * dropped from the built CSS. See docs/DECISIONS.md.
+ */
+@source "../../../../packages/ui/src/**/*.{ts,tsx}";
+@source "../../../../packages/widgets/**/*.{ts,tsx}";
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

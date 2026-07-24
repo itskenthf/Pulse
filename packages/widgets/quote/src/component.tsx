@@ -12,9 +12,10 @@ export function QuoteComponent({
       title="Quote"
       icon={<QuoteIcon />}
       action={<ActionForm action={actions.refresh} submitLabel="Shuffle" />}
+      tone="accent"
     >
       {data ? (
-        <p className="text-zinc-950 dark:text-zinc-50">{data.text}</p>
+        <p className="text-current">{data.text}</p>
       ) : (
         <p>No quote yet — click shuffle.</p>
       )}

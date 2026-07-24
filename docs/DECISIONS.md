@@ -623,3 +623,125 @@ the same pass. `PROJECT_REFERENCE.md` §19 and the rest of `DESIGN_SYSTEM.md`'s
 now-superseded sections will be reconciled once that implementation work
 happens, not before — recording the gap here so it isn't mistaken for
 `DESIGN_SYSTEM.md` already matching reality.
+
+## 2026-07-24 — Full redesign: Liquid Glass, replacing the light-blue flat theme
+
+**Context:** Ken reviewed the live V4 (light-blue, masonry grid, sidebar,
+colored left borders) and rejected it as a redesign target — "functional,
+but not achieving the intended experience." His words: it feels like an
+admin panel, a collection of white cards, unfinished, visually flat, too
+much unused whitespace, poor visual hierarchy, weak component identity.
+He asked for a critique-then-redesign against the newly adopted
+`docs/DESIGN_SYSTEM.md` spec (previous entry), explicitly authorizing
+structural change ("challenge the existing layout if necessary... the
+current implementation is only a prototype").
+
+**Critique of V4** (given in full to Ken before implementing, summarized
+here): every widget was the same white rectangle at the same size class
+with the same shadow — nothing signaled what mattered most. The colored
+left borders read as a tagging system, not personality. `bg-white/90` +
+`backdrop-blur-sm` was translucency in name only — no tint, no inner
+highlight, no layered depth, so "glass" was cosmetic. A single linear
+gradient behind flat cards read as "a gradient someone added," not
+atmosphere. The masonry grid, even though it fixed uneven gaps, still gave
+every widget equal visual authority — nothing could be a focal point. Hero
+was four floating text blocks sharing a container, not a designed unit.
+
+**Redesign decisions and rationale:**
+
+1. **Real glass system** (`packages/ui/src/glass.ts`): three levels
+   (light/medium/heavy), each a tinted translucent fill + blur + inset
+   highlight ring + layered ambient shadow, not a lowered-opacity box.
+   Used by `WidgetCard`, the hero panel, sidebar, navbar, and profile
+   dropdown — one shared vocabulary instead of every surface hand-rolling
+   translucency.
+
+2. **Layered ambient background**: soft neutral (`#f3f4f8` light /
+   `#0b0d12` dark, "never pure white/black" per the spec) plus three large,
+   low-opacity, heavily blurred color blobs (sky/violet/amber) fixed behind
+   the content. This is atmosphere, not a gradient card — the specific gap
+   the critique identified.
+
+3. **Bento grid via the existing `size` field, not new plumbing.** Rather
+   than inventing a new "importance" concept, `WidgetSize`'s existing
+   `sm`/`md`/`lg` values now drive `sm:col-span-2 lg:col-span-2` in the
+   grid. GitHub is `"lg"` (richest, most personal data — reused as the
+   focal widget); Steam and Spotify are `"md"`; Quick Launch is `"sm"`.
+   Considered CSS Grid row-span for true bento density but rejected it:
+   row-span requires explicit row heights to mean anything, and every
+   widget's height is content-driven (auto), so a forced row-span would
+   either clip content or leave dead space — column-span alone, with
+   content-driven height, is the more robust choice for dynamic widget data.
+
+4. **Removed the colored left borders entirely**, per the spec's explicit
+   "avoid thick colored stripes" and Ken's "outdated" callout. Identity now
+   comes from a soft colored glow behind each widget's icon badge
+   (`WidgetCard`'s `accent` prop, `box-shadow` glow + tinted badge, not a
+   border) — GitHub blue, Spotify green (Spotify's own brand color), Steam
+   indigo (a distinct darker blue). Quick Launch stays unaccented, same
+   reasoning as before: no invented color with no rationale.
+
+5. **Hero rebuilt as one grouped glass panel**, not floating text: a large
+   greeting, then a row of three distinct "today" chips (date/time,
+   weather, quote) — each its own small glass surface, read as related but
+   individually legible, addressing "orphaned facts under a headline."
+   Did **not** add an "Upcoming focus" field Ken's brief mentioned as
+   optional — there's no real task data behind it (no Tasks widget exists
+   yet), and Pulse's established pattern (Spotify's play-count decision) is
+   to never fabricate a fact that isn't real. Left a clean gap for it once
+   a real Tasks widget exists rather than inventing placeholder content.
+
+6. **Adaptive navigation, not responsive resizing** (this section came
+   from a follow-up message Ken sent while implementation was already
+   starting — folded in before continuing rather than building a
+   non-adaptive nav and reworking it after):
+   - **Desktop** (`lg:` 1024px+): sidebar permanently visible, compact
+     icon rail — matches the spec's own "compact, minimal, purpose driven,
+     icons readable without labels when collapsed."
+   - **Tablet** (`sm:`–`lg:`, 640–1024px): the *same* sidebar markup
+     becomes an off-canvas drawer, toggled by a menu button in the navbar.
+     Built with a hidden checkbox + Tailwind's `peer-checked:` variant
+     (translate-x-full ↔ translate-x-0), not a client component with
+     `useState` — consistent with the app's established preference
+     (`ProfileMenu`'s `<details>`) for CSS-only interactivity over
+     shipping extra client JS for what's fundamentally a show/hide toggle.
+     A backdrop (`<label>` covering the viewport, same `htmlFor`) closes
+     it on outside click for free, since clicking any label for a checkbox
+     toggles it regardless of click target.
+   - **Mobile** (below `sm:`, <640px): sidebar and drawer both disappear;
+     a fixed glass bottom nav bar takes over entirely — chosen over a
+     drawer for phone per the brief's "glanceable companion" framing,
+     since a bottom bar is reachable one-handed and always visible, where
+     a drawer requires an extra tap to even see navigation exists.
+   Chose the sidebar (not a floating dock) for desktop/tablet, decisively,
+   per Ken's "either is acceptable, don't leave it as placeholder" —
+   reasoning: a dock (macOS-style, icons-only, implies "click to launch
+   something elsewhere") fits an app-launcher metaphor, while a dashboard
+   benefits from a persistent, always-present sense of place, which a
+   sidebar gives more naturally and adapts to a drawer/bottom-nav pattern
+   more cleanly than a dock would.
+
+7. **Icons: Lucide for system/nav chrome, brand marks stay custom.** Added
+   `lucide-react` (v1.26.0) as the spec's recommended single icon library.
+   Discovered v1.x dropped brand icons (no `Github` export, confirmed via
+   a failed typecheck) — Lucide is a generic UI icon set, not a brand-icon
+   library. Kept the hand-drawn GitHub/Spotify/Steam marks (resized to the
+   same 18px/2px-stroke scale as Lucide for visual consistency) rather than
+   substituting generic shapes that would lose brand recognizability;
+   every sidebar/navbar/button icon (dashboard, tasks, habits, search,
+   bell, settings, sign out, refresh, menu) is genuinely Lucide now.
+
+8. **Motion**: hover elevation (`-translate-y-0.5` + shadow bloom) on
+   cards, spring-style scale (`hover:scale-105 active:scale-95`) on
+   buttons — all class names prefixed `motion-safe:` so
+   `prefers-reduced-motion` users get zero transform, per the spec's
+   accessibility requirement, without a separate reduced-motion code path.
+
+**Known gap, intentionally not built in this pass:** the spec's
+per-breakpoint *content* adaptation ("widgets should intelligently adapt
+their content, not just shrink" — e.g., showing fewer Steam games on
+mobile) wasn't implemented per-widget. This pass focused on structural/
+navigation adaptation (the primary, most visible gap between "functional"
+and "premium"); trimming individual widgets' content density per
+breakpoint is a real follow-up, not done here to keep this already-large
+redesign scoped to what could be verified end-to-end in one pass.

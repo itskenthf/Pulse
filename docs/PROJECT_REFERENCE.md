@@ -434,53 +434,45 @@ Do not proceed to Phase 2 until these conditions are met.
 
 ## 19. UI / design principles
 
-- Reference points for feel: Arc Browser, Raycast, Linear, Vercel Dashboard,
-  GitHub — not Notion. Simple, lots of spacing, very little decoration.
-- Flat, minimalist, generous whitespace — no background texture
-- Compact icon-rail sidebar (2026-07-24, Ken's request — reverses this
-  doc's earlier "no sidebar nav" stance, see docs/DECISIONS.md): only
-  "Dashboard" is a real, active destination; the rest are visible but
-  disabled placeholders for future sections (Tasks, Habits), not routed
-  anywhere. Still a single-page app — the sidebar doesn't imply multiple
-  built views yet, it's UI chrome sized for where the app is headed.
-- Light-blue theme (2026-07-24 redesign, see docs/DECISIONS.md): a soft
-  blue gradient page background, white cards with larger border radius and
-  a soft shadow, and small colored icon badges — adapted from a
-  user-provided design reference. An earlier same-day attempt used
-  two-tone black/white cards instead of the gradient background; the user
-  reviewed it live and asked for all-white cards, which is the current
-  direction — see docs/DECISIONS.md for both entries.
-- One reusable card component (consistent padding, radius, label style, icon
-  placement) used for every widget, so mobile and desktop feel like the same
-  app, not two designs. One exception: a single "hero" banner widget
-  (greeting + date/time + weather + quote — originally 5 separate widgets,
-  merged 2026-07-24 at Ken's request) renders full-width above the grid,
-  outside card chrome, rather than as its own card.
-- Widgets with real magnitude data (Steam's hours played, GitHub's
-  contributions) get a lightweight bar/heatmap visualization in a single
-  sequential blue hue, rather than a plain number — see docs/DESIGN_SYSTEM.md
-  "Graphs". Not applied where there's no real magnitude data to show (e.g.
-  Spotify, whose API doesn't expose play counts).
-- Cards flow in a CSS multi-column ("masonry") layout rather than a
-  uniform-row grid, so a short card doesn't leave a visible gap under it —
-  see docs/DESIGN_SYSTEM.md "Layout".
-- Each widget card gets a thin colored left border for visual identity
-  (GitHub blue, Spotify green, Steam indigo) instead of every card looking
-  identically white — see docs/DESIGN_SYSTEM.md "Card accents".
+Superseded 2026-07-24 by a full redesign (see docs/DECISIONS.md for the
+critique/proposal/rationale) — Pulse's actual design system is now
+`docs/DESIGN_SYSTEM.md` in full (Liquid Glass: glass materials, layered
+ambient background, spring motion, Lucide icons). This section records
+only the structural/layout decisions that doc doesn't cover:
+
+- A real glass system (`packages/ui/src/glass.ts`: light/medium/heavy —
+  tint, blur, inset highlight, layered shadow), not `bg-white/opacity`.
+  Layered ambient background: soft neutral base + three large blurred
+  color blobs (sky/violet/amber), fixed behind everything.
+- **Bento-style grid, not uniform columns**: each widget's existing SDK
+  `size` field (`sm`/`md`/`lg`) picks how many grid columns it spans, so
+  the richest widget becomes an actual focal point (currently GitHub,
+  `"lg"`, spans 2 of 3 desktop columns) instead of every card getting
+  identical width. No left-border accents — widget identity comes from a
+  soft colored glow behind the icon badge instead.
+- **Hero is one grouped glass panel**, not floating text: greeting
+  headline, then a row of distinct "today" chips (date/time, weather,
+  quote), each its own small glass surface.
+- **Adaptive navigation per breakpoint, not just resized** (2026-07-24,
+  Ken's request — reverses this doc's earlier "no sidebar nav" stance):
+  - Desktop (`lg:` 1024px+): permanent compact icon-rail sidebar.
+  - Tablet (`sm:`–`lg:` 640–1024px): the same sidebar becomes an
+    off-canvas drawer, toggled by a menu button in the navbar — a
+    checkbox + `peer-checked:` CSS toggle, no client JS.
+  - Mobile (below `sm:` 640px): sidebar replaced entirely by a fixed glass
+    bottom nav bar — a "glanceable companion," not a shrunk desktop layout.
+  Only "Dashboard" is a real, active destination in any of these; Tasks
+  and Habits are visible, disabled placeholders for future sections, not
+  routed anywhere — UI signposting, not scaffolded feature infrastructure.
 - The header's account control is a compact profile pill (avatar/initial +
   name) with a dropdown for Settings (placeholder) and Sign out, not a bare
-  "Signed in as X / Sign out" text row.
-- Responsive grid, not separate mobile/desktop builds:
-  - Desktop (>1024px): 3-column grid
-  - Tablet (600–1024px): 2-column grid
-  - Mobile (<600px): single column, stacked
-- On mobile, card order = priority order (schedule/tasks/emails first,
-  GitHub/focus next, lighter widgets like YouTube/Spotify/habits/quote last)
-- Widget priority/order should live in config, not hardcoded per device, so
-  reordering is a data change not a rebuild
+  "Signed in as X / Sign out" text row. Search and Notifications sit beside
+  it as disabled placeholder icons, future-proofing the navbar without
+  building either feature ahead of need.
 - Avoid adding more detail to mobile cards just because there's a full
-  screen — keep cards shrunk/consistent; extra detail belongs behind a
-  tap-through, not crammed into the card
+  screen — keep cards content-appropriate per breakpoint rather than a
+  uniformly shrunk desktop layout; extra detail belongs behind a
+  tap-through, not crammed into the card.
 
 ## 20. Known risks / things to watch
 

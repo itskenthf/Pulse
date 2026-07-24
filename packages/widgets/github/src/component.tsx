@@ -7,7 +7,9 @@ import type { GitHubData } from "./types";
 function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex flex-col">
-      <span className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">{value}</span>
+      <span className="text-3xl font-bold tracking-tight text-zinc-950 dark:text-zinc-50">
+        {value}
+      </span>
       <span className="text-xs text-zinc-500 dark:text-zinc-500">{label}</span>
     </div>
   );
@@ -25,8 +27,8 @@ export function GitHubComponent({
       accent="blue"
     >
       {data ? (
-        <div className="flex flex-col gap-3">
-          <div className="flex gap-6">
+        <div className="flex flex-col gap-5">
+          <div className="flex gap-8">
             <Stat label="Today" value={data.totalToday} />
             <Stat label="This week" value={data.totalThisWeek} />
             <Stat label="This year" value={data.totalThisYear} />

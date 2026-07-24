@@ -454,16 +454,30 @@ only the structural/layout decisions that doc doesn't cover:
   headline, then a row of distinct "today" chips (date/time, weather,
   quote), each its own small glass surface.
 - **Adaptive navigation per breakpoint, not just resized** (2026-07-24,
-  Ken's request — reverses this doc's earlier "no sidebar nav" stance):
-  - Desktop (`lg:` 1024px+): permanent compact icon-rail sidebar.
-  - Tablet (`sm:`–`lg:` 640–1024px): the same sidebar becomes an
-    off-canvas drawer, toggled by a menu button in the navbar — a
-    checkbox + `peer-checked:` CSS toggle, no client JS.
-  - Mobile (below `sm:` 640px): sidebar replaced entirely by a fixed glass
-    bottom nav bar — a "glanceable companion," not a shrunk desktop layout.
+  Ken's request):
+  - Desktop (`lg:` 1024px+): a floating glass **dock**, bottom-center —
+    not a pinned sidebar rail (2026-07-24 refinement pass: replaced the
+    rail after Ken judged it "still feels disconnected"; see
+    docs/DECISIONS.md).
+  - Tablet (`sm:`–`lg:` 640–1024px): an off-canvas sidebar drawer, toggled
+    by a menu button in the navbar — a checkbox + `peer-checked:` CSS
+    toggle, no client JS.
+  - Mobile (below `sm:` 640px): a fixed glass bottom nav bar — a
+    "glanceable companion," not a shrunk desktop layout.
   Only "Dashboard" is a real, active destination in any of these; Tasks
   and Habits are visible, disabled placeholders for future sections, not
   routed anywhere — UI signposting, not scaffolded feature infrastructure.
+- **Every dropdown (profile menu, per-widget "⋯" overflow menu) closes on
+  outside click** via CSS `:focus-within` on its wrapper, not a checkbox +
+  fixed backdrop — backdrop-blur on an ancestor (the navbar, a widget card)
+  creates a new CSS containing block for `position: fixed` descendants, so
+  a backdrop nested inside a glass surface only ever covers that surface's
+  own box, never the full viewport. Real, non-obvious CSS quirk — see
+  docs/DECISIONS.md if adding another dropdown.
+- Every widget's action slot is a single **"⋯" overflow menu**
+  (`WidgetMenu` in `packages/ui`) — Refresh, and Settings when the widget
+  has any — instead of a bare icon button plus a separate below-card
+  Settings toggle. Room for future actions without redesigning the card.
 - The header's account control is a compact profile pill (avatar/initial +
   name) with a dropdown for Settings (placeholder) and Sign out, not a bare
   "Signed in as X / Sign out" text row. Search and Notifications sit beside

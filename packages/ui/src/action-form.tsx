@@ -12,9 +12,14 @@ export interface ActionFormProps {
   children?: ReactNode;
   className?: string;
   /** "icon" renders a minimal icon-only refresh button (label moves to
-   *  aria-label/title) instead of the default text button — used for the
-   *  refresh action; "Save"-style actions keep the text variant. */
-  variant?: "text" | "icon";
+   *  aria-label/title) instead of the default text button — used
+   *  standalone (Hero). "menu" renders a full-width left-aligned row
+   *  matching a dropdown menu item — used inside WidgetMenu. "Save"-style
+   *  actions keep the default text variant. */
+  variant?: "text" | "icon" | "menu";
+  /** Leading icon for the "menu" row variant — ignored by other variants
+   *  ("icon" always uses its own refresh glyph). */
+  icon?: ReactNode;
 }
 
 const initialState: WidgetActionState = {};
@@ -30,6 +35,7 @@ export function ActionForm({
   children,
   className,
   variant = "text",
+  icon,
 }: ActionFormProps) {
   const [state, formAction, isPending] = useActionState(action, initialState);
 
@@ -44,11 +50,18 @@ export function ActionForm({
         className={
           variant === "icon"
             ? `flex h-8 w-8 items-center justify-center rounded-full border border-current/20 text-current hover:bg-current/10 disabled:opacity-50 ${SPRING_PRESS}`
-            : `rounded-xl border border-current/20 px-3 py-1.5 text-xs font-medium text-current hover:bg-current/10 disabled:opacity-50 ${SPRING_PRESS}`
+            : variant === "menu"
+              ? "flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-950/5 disabled:opacity-50 dark:text-zinc-300 dark:hover:bg-white/5"
+              : `rounded-xl border border-current/20 px-3 py-1.5 text-xs font-medium text-current hover:bg-current/10 disabled:opacity-50 ${SPRING_PRESS}`
         }
       >
         {variant === "icon" ? (
           <RefreshCw className={`h-3.5 w-3.5 ${isPending ? "animate-spin" : ""}`} aria-hidden="true" />
+        ) : variant === "menu" ? (
+          <>
+            {icon}
+            {isPending ? "…" : submitLabel}
+          </>
         ) : isPending ? (
           "…"
         ) : (

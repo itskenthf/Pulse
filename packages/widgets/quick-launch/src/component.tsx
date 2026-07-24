@@ -1,4 +1,4 @@
-import { ActionForm, WidgetCard } from "@pulse/ui";
+import { WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
 import { QuickLaunchIcon } from "./icon";
 import { SettingsFormFields } from "./settings-form-fields";
@@ -14,7 +14,13 @@ export function QuickLaunchComponent({
     <WidgetCard
       title="Quick Launch"
       icon={<QuickLaunchIcon />}
-      action={<ActionForm action={actions.refresh} submitLabel="Refresh" variant="icon" />}
+      action={
+        <WidgetMenu
+          id="quick-launch"
+          actions={actions}
+          settingsFields={<SettingsFormFields settings={settings} />}
+        />
+      }
     >
       {links.length > 0 ? (
         <ul className="flex flex-col gap-1">
@@ -33,17 +39,6 @@ export function QuickLaunchComponent({
         </ul>
       ) : (
         <p>No links yet — add some in settings.</p>
-      )}
-
-      {actions.updateSettings && (
-        <details className="mt-3">
-          <summary className="cursor-pointer text-xs text-zinc-500 dark:text-zinc-500">
-            Settings
-          </summary>
-          <ActionForm action={actions.updateSettings} submitLabel="Save" className="mt-2">
-            <SettingsFormFields settings={settings} />
-          </ActionForm>
-        </details>
       )}
     </WidgetCard>
   );

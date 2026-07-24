@@ -21,7 +21,7 @@ export function GitHubComponent({
     <WidgetCard
       title="GitHub"
       icon={<GitHubIcon />}
-      action={<ActionForm action={actions.refresh} submitLabel="Refresh" />}
+      action={<ActionForm action={actions.refresh} submitLabel="Refresh" variant="icon" />}
     >
       {data ? (
         <div className="flex flex-col gap-3">

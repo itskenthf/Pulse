@@ -14,7 +14,7 @@ export function QuickLaunchComponent({
     <WidgetCard
       title="Quick Launch"
       icon={<QuickLaunchIcon />}
-      action={<ActionForm action={actions.refresh} submitLabel="Refresh" />}
+      action={<ActionForm action={actions.refresh} submitLabel="Refresh" variant="icon" />}
     >
       {links.length > 0 ? (
         <ul className="flex flex-col gap-1">

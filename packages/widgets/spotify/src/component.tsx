@@ -24,7 +24,7 @@ export function SpotifyComponent({
     <WidgetCard
       title="Spotify"
       icon={<SpotifyIcon />}
-      action={<ActionForm action={actions.refresh} submitLabel="Refresh" />}
+      action={<ActionForm action={actions.refresh} submitLabel="Refresh" variant="icon" />}
     >
       {data.tracks.length > 0 ? (
         <ul className="flex flex-col gap-2">

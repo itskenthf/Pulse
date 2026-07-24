@@ -22,6 +22,7 @@ export function GitHubComponent({
       title="GitHub"
       icon={<GitHubIcon />}
       action={<ActionForm action={actions.refresh} submitLabel="Refresh" variant="icon" />}
+      accent="blue"
     >
       {data ? (
         <div className="flex flex-col gap-3">

@@ -436,8 +436,13 @@ Do not proceed to Phase 2 until these conditions are met.
 
 - Reference points for feel: Arc Browser, Raycast, Linear, Vercel Dashboard,
   GitHub — not Notion. Simple, lots of spacing, very little decoration.
-- Flat, minimalist, generous whitespace — no background texture or sidebar
-  navigation (single-page dashboard, not a multi-view app)
+- Flat, minimalist, generous whitespace — no background texture
+- Compact icon-rail sidebar (2026-07-24, Ken's request — reverses this
+  doc's earlier "no sidebar nav" stance, see docs/DECISIONS.md): only
+  "Dashboard" is a real, active destination; the rest are visible but
+  disabled placeholders for future sections (Tasks, Habits), not routed
+  anywhere. Still a single-page app — the sidebar doesn't imply multiple
+  built views yet, it's UI chrome sized for where the app is headed.
 - Light-blue theme (2026-07-24 redesign, see docs/DECISIONS.md): a soft
   blue gradient page background, white cards with larger border radius and
   a soft shadow, and small colored icon badges — adapted from a
@@ -456,6 +461,15 @@ Do not proceed to Phase 2 until these conditions are met.
   sequential blue hue, rather than a plain number — see docs/DESIGN_SYSTEM.md
   "Graphs". Not applied where there's no real magnitude data to show (e.g.
   Spotify, whose API doesn't expose play counts).
+- Cards flow in a CSS multi-column ("masonry") layout rather than a
+  uniform-row grid, so a short card doesn't leave a visible gap under it —
+  see docs/DESIGN_SYSTEM.md "Layout".
+- Each widget card gets a thin colored left border for visual identity
+  (GitHub blue, Spotify green, Steam indigo) instead of every card looking
+  identically white — see docs/DESIGN_SYSTEM.md "Card accents".
+- The header's account control is a compact profile pill (avatar/initial +
+  name) with a dropdown for Settings (placeholder) and Sign out, not a bare
+  "Signed in as X / Sign out" text row.
 - Responsive grid, not separate mobile/desktop builds:
   - Desktop (>1024px): 3-column grid
   - Tablet (600–1024px): 2-column grid

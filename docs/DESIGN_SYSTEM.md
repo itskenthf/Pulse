@@ -20,10 +20,15 @@ UI work doesn't drift from them, and tracks what's actually built in
   like the same app, not two designs.
 - One widget (`hero`, `packages/widgets/hero`) renders full-width above the
   card grid, chromeless — see "Hero banner" below.
-- Responsive grid, not separate mobile/desktop builds:
-  - Desktop (>1024px): 3-column grid
-  - Tablet (600–1024px): 2-column grid
-  - Mobile (<600px): single column, stacked
+- **Masonry-style column layout** (2026-07-24, Ken's request — replaced a
+  uniform-row CSS grid, which left visible gaps under shorter cards): the
+  card area (`apps/web/src/app/page.tsx`'s `WidgetGrid`) uses CSS
+  multi-column (`columns-1 sm:columns-2 lg:columns-3`) with each card
+  wrapped in `mb-4 break-inside-avoid`, instead of `grid-cols-*`. Cards pack
+  tightly top-to-bottom per column — no JS masonry library needed.
+  - Desktop (>1024px): 3 columns
+  - Tablet (600–1024px): 2 columns
+  - Mobile (<600px): 1 column, stacked
 - On mobile, card order = priority order (§19's intent — heavier/more
   actionable widgets first, lighter ones like Steam last). **Not yet
   implemented**: cards currently render in registration order
@@ -34,6 +39,21 @@ UI work doesn't drift from them, and tracks what's actually built in
 - Don't add detail to mobile cards just because there's more screen space —
   keep cards consistent across breakpoints; extra detail belongs behind a
   tap-through, not crammed into the card.
+- **Compact sidebar** (2026-07-24, Ken's request — reverses the earlier
+  "no sidebar nav" decision, see docs/DECISIONS.md): a 64px icon rail
+  (`apps/web/src/app/page.tsx`'s `Sidebar`), sticky full-height, left of the
+  main content. Only "Dashboard" is active (highlighted, sky accent); Tasks
+  and Habits are visible but disabled placeholders (`title="… — coming
+  soon"`, no `href`) — future-section signposting, not functional routes or
+  scaffolded backend.
+- **Profile menu**: the header's account control is a `<details>`/`<summary>`
+  dropdown pill (avatar or initial-letter badge + name), not a bare
+  "Signed in as X / Sign out" text row. Opens to "Settings" (a disabled
+  placeholder — there's no global settings page yet) and "Sign out" (real,
+  same server action as before). Deliberately built as `<details>` rather
+  than a client component with `useState`, so the whole header stays a
+  server component — no extra client JS for what's fundamentally a CSS/HTML
+  disclosure widget.
 
 ## Visual language
 
@@ -47,8 +67,8 @@ UI work doesn't drift from them, and tracks what's actually built in
   text-sky-600` light, dark equivalents) — echoes the reference's colored
   icon-badge treatment, kept to a single accent color (sky blue) for
   minimalism rather than the reference's varied palette.
-- No background texture, no sidebar nav, no heavy drop shadows beyond the
-  cards' own soft shadow — single-page dashboard, not a multi-view app.
+- No background texture, no heavy drop shadows beyond the cards' own soft
+  shadow.
 - Generous whitespace over dense information.
 - **Light-blue is the only actively designed theme** (2026-07-24, Ken's
   request) — dark mode's `dark:` variants stay in the code as a cheap
@@ -93,6 +113,23 @@ needed). Time zone and weather location are fixed constants in
 coordinates) rather than a per-user setting — reasonable for a single-user
 app; revisit if Pulse ever supports more than one user. See
 docs/DECISIONS.md for the auto-location tradeoffs considered.
+
+## Card accents
+
+(2026-07-24, Ken's request — "every widget is white," no visual identity.)
+`WidgetCard` takes an `accent?: "blue" | "green" | "indigo" | "none"` prop
+(`packages/ui/src/widget-card.tsx`) — a thin colored left border
+(`border-l-4`), not a full recolor of the card. Kept as a small, fixed set
+of Tailwind color tokens rather than an arbitrary-hex prop, so every
+widget's accent still comes from the same restrained palette instead of
+drifting into a rainbow of one-off colors. Currently assigned: GitHub
+`"blue"`, Spotify `"green"` (a nod to Spotify's own brand green), Steam
+`"indigo"` (a darker blue, distinct from GitHub's). Quick Launch stays
+`"none"` (unspecified) rather than guessing a color for it. Hero isn't a
+`WidgetCard` at all (chromeless), so instead its own weather section gets
+a sky-gradient background chip and its date/time line gets a small violet
+accent dot — same "give each concern a color" idea, applied inside Hero's
+own markup since it doesn't use the shared card.
 
 ## Graphs
 

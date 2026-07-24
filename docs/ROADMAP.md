@@ -202,6 +202,41 @@ Same-day follow-up after Ken reviewed the live redesign above. Changes:
   across every widget — a circular-arrow SVG instead of a text button,
   `aria-label`/`title` keep it accessible.
 
+### Redesign (2026-07-24): Liquid Glass — full visual system replacement
+
+Ken reviewed the light-blue redesign live and judged it "functional but
+not achieving the intended experience" — an admin-panel feel, flat, weak
+hierarchy, unfinished-looking. He provided a full authored design system
+doc (now `docs/DESIGN_SYSTEM.md` in its entirety) and asked for a genuine
+redesign against it, not a polish pass. Full critique/proposal/rationale
+and every implementation decision recorded in `docs/DECISIONS.md`. Summary:
+
+- Real glass materials (`packages/ui/src/glass.ts`: light/medium/heavy)
+  replace `bg-white/opacity` cards — tint, blur, inset highlight, layered
+  shadow.
+- Layered ambient background (soft neutral base + three blurred color
+  blobs) replaces the flat gradient.
+- **Bento grid**: widgets' existing `size` field (`sm`/`md`/`lg`) now
+  drives column span, so GitHub (`"lg"`) is a real focal widget instead of
+  every card being equal width. Left-border accents removed — identity
+  comes from a colored glow behind each widget's icon badge instead.
+  Steam and Spotify are `"md"`, Quick Launch `"sm"`.
+- Hero rebuilt as one grouped glass panel (greeting + a row of "today"
+  chips: date/time, weather, quote) instead of floating text blocks.
+- **Adaptive navigation, not just responsive resizing**: permanent sidebar
+  on desktop (`lg:`), the same sidebar becomes a toggleable off-canvas
+  drawer on tablet (`sm:`–`lg:`, checkbox + CSS `peer-checked:`, no client
+  JS), replaced entirely by a fixed bottom nav bar on mobile.
+- Icons switched to Lucide (the spec's recommendation) for every
+  system/nav icon; the three widget brand marks (GitHub, Spotify, Steam)
+  stay hand-drawn since Lucide has no brand-icon set in the installed
+  version.
+- Spring-ish hover/press motion on cards and buttons, gated behind
+  `motion-safe:` so reduced-motion users get none of it.
+- `docs/PROJECT_REFERENCE.md` §19 rewritten to point at
+  `docs/DESIGN_SYSTEM.md` as the actual design system, keeping only the
+  structural/layout decisions that doc doesn't cover.
+
 **Gate to move on:** the Phase 1 success gates in the reference doc §18 —
 daily use for two consecutive weeks, trusted data, at least one widget
 replacing a separately-checked tool.

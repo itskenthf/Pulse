@@ -1,5 +1,5 @@
 import { CalendarClock, CloudSun, Quote as QuoteIcon } from "lucide-react";
-import { ActionForm, glassClass } from "@pulse/ui";
+import { glassClass, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
 import { HeroClock } from "./hero-clock";
 import type { HeroData } from "./types";
@@ -28,7 +28,7 @@ export function HeroComponent({
           </h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-500">Continue where you left off.</p>
         </div>
-        <ActionForm action={actions.refresh} submitLabel="Refresh" variant="icon" />
+        <WidgetMenu id="hero" actions={actions} />
       </div>
 
       {data && (

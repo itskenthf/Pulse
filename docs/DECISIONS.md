@@ -745,3 +745,121 @@ navigation adaptation (the primary, most visible gap between "functional"
 and "premium"); trimming individual widgets' content density per
 breakpoint is a real follow-up, not done here to keep this already-large
 redesign scoped to what could be verified end-to-end in one pass.
+
+## 2026-07-24 — Refinement pass: glass render bug, widget polish, overflow menus, dock nav
+
+**Context:** Ken confirmed the Liquid Glass redesign was "a major
+improvement... much closer to the intended direction" and explicitly said
+not to redesign again — this pass is refinement/consistency only. Specific
+issues flagged: the glass cards "still appear mostly like solid white
+surfaces," Steam's bars "feel like Material Design," GitHub (the largest
+widget) "doesn't fully utilize its space," the sidebar "still feels
+disconnected," dropdowns didn't close on outside click, and Steam/Quick
+Launch exposed Settings as a separate control from Refresh.
+
+**1. Glass rendering bug — investigated, not guessed.** Rendered the real
+dashboard and screenshotted it before touching any value. Confirmed: the
+background blobs were visible in empty page space but barely bled through
+the cards at all. Root cause was two compounding factors, not one: fill
+opacity too high (55–80% white/zinc in `packages/ui/src/glass.ts`) and the
+background blobs (`apps/web/src/app/page.tsx`) not vibrant or large enough
+to actually have color sitting behind the card regions. Fixed both:
+lowered `light`/`medium` fill opacity to 30–40% (kept `heavy` more opaque
+since it's used for text-dense dropdowns, where legibility beats
+translucency), and increased blob opacity/size and added a fourth blob
+positioned to sit under the card grid, not just in the empty margins.
+Re-screenshotted to confirm color now genuinely reads through every card
+before moving on — this is exactly the "verify against a render, not a
+description" habit this project has used since the very first Tailwind
+`@source` bug.
+
+**2. Steam progress bars.** Rebuilt per the brief's own suggestions: a
+translucent glass track (inset shadow + ring, not a flat gray rectangle),
+a gradient (`sky-400` → `indigo-500`) fill with a matching glow shadow,
+and a CSS `@keyframes` grow-in animation on mount (`.pulse-bar-fill` in
+`globals.css`) — server-rendered, so this is a pure CSS keyframe using the
+real target width, not a client component faking the animation. Game icons
+enlarged from 20px to 40px, rounded, addressing the separate "help Steam
+feel like Steam" ask about cover art in the same pass since it's the same
+component.
+
+**3. GitHub widget composition.** Heatmap window widened from 12 to 20
+weeks and cells enlarged (`HEATMAP_WEEKS` in `constants.ts`, cell size in
+`heatmap.tsx`) so the widget's extra width (it's `"lg"`, spanning 2 grid
+columns) is actually used. Added **current streak** and **longest streak**
+(`packages/widgets/github/src/streaks.ts`) — both computed from the same
+daily contribution data the heatmap already renders, zero new API calls,
+genuinely real numbers. Explicitly **did not** add "latest repository" or
+"latest commit" from the brief's suggestion list: the current GitHub
+adapter only fetches contribution counts via one GraphQL query; showing a
+real latest-repo/commit would need a second, different API call — a real
+feature addition, not polish, and out of scope for a pass Ken explicitly
+scoped to refinement.
+
+**4. Overflow menu.** Added `WidgetMenu` (`packages/ui/src/widget-menu.tsx`)
+— a single "⋯" trigger opening Refresh (and Settings, when the widget has
+any) — replacing every widget's bare icon-refresh button and, for
+Steam/Quick Launch, the separate below-card `<details>` Settings toggle.
+`ActionForm` gained a third `variant="menu"` (full-width row, matching a
+dropdown item) plus an `icon` prop so the menu's Refresh row can carry a
+leading icon without hardcoding one into the generic component.
+
+**5. Dropdown click-outside-to-close — a second real CSS bug, same root
+cause pattern as the glass fix (fixed something without fully tracing why
+it was broken first).** The previous pass converted the profile menu from
+`<details>` (which never closes on outside click) to a checkbox + `fixed`
+backdrop `<label>`, believing that fixed the UX bug. It didn't, fully:
+tested via Playwright (open the menu, click far outside, assert the
+checkbox's `checked` state) and found it stayed open. Root cause: a
+`position: fixed` element's containing block is the viewport *only* if no
+ancestor establishes a new one — and `backdrop-filter` (Tailwind's
+`backdrop-blur-*`, part of every `glassClass()` surface) is one of the CSS
+properties that does establish one, same as `transform`/`filter`. Both the
+profile menu (nested inside the blurred navbar) and the new `WidgetMenu`
+(nested inside a blurred `WidgetCard`) had this bug: their "fixed
+inset-0" backdrop only ever covered their own blurred ancestor's box, not
+the actual viewport, so clicking anywhere outside that small box never
+reached the backdrop. Fixed by dropping the backdrop approach entirely for
+both: the trigger is now a real `<button>`, and the dropdown's visibility
+is driven by CSS `:focus-within` on the wrapper (Tailwind's `group-focus-within/name:`)
+— when focus leaves the group (i.e. the user clicks anywhere else), the
+menu hides on its own, no backdrop element needed, and no containing-block
+interaction possible since there's no `position: fixed` involved at all.
+The nav *drawer*'s checkbox+backdrop (tablet sidebar) was left as-is — it's
+a direct child of the page root with no blurred ancestor between it and
+the backdrop, so it doesn't have this bug; confirmed by testing it
+separately.
+
+Known tradeoff, accepted deliberately: `:focus-within` triggered by a
+`<button>` click has a documented desktop Safari quirk (buttons don't
+receive focus on mouse click unless "Full Keyboard Access" is enabled —
+keyboard/tab access and mobile Safari taps are unaffected). A fully
+robust cross-browser fix would need a React portal (rendering the backdrop
+outside the blurred ancestor's DOM subtree), which requires a client
+component — judged not worth it for Ken's personal-use dashboard on a
+Chrome/Firefox/Edge-first assumption; flagged here in case it's ever worth
+revisiting.
+
+**6. Desktop navigation: dock, not rail.** Ken flagged the pinned sidebar
+rail as "still feels disconnected" and asked to explore a bottom-center
+floating dock as an alternative, explicitly leaving the choice open.
+Replaced the `lg:`+ permanent sidebar rail with `Dock` in
+`apps/web/src/app/page.tsx` — a floating glass pill, bottom-center,
+active-state shown as a small dot beneath the icon (not a filled
+background, to stay quieter than a typical OS dock). The tablet drawer and
+mobile bottom nav are unchanged; `Sidebar` is now scoped purely to the
+tablet breakpoint range instead of also serving as the desktop rail's
+markup.
+
+**7. Radius/motion audit.** Found two `rounded-lg` (8px) outliers in the
+navbar (the drawer-toggle hamburger button, `NavIconButton`) inconsistent
+with the `rounded-xl` (12px) used everywhere else at that size tier (nav
+links, action buttons) — bumped both to `rounded-xl`. Motion
+(`GLASS_HOVER`/`SPRING_PRESS`) was already consistently applied from the
+previous pass; no changes needed there.
+
+**Explicitly out of scope for this pass, per Ken's instruction:** Spotify's
+"now playing" emphasis treatment, and the git commit-signature stop-hook
+warning (those are GitHub's own web-UI merge-commit attribution, not
+something to rewrite history over — explained to Ken twice already,
+not revisited here).

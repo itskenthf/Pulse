@@ -1,6 +1,11 @@
 import type { ReactNode } from "react";
 
-export type WidgetSize = "sm" | "md" | "lg";
+/**
+ * "hero" widgets render full-width above the card grid, chromeless (no
+ * WidgetCard) — used for a single banner-style widget, not a general
+ * layout escape hatch. Every other size renders inside the responsive grid.
+ */
+export type WidgetSize = "sm" | "md" | "lg" | "hero";
 
 export interface WidgetFetchContext {
   userId: string;

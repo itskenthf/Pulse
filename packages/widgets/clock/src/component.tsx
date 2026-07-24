@@ -14,7 +14,6 @@ export function ClockComponent({
       title="Clock"
       icon={<ClockIcon />}
       action={<ActionForm action={actions.refresh} submitLabel="Refresh" />}
-      tone="accent"
     >
       <ClockDisplay settings={settings} />
       <p className="text-xs opacity-60">{settings.timeZone}</p>

@@ -430,18 +430,20 @@ Do not proceed to Phase 2 until these conditions are met.
 
 - Reference points for feel: Arc Browser, Raycast, Linear, Vercel Dashboard,
   GitHub — not Notion. Simple, lots of spacing, very little decoration.
-- Flat, minimalist, generous whitespace — no gradients, background texture,
-  or sidebar navigation (single-page dashboard, not a multi-view app)
-- Bolder than the original flat baseline (2026-07 redesign, see
-  docs/DECISIONS.md): a two-tone card system where select widgets invert to
-  a solid black/white card against the mostly-white/black grid, larger
-  border radius, and a soft shadow — adapted from a user-provided design
-  reference, keeping the two-tone/bold/radius elements but deliberately
-  dropping that reference's heavy drop shadows, decorative background
-  texture, and sidebar nav
+- Flat, minimalist, generous whitespace — no background texture or sidebar
+  navigation (single-page dashboard, not a multi-view app)
+- Light-blue theme (2026-07-24 redesign, see docs/DECISIONS.md): a soft
+  blue gradient page background, white cards with larger border radius and
+  a soft shadow, and small colored icon badges — adapted from a
+  user-provided design reference. An earlier same-day attempt used
+  two-tone black/white cards instead of the gradient background; the user
+  reviewed it live and asked for all-white cards, which is the current
+  direction — see docs/DECISIONS.md for both entries.
 - One reusable card component (consistent padding, radius, label style, icon
   placement) used for every widget, so mobile and desktop feel like the same
-  app, not two designs
+  app, not two designs. One exception: a single "hero" banner widget
+  (greeting + weather + quote) renders full-width above the grid, outside
+  card chrome, rather than as its own card.
 - Responsive grid, not separate mobile/desktop builds:
   - Desktop (>1024px): 3-column grid
   - Tablet (600–1024px): 2-column grid

@@ -2,7 +2,9 @@
 
 import { useActionState } from "react";
 import type { ReactNode } from "react";
+import { RefreshCw } from "lucide-react";
 import type { WidgetAction, WidgetActionState } from "@pulse/sdk";
+import { SPRING_PRESS } from "./glass";
 
 export interface ActionFormProps {
   action: WidgetAction;
@@ -16,26 +18,6 @@ export interface ActionFormProps {
 }
 
 const initialState: WidgetActionState = {};
-
-function RefreshIcon({ spinning }: { spinning: boolean }) {
-  return (
-    <svg
-      className={`h-3.5 w-3.5 ${spinning ? "animate-spin" : ""}`}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M3 12a9 9 0 0 1 15.3-6.4L21 8" />
-      <path d="M21 3v5h-5" />
-      <path d="M21 12a9 9 0 0 1-15.3 6.4L3 16" />
-      <path d="M3 21v-5h5" />
-    </svg>
-  );
-}
 
 /**
  * Generic form wiring for a widget action (refresh, save settings, ...):
@@ -61,11 +43,17 @@ export function ActionForm({
         title={submitLabel}
         className={
           variant === "icon"
-            ? "rounded-full border border-current p-1.5 text-current hover:bg-current/10 disabled:opacity-50"
-            : "rounded-md border border-current px-2 py-1 text-xs font-medium text-current hover:bg-current/10 disabled:opacity-50"
+            ? `flex h-8 w-8 items-center justify-center rounded-full border border-current/20 text-current hover:bg-current/10 disabled:opacity-50 ${SPRING_PRESS}`
+            : `rounded-xl border border-current/20 px-3 py-1.5 text-xs font-medium text-current hover:bg-current/10 disabled:opacity-50 ${SPRING_PRESS}`
         }
       >
-        {variant === "icon" ? <RefreshIcon spinning={isPending} /> : isPending ? "…" : submitLabel}
+        {variant === "icon" ? (
+          <RefreshCw className={`h-3.5 w-3.5 ${isPending ? "animate-spin" : ""}`} aria-hidden="true" />
+        ) : isPending ? (
+          "…"
+        ) : (
+          submitLabel
+        )}
       </button>
       {state?.error && (
         <p className="mt-1 text-xs text-red-600 dark:text-red-400">{state.error}</p>

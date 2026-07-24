@@ -69,9 +69,13 @@ dependency graph (`turbo.json`'s `dependsOn: ["^build"]`).
 - `packages/adapters/*` — one package per external service. Owns the actual
   HTTP call and response normalization; widgets never fetch raw API
   responses themselves.
-- `packages/ui` — shared design system components: `WidgetCard` (the one
-  reusable card from §19) and `ActionForm` (generic `useActionState` wiring
-  — pending/error UI — reused for every widget action).
+- `packages/ui` — shared design system components: `glass.ts` (`glassClass(level)`
+  — the light/medium/heavy glass materials every surface builds on, plus
+  `GLASS_HOVER`/`SPRING_PRESS` motion classnames), `WidgetCard` (the one
+  reusable glass card, with an `accent` prop for the icon-glow identity
+  treatment), and `ActionForm` (generic `useActionState` wiring — pending/
+  error UI, plus an icon-only `variant` for refresh buttons — reused for
+  every widget action).
 
 ## Widget SDK contract
 

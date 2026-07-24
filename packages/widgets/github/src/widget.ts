@@ -7,7 +7,7 @@ import type { GitHubData } from "./types";
 export const githubWidget: Widget<GitHubData> = {
   id: WIDGET_ID,
   name: WIDGET_NAME,
-  size: "md",
+  size: "lg",
   refreshInterval: 1800, // 30 min — contributions don't need minute-level freshness
   fetchData: fetchGitHubData,
   render: GitHubComponent,

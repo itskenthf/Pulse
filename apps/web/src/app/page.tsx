@@ -1,188 +1,178 @@
 import type { ReactNode } from "react";
-import { getAllWidgets } from "@pulse/sdk";
+import { Bell, LayoutDashboard, ListChecks, LogOut, Menu, Repeat2, Search, Settings } from "lucide-react";
+import { getAllWidgets, type WidgetSize } from "@pulse/sdk";
 import { readWidgetCache, readWidgetSettings } from "@pulse/database";
+import { glassClass, SPRING_PRESS } from "@pulse/ui";
 import { auth, signIn, signOut } from "@/auth";
 import { refreshWidgetAction, updateWidgetSettingsAction } from "./actions/widgets";
 import "@/lib/register-widgets";
+
+const DRAWER_ID = "nav-drawer";
 
 export default async function Home() {
   const session = await auth();
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-white dark:from-slate-950 dark:via-blue-950 dark:to-slate-950">
-      {session?.user && <Sidebar />}
-
-      <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6">
-        <header className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
-            Pulse
-          </h1>
-
-          {session?.user ? (
-            <ProfileMenu user={session.user} />
-          ) : (
-            <form
-              action={async () => {
-                "use server";
-                await signIn("github");
-              }}
-            >
-              <button
-                type="submit"
-                className="rounded-md bg-zinc-950 px-4 py-2 text-sm font-medium text-zinc-50 hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-zinc-200"
-              >
-                Sign in with GitHub
-              </button>
-            </form>
-          )}
-        </header>
-
-        {session?.user?.id ? (
-          <WidgetGrid userId={session.user.id} />
-        ) : (
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            Sign in to see your dashboard.
-          </p>
-        )}
+    <div className="relative flex min-h-screen bg-[#f3f4f8] dark:bg-[#0b0d12]">
+      {/* Layered ambient background: soft neutral base + blurred color
+          blobs, fixed behind everything — atmosphere, not a gradient card. */}
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-32 -left-24 h-[26rem] w-[26rem] rounded-full bg-sky-300/40 blur-3xl dark:bg-sky-500/10" />
+        <div className="absolute top-1/4 -right-40 h-[30rem] w-[30rem] rounded-full bg-violet-300/30 blur-3xl dark:bg-violet-500/10" />
+        <div className="absolute bottom-0 left-1/4 h-96 w-96 rounded-full bg-amber-200/30 blur-3xl dark:bg-amber-500/10" />
       </div>
+
+      {session?.user && (
+        <>
+          {/* Checkbox-driven drawer toggle — no client JS needed. Must be a
+              sibling ahead of anything using peer-checked below. */}
+          <input type="checkbox" id={DRAWER_ID} className="peer hidden" />
+          <label
+            htmlFor={DRAWER_ID}
+            aria-hidden="true"
+            className="fixed inset-0 z-30 hidden bg-zinc-950/20 backdrop-blur-sm peer-checked:sm:block lg:hidden"
+          />
+          <Sidebar />
+        </>
+      )}
+
+      <div className="relative flex min-h-screen flex-1 flex-col">
+        <Navbar session={session} />
+
+        <main className="flex flex-1 flex-col gap-6 p-4 pb-24 sm:p-6 sm:pb-6">
+          {session?.user?.id ? (
+            <WidgetGrid userId={session.user.id} />
+          ) : (
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Sign in to see your dashboard.
+            </p>
+          )}
+        </main>
+      </div>
+
+      {session?.user && <BottomNav />}
     </div>
   );
 }
 
-function DashboardIcon() {
+interface SessionUser {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+}
+
+function Navbar({ session }: { session: { user?: SessionUser } | null }) {
   return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
+    <header
+      className={`sticky top-0 z-20 mx-4 mt-4 flex items-center justify-between gap-3 rounded-2xl px-4 py-2.5 sm:mx-6 sm:mt-6 ${glassClass("medium")}`}
     >
-      <rect x="3" y="3" width="7" height="9" rx="1.5" />
-      <rect x="14" y="3" width="7" height="5" rx="1.5" />
-      <rect x="14" y="12" width="7" height="9" rx="1.5" />
-      <rect x="3" y="16" width="7" height="5" rx="1.5" />
-    </svg>
+      <div className="flex items-center gap-3">
+        {session?.user && (
+          <label
+            htmlFor={DRAWER_ID}
+            className={`hidden h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-950/5 sm:flex lg:hidden dark:text-zinc-400 dark:hover:bg-white/5 ${SPRING_PRESS}`}
+            aria-label="Toggle navigation"
+          >
+            <Menu className="h-4.5 w-4.5" aria-hidden="true" />
+          </label>
+        )}
+        <h1 className="text-lg font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+          Pulse
+        </h1>
+      </div>
+
+      {session?.user ? (
+        <div className="flex items-center gap-1.5">
+          <NavIconButton label="Search — coming soon" disabled>
+            <Search className="h-4 w-4" aria-hidden="true" />
+          </NavIconButton>
+          <NavIconButton label="Notifications — coming soon" disabled>
+            <Bell className="h-4 w-4" aria-hidden="true" />
+          </NavIconButton>
+          <ProfileMenu user={session.user} />
+        </div>
+      ) : (
+        <form
+          action={async () => {
+            "use server";
+            await signIn("github");
+          }}
+        >
+          <button
+            type="submit"
+            className={`rounded-xl bg-zinc-950 px-4 py-2 text-sm font-medium text-zinc-50 hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-zinc-200 ${SPRING_PRESS}`}
+          >
+            Sign in with GitHub
+          </button>
+        </form>
+      )}
+    </header>
   );
 }
 
-function TasksIcon() {
+function NavIconButton({
+  label,
+  disabled,
+  children,
+}: {
+  label: string;
+  disabled?: boolean;
+  children: ReactNode;
+}) {
   return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
+    <span
+      title={label}
+      aria-label={label}
+      className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+        disabled
+          ? "cursor-not-allowed text-zinc-300 dark:text-zinc-700"
+          : `text-zinc-500 hover:bg-zinc-950/5 dark:text-zinc-400 dark:hover:bg-white/5 ${SPRING_PRESS}`
+      }`}
     >
-      <path d="m4 7 2 2 4-4" />
-      <path d="M12 6h8" />
-      <path d="m4 15 2 2 4-4" />
-      <path d="M12 16h8" />
-    </svg>
-  );
-}
-
-function HabitsIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M17 2 21 6l-4 4" />
-      <path d="M3 12v-1a4 4 0 0 1 4-4h14" />
-      <path d="M7 22 3 18l4-4" />
-      <path d="M21 12v1a4 4 0 0 1-4 4H3" />
-    </svg>
-  );
-}
-
-function SettingsIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.5 1Z" />
-    </svg>
-  );
-}
-
-function SignOutIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-      <path d="M16 17 21 12l-5-5" />
-      <path d="M21 12H9" />
-    </svg>
+      {children}
+    </span>
   );
 }
 
 /**
- * Compact icon rail — placeholder for future sections (Tasks/Habits, per
- * Ken's request). Only "Dashboard" is real; the rest are visibly disabled,
- * not routed anywhere — this is UI chrome, not scaffolding actual feature
- * infrastructure ahead of need.
+ * Adaptive per breakpoint, not just resized: hidden below `sm` (BottomNav
+ * takes over), an off-canvas drawer toggled by the navbar's Menu button
+ * from `sm` to `lg` ("collapsible sidebar" on tablet), permanently pinned
+ * from `lg` up ("sidebar on desktop"). Only "Dashboard" is real — Tasks and
+ * Habits are visible, disabled placeholders for future sections, not
+ * routed anywhere; UI signposting, not scaffolded feature infrastructure.
  */
 function Sidebar() {
   return (
     <nav
       aria-label="Primary"
-      className="sticky top-0 flex h-screen w-16 shrink-0 flex-col items-center gap-6 border-r border-white/60 bg-white/70 py-6 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/70"
+      className={`fixed inset-y-0 left-0 z-40 hidden w-64 -translate-x-full flex-col gap-8 p-4 transition-transform duration-300 peer-checked:translate-x-0 sm:flex lg:sticky lg:top-0 lg:h-screen lg:w-20 lg:translate-x-0 lg:items-center lg:rounded-none lg:border-0 ${glassClass("medium")} lg:bg-transparent lg:shadow-none lg:ring-0 lg:backdrop-blur-none`}
     >
-      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-950 text-sm font-semibold text-zinc-50 dark:bg-zinc-50 dark:text-zinc-950">
-        P
-      </span>
+      <div className="flex items-center gap-2.5 px-1 pt-1 lg:px-0">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-zinc-950 text-sm font-semibold text-zinc-50 dark:bg-zinc-50 dark:text-zinc-950">
+          P
+        </span>
+        <span className="text-sm font-semibold text-zinc-950 lg:hidden dark:text-zinc-50">
+          Pulse
+        </span>
+      </div>
 
-      <div className="flex flex-col items-center gap-3">
-        <SidebarIcon label="Dashboard" active>
-          <DashboardIcon />
-        </SidebarIcon>
-        <SidebarIcon label="Tasks — coming soon" disabled>
-          <TasksIcon />
-        </SidebarIcon>
-        <SidebarIcon label="Habits — coming soon" disabled>
-          <HabitsIcon />
-        </SidebarIcon>
+      <div className={`flex flex-col gap-2 lg:items-center lg:gap-3 lg:rounded-3xl lg:p-2 ${glassClass("light")} lg:bg-transparent lg:shadow-none lg:ring-0 lg:border-0 lg:backdrop-blur-none`}>
+        <SidebarLink label="Dashboard" active>
+          <LayoutDashboard className="h-[18px] w-[18px]" aria-hidden="true" />
+        </SidebarLink>
+        <SidebarLink label="Tasks — coming soon" disabled>
+          <ListChecks className="h-[18px] w-[18px]" aria-hidden="true" />
+        </SidebarLink>
+        <SidebarLink label="Habits — coming soon" disabled>
+          <Repeat2 className="h-[18px] w-[18px]" aria-hidden="true" />
+        </SidebarLink>
       </div>
     </nav>
   );
 }
 
-function SidebarIcon({
+function SidebarLink({
   label,
   active,
   disabled,
@@ -197,12 +187,63 @@ function SidebarIcon({
     <span
       title={label}
       aria-label={label}
-      className={`flex h-9 w-9 items-center justify-center rounded-lg ${
+      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium lg:h-10 lg:w-10 lg:justify-center lg:px-0 lg:py-0 ${
         active
-          ? "bg-sky-100 text-sky-600 dark:bg-sky-500/10 dark:text-sky-300"
+          ? "bg-sky-500/15 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300"
           : disabled
             ? "cursor-not-allowed text-zinc-300 dark:text-zinc-700"
-            : "text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            : `text-zinc-500 hover:bg-zinc-950/5 dark:text-zinc-400 dark:hover:bg-white/5 ${SPRING_PRESS}`
+      }`}
+    >
+      {children}
+      <span className="lg:hidden">{label.replace(" — coming soon", "")}</span>
+    </span>
+  );
+}
+
+/** Phone-only ("glanceable companion") navigation — replaces the sidebar
+ *  entirely below `sm` rather than shrinking it. */
+function BottomNav() {
+  return (
+    <nav
+      aria-label="Primary"
+      className={`fixed inset-x-4 bottom-4 z-30 flex items-center justify-around rounded-2xl px-2 py-2 sm:hidden ${glassClass("heavy")}`}
+      style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+    >
+      <BottomNavLink label="Dashboard" active>
+        <LayoutDashboard className="h-5 w-5" aria-hidden="true" />
+      </BottomNavLink>
+      <BottomNavLink label="Tasks — coming soon" disabled>
+        <ListChecks className="h-5 w-5" aria-hidden="true" />
+      </BottomNavLink>
+      <BottomNavLink label="Habits — coming soon" disabled>
+        <Repeat2 className="h-5 w-5" aria-hidden="true" />
+      </BottomNavLink>
+    </nav>
+  );
+}
+
+function BottomNavLink({
+  label,
+  active,
+  disabled,
+  children,
+}: {
+  label: string;
+  active?: boolean;
+  disabled?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <span
+      title={label}
+      aria-label={label}
+      className={`flex h-11 w-11 items-center justify-center rounded-xl ${
+        active
+          ? "bg-sky-500/15 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300"
+          : disabled
+            ? "cursor-not-allowed text-zinc-300 dark:text-zinc-700"
+            : "text-zinc-500 dark:text-zinc-400"
       }`}
     >
       {children}
@@ -224,7 +265,9 @@ function ProfileMenu({
 
   return (
     <details className="relative">
-      <summary className="flex cursor-pointer list-none items-center gap-2 rounded-full border border-zinc-200 bg-white/80 py-1 pr-3 pl-1 text-sm font-medium text-zinc-950 hover:bg-white [&::-webkit-details-marker]:hidden dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-zinc-50 dark:hover:bg-zinc-900">
+      <summary
+        className={`ml-1 flex cursor-pointer list-none items-center gap-2 rounded-full py-1 pr-3 pl-1 text-sm font-medium text-zinc-950 [&::-webkit-details-marker]:hidden dark:text-zinc-50 ${SPRING_PRESS}`}
+      >
         {user.image ? (
           // Plain <img>: external GitHub avatar URL, tiny fixed size — not
           // worth routing through next/image's optimizer.
@@ -235,15 +278,17 @@ function ProfileMenu({
             {initial}
           </span>
         )}
-        {label}
+        <span className="hidden sm:inline">{label}</span>
       </summary>
 
-      <div className="absolute right-0 z-10 mt-2 w-44 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
+      <div
+        className={`absolute right-0 z-10 mt-2 w-48 overflow-hidden rounded-2xl py-1 ${glassClass("heavy")}`}
+      >
         <span
           title="Coming soon"
           className="flex cursor-not-allowed items-center gap-2 px-3 py-2 text-sm text-zinc-400 dark:text-zinc-600"
         >
-          <SettingsIcon /> Settings
+          <Settings className="h-4 w-4" aria-hidden="true" /> Settings
         </span>
         <form
           action={async () => {
@@ -253,15 +298,21 @@ function ProfileMenu({
         >
           <button
             type="submit"
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-950/5 dark:text-zinc-300 dark:hover:bg-white/5"
           >
-            <SignOutIcon /> Sign out
+            <LogOut className="h-4 w-4" aria-hidden="true" /> Sign out
           </button>
         </form>
       </div>
     </details>
   );
 }
+
+const SPAN_CLASS: Record<Exclude<WidgetSize, "hero">, string> = {
+  lg: "sm:col-span-2 lg:col-span-2",
+  md: "col-span-1",
+  sm: "col-span-1",
+};
 
 async function WidgetGrid({ userId }: { userId: string }) {
   const widgets = getAllWidgets();
@@ -294,26 +345,25 @@ async function WidgetGrid({ userId }: { userId: string }) {
     }),
   );
 
-  // "hero" widgets render full-width, chromeless, above the card grid —
-  // every other size flows into the masonry-style column layout below.
+  // "hero" renders full-width, chromeless, above the grid. Every other
+  // widget flows into a bento-style grid — its `size` (sm/md/lg) picks how
+  // many columns it spans, so the richest widget (GitHub, "lg") becomes an
+  // actual focal point instead of every card getting equal width.
   const heroItems = rendered.filter((item) => item.size === "hero");
   const cardItems = rendered.filter((item) => item.size !== "hero");
 
   return (
-    <div className="flex flex-col gap-6">
+    <>
       {heroItems.map((item) => (
         <div key={item.id}>{item.node}</div>
       ))}
-      {/* CSS multi-column layout: cards pack tightly top-to-bottom per
-          column instead of leaving gaps under short cards the way a
-          uniform-row CSS grid would — the "masonry" feel without JS. */}
-      <div className="columns-1 gap-4 sm:columns-2 lg:columns-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cardItems.map((item) => (
-          <div key={item.id} className="mb-4 break-inside-avoid">
+          <div key={item.id} className={SPAN_CLASS[item.size as Exclude<WidgetSize, "hero">]}>
             {item.node}
           </div>
         ))}
       </div>
-    </div>
+    </>
   );
 }

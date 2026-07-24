@@ -1,40 +1,46 @@
 import type { ReactNode } from "react";
+import { GLASS_HOVER, glassClass } from "./glass";
 
-export type WidgetCardAccent = "blue" | "green" | "indigo" | "none";
+export type WidgetCardAccent = "blue" | "green" | "indigo" | "sky" | "none";
 
 export interface WidgetCardProps {
   title: string;
   icon?: ReactNode;
   action?: ReactNode;
   children: ReactNode;
-  /** A thin colored left border, giving each widget a distinct visual
-   *  identity instead of every card looking identically white. Purely a
-   *  rendering choice each widget makes for itself — not part of the SDK's
-   *  Widget interface. */
+  /** Identity comes from a soft glow behind the icon badge, not a border —
+   *  see docs/DESIGN_SYSTEM.md. Purely a rendering choice each widget makes
+   *  for itself, not part of the SDK's Widget interface. */
   accent?: WidgetCardAccent;
 }
 
-const ACCENT_BORDER: Record<WidgetCardAccent, string> = {
-  blue: "border-l-4 border-l-sky-400",
-  green: "border-l-4 border-l-emerald-500",
-  indigo: "border-l-4 border-l-indigo-600",
-  none: "",
+const ACCENT_BADGE: Record<WidgetCardAccent, string> = {
+  blue: "bg-sky-100 text-sky-600 shadow-[0_0_24px_-4px_rgba(56,189,248,0.5)] dark:bg-sky-500/10 dark:text-sky-300",
+  green:
+    "bg-emerald-100 text-emerald-600 shadow-[0_0_24px_-4px_rgba(16,185,129,0.5)] dark:bg-emerald-500/10 dark:text-emerald-300",
+  indigo:
+    "bg-indigo-100 text-indigo-600 shadow-[0_0_24px_-4px_rgba(99,102,241,0.5)] dark:bg-indigo-500/10 dark:text-indigo-300",
+  sky: "bg-sky-100 text-sky-600 shadow-[0_0_24px_-4px_rgba(56,189,248,0.5)] dark:bg-sky-500/10 dark:text-sky-300",
+  none: "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
 };
 
 /**
- * The one reusable card every widget renders itself inside of, so mobile
- * and desktop share the same visual language (reference doc §19). Widgets
- * own their own content — this only standardizes the chrome around it.
+ * The one reusable glass card every regular widget renders itself inside
+ * of, so every widget shares the same material (docs/DESIGN_SYSTEM.md).
+ * Widgets own their own content — this only standardizes the chrome
+ * around it. Not used by "hero"-sized widgets, which render chromeless.
  */
 export function WidgetCard({ title, icon, action, children, accent = "none" }: WidgetCardProps) {
   return (
     <div
-      className={`flex flex-col gap-3 rounded-2xl border border-white/60 bg-white/90 p-5 shadow-sm shadow-blue-950/5 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/90 ${ACCENT_BORDER[accent]}`}
+      className={`flex h-full flex-col gap-4 rounded-3xl p-5 ${glassClass("light")} ${GLASS_HOVER} motion-safe:hover:shadow-[0_1px_1px_rgba(255,255,255,0.6),0_28px_56px_-16px_rgba(15,23,42,0.28)]`}
     >
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5 text-zinc-950 dark:text-zinc-50">
+        <div className="flex items-center gap-3 text-zinc-950 dark:text-zinc-50">
           {icon && (
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-600 dark:bg-sky-500/10 dark:text-sky-300">
+            <span
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${ACCENT_BADGE[accent]}`}
+            >
               {icon}
             </span>
           )}
@@ -42,7 +48,7 @@ export function WidgetCard({ title, icon, action, children, accent = "none" }: W
         </div>
         {action}
       </div>
-      <div className="text-sm text-zinc-600 dark:text-zinc-400">{children}</div>
+      <div className="flex-1 text-sm text-zinc-600 dark:text-zinc-400">{children}</div>
     </div>
   );
 }

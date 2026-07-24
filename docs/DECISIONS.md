@@ -596,3 +596,30 @@ server component. Hero's date line shortened from the full
 gave two alternative greeting styles as examples; this keeps the first
 one's headline+date structure (already in place) and borrows the second
 one's warmer tagline phrase, rather than picking one wholesale.
+
+## 2026-07-24 — New design system spec adopted: Liquid Glass, not light-blue flat
+
+Ken provided a complete, authored `docs/DESIGN_SYSTEM.md` replacing the
+incrementally-built one from the four redesign passes earlier today. It's a
+real direction change, not an extension: glass materials (light/medium/heavy
+blur variants), a soft-neutral (never pure white) background instead of the
+sky-blue gradient, spring-based motion, an 8px spacing scale, a defined
+radius/typography/shadow scale, `accent` colors restricted to icons/indicators
+only ("avoid full colored cards" — a stricter rule than today's `WidgetCard`
+`accent` left-border, which is still a colored *card* element), a component
+architecture named around `Glass*` primitives (`GlassCard`, `GlassPanel`,
+`GlassButton`, `GlassNavbar`, `GlassSidebar`), and Lucide as the standard
+icon set (every widget currently hand-rolls its own inline SVG icons).
+
+**Current implementation does not yet match this doc.** Today's four
+redesign passes (see the four entries above) built a light-blue flat theme
+with `backdrop-blur-sm` used sparingly, not the systematic
+light/medium/heavy glass hierarchy this doc specifies, and `PROJECT_REFERENCE.md`
+§19 still describes that light-blue direction. This is intentional,
+temporary drift: Ken said the actual redesign implementation will follow in
+a separate prompt — this commit is scoped to landing the spec doc itself so
+it's the source of truth to build against, not to also rewriting the app in
+the same pass. `PROJECT_REFERENCE.md` §19 and the rest of `DESIGN_SYSTEM.md`'s
+now-superseded sections will be reconciled once that implementation work
+happens, not before — recording the gap here so it isn't mistaken for
+`DESIGN_SYSTEM.md` already matching reality.

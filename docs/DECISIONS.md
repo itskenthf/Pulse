@@ -400,3 +400,62 @@ documented fallback). Single column on phone, 2-column on tablet, 3-column
 on desktop; header wraps cleanly on narrow widths. `apps/web/src/app/page.tsx`
 picked up `flex-wrap` on the header and responsive padding (`p-4 sm:p-6`)
 for the phone case.
+
+## 2026-07-24 — Redesign v2: white cards + blue gradient, and a merged Hero banner
+
+**Context:** after the two-tone black/white redesign shipped (previous
+entry, same day), the user reviewed the live deployment and a second design
+reference (a light-blue admin dashboard mockup) and asked for two changes:
+(1) all cards white instead of the black "accent" tone, with the reference's
+light-blue gradient background and card style; (2) Greeting, Weather, and
+Quote combined into a single hero paragraph above the grid instead of three
+separate cards, e.g. "Good Morning Ken / Today / 29°C Cloudy / Continue
+working on Pulse / Quote / '...'".
+
+**Color/background decision:** straightforward — reverted `WidgetCard`'s
+`tone` prop entirely (nothing needed it once Greeting/Quote were folded into
+Hero and Clock's accent tone was dropped), added a light-blue gradient to
+`apps/web/src/app/page.tsx`, and gave each card's icon a small colored badge
+circle (`bg-sky-100`/`text-sky-600`, dark equivalents) echoing the
+reference's icon-badge treatment. Kept to one accent color rather than the
+reference's varied palette, for minimalism.
+
+**Hero banner decision:** merging three widgets' data into one piece of
+prose outside the card grid means *something* has to know about all three
+by name and stitch their data together — a real conflict with "the shell
+never contains widget-specific business logic" (CLAUDE.md, ARCHITECTURE.md).
+Flagged this to the user before implementing and offered three options: (a)
+a new dedicated widget that aggregates the three data sources itself, so the
+shell still only ever calls generic `render()`; (b) the shell reading
+Greeting/Weather/Quote's cache by id and composing the paragraph directly;
+(c) keep them as separate cards, just reordered to the top. User picked (a).
+
+**Implementation:** added `"hero"` to `WidgetSize` in `packages/sdk` (was
+`"sm" | "md" | "lg"`, previously unused by the shell for layout — now
+actually branches on it). `apps/web/src/app/page.tsx`'s `WidgetGrid` splits
+rendered widgets into `heroItems` (rendered full-width, chromeless, above
+the grid) and `cardItems` (rendered inside the existing responsive grid) —
+driven entirely by the generic `size` field, not a hardcoded widget id, so
+the shell still only depends on `@pulse/sdk`'s `Widget` interface.
+
+Built `packages/widgets/hero`: its `fetch.ts` reuses `@pulse/adapter-weather`
+directly (adapters are meant to be reused across widgets) and inlines the
+greeting time-of-day logic and the quote list/pick logic, rather than
+importing from the old Greeting/Quote widget packages — those packages'
+whole reason to exist was their card UI, which Hero doesn't use, and their
+computation is small enough that duplicating it here beats keeping three
+now-largely-dead packages around as import sources (CLAUDE.md: no
+premature abstraction, delete rather than accumulate). `packages/widgets/greeting`,
+`packages/widgets/weather`, and `packages/widgets/quote` were deleted
+outright — not deprecated, not kept as dead code — since every line of
+their UI is superseded by Hero and nothing else referenced them.
+`packages/adapters/weather` is untouched and still in use, just from Hero
+instead of a dedicated `weather` widget.
+
+**Known side effect:** Hero is a new widget id (`hero`), so the previous
+Greeting/Weather widget settings (name, time zone, location) in
+`widget_settings` don't carry over — they're orphaned rows under the old
+`greeting`/`weather` widget ids. The user needs to reconfigure name/location
+once via Hero's own Settings panel after this deploys. Defaulted Hero's
+location to Kuching (matching the user's already-known location from the
+original Weather widget setup) to minimize the reconfiguration needed.

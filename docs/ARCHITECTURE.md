@@ -15,15 +15,18 @@ packages/
   auth/               Auth.js configuration
   database/           Supabase client, widget_cache/widget_settings/registry/account/user helpers
   widgets/
-    weather/          Location-based current conditions (Open-Meteo)
-    greeting/         Time-of-day message, no external service
+    hero/             Greeting + weather + quote, one full-width banner (size: "hero")
     clock/            Live client-ticking clock, no external service
     github/           Contribution counts + mini heatmap (reuses your GitHub login token)
     steam/            Recently played games
+    quick-launch/     Fixed-slot link shortcuts, no external service
+    spotify/          Top tracks, custom OAuth connect flow
+    calendar-date/    Plain-text today's date, no external service
   adapters/
-    weather/          Open-Meteo client
+    weather/          Open-Meteo client (used by widgets/hero)
     github/           GitHub GraphQL contributions client
     steam/            Steam Web API client
+    spotify/          Spotify Web API client + OAuth token exchange
 supabase/
   migrations/         SQL migrations, applied in order
 docs/                 Architecture, roadmap, design system, decisions
@@ -39,7 +42,7 @@ dependency graph (`turbo.json`'s `dependsOn: ["^build"]`).
 - `apps/web` — the Next.js shell: auth, routing, the widget grid, the cron
   route. Never imports a specific widget's internals — only `@pulse/sdk`'s
   `registerWidget` / `getAllWidgets`, plus each widget's single top-level
-  export (e.g. `weatherWidget` from `@pulse/widget-weather`).
+  export (e.g. `heroWidget` from `@pulse/widget-hero`).
 - `packages/sdk` — the `Widget` interface (see below) and the in-memory
   registry. This is the only contract the shell depends on.
 - `packages/auth` — Auth.js configuration (providers, adapter, the
@@ -56,14 +59,17 @@ dependency graph (`turbo.json`'s `dependsOn: ["^build"]`).
   widget gets API access for a service the user already signed in with
   (the GitHub widget uses this; Spotify will too), without a second OAuth
   connection.
-- `packages/widgets/*` — one package per widget. `packages/widgets/weather`
-  is the reference implementation — copy its shape for the next one.
+- `packages/widgets/*` — one package per widget. `packages/widgets/steam`
+  or `packages/widgets/calendar-date` are good reference implementations for
+  a normal card widget — copy their shape for the next one.
+  `packages/widgets/hero` is the one exception: it's `size: "hero"`, so it
+  renders full-width above the grid instead of inside a `WidgetCard`.
 - `packages/adapters/*` — one package per external service. Owns the actual
   HTTP call and response normalization; widgets never fetch raw API
   responses themselves.
 - `packages/ui` — shared design system components: `WidgetCard` (the one
   reusable card from §19) and `ActionForm` (generic `useActionState` wiring
-  — pending/error UI — reused for every widget action, not just weather's).
+  — pending/error UI — reused for every widget action).
 
 ## Widget SDK contract
 
@@ -72,7 +78,7 @@ dependency graph (`turbo.json`'s `dependsOn: ["^build"]`).
 export interface Widget<TData = unknown, TSettings = Record<string, unknown>> {
   id: string;
   name: string;
-  size: WidgetSize; // "sm" | "md" | "lg"
+  size: WidgetSize; // "sm" | "md" | "lg" | "hero" — "hero" renders full-width, chromeless, above the grid
   refreshInterval: number; // seconds
   fetchData(context: WidgetFetchContext): Promise<TData>;
   render(props: WidgetRenderProps<TData, TSettings>): ReactNode;
@@ -111,7 +117,7 @@ touching any widget.
 
 ## Adding a widget
 
-1. Create `packages/widgets/<name>/` — use `packages/widgets/weather` as
+1. Create `packages/widgets/<name>/` — use `packages/widgets/steam` as
    the template: `constants.ts`, `types.ts`, `settings.ts` (defaults +
    `parseSettingsForm`), `fetch.ts` (calls an adapter, reads settings,
    calls `ensureWidgetRegistered`), `icon.tsx`, `component.tsx` (wraps

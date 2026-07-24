@@ -1,5 +1,5 @@
 {
-  "name": "@pulse/widget-quote",
+  "name": "@pulse/widget-hero",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@pulse/adapter-weather": "workspace:*",
     "@pulse/database": "workspace:*",
     "@pulse/sdk": "workspace:*",
     "@pulse/ui": "workspace:*"

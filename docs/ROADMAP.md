@@ -162,6 +162,19 @@ on building them in order:
   real Google Calendar widget can use the plain `calendar` id later
   without a rename or collision.
 
+### Redesign (2026-07-24): Greeting/Weather/Quote merged into Hero
+
+Following the two-tone card redesign, Ken asked for the Greeting, Weather,
+and Quote cards to become one full-width hero banner above the grid
+(`packages/widgets/hero`) instead of three separate cards — see
+`docs/DECISIONS.md`. `packages/widgets/greeting`, `packages/widgets/weather`,
+and `packages/widgets/quote` were deleted (their logic now lives inside
+`hero`); `packages/adapters/weather` is unchanged and reused directly by
+`hero`. **Note for Ken:** the previous Greeting/Weather widget settings
+(name, time zone, location) don't carry over automatically since Hero is a
+new widget id — reconfigure them once via the Hero banner's own Settings
+after this deploys.
+
 **Gate to move on:** the Phase 1 success gates in the reference doc §18 —
 daily use for two consecutive weeks, trusted data, at least one widget
 replacing a separately-checked tool.

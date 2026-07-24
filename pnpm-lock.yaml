@@ -47,24 +47,18 @@ importers:
       '@pulse/widget-github':
         specifier: workspace:*
         version: link:../../packages/widgets/github
-      '@pulse/widget-greeting':
+      '@pulse/widget-hero':
         specifier: workspace:*
-        version: link:../../packages/widgets/greeting
+        version: link:../../packages/widgets/hero
       '@pulse/widget-quick-launch':
         specifier: workspace:*
         version: link:../../packages/widgets/quick-launch
-      '@pulse/widget-quote':
-        specifier: workspace:*
-        version: link:../../packages/widgets/quote
       '@pulse/widget-spotify':
         specifier: workspace:*
         version: link:../../packages/widgets/spotify
       '@pulse/widget-steam':
         specifier: workspace:*
         version: link:../../packages/widgets/steam
-      '@pulse/widget-weather':
-        specifier: workspace:*
-        version: link:../../packages/widgets/weather
       next:
         specifier: 16.2.10
         version: 16.2.10(@babel/core@7.29.7)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -254,8 +248,11 @@ importers:
         specifier: ^5.7.3
         version: 5.9.3
 
-  packages/widgets/greeting:
+  packages/widgets/hero:
     dependencies:
+      '@pulse/adapter-weather':
+        specifier: workspace:*
+        version: link:../../adapters/weather
       '@pulse/database':
         specifier: workspace:*
         version: link:../../database
@@ -277,28 +274,6 @@ importers:
         version: 5.9.3
 
   packages/widgets/quick-launch:
-    dependencies:
-      '@pulse/database':
-        specifier: workspace:*
-        version: link:../../database
-      '@pulse/sdk':
-        specifier: workspace:*
-        version: link:../../sdk
-      '@pulse/ui':
-        specifier: workspace:*
-        version: link:../../ui
-      react:
-        specifier: ^19
-        version: 19.2.4
-    devDependencies:
-      '@types/react':
-        specifier: ^19
-        version: 19.2.17
-      typescript:
-        specifier: ^5.7.3
-        version: 5.9.3
-
-  packages/widgets/quote:
     dependencies:
       '@pulse/database':
         specifier: workspace:*
@@ -350,31 +325,6 @@ importers:
       '@pulse/adapter-steam':
         specifier: workspace:*
         version: link:../../adapters/steam
-      '@pulse/database':
-        specifier: workspace:*
-        version: link:../../database
-      '@pulse/sdk':
-        specifier: workspace:*
-        version: link:../../sdk
-      '@pulse/ui':
-        specifier: workspace:*
-        version: link:../../ui
-      react:
-        specifier: ^19
-        version: 19.2.4
-    devDependencies:
-      '@types/react':
-        specifier: ^19
-        version: 19.2.17
-      typescript:
-        specifier: ^5.7.3
-        version: 5.9.3
-
-  packages/widgets/weather:
-    dependencies:
-      '@pulse/adapter-weather':
-        specifier: workspace:*
-        version: link:../../adapters/weather
       '@pulse/database':
         specifier: workspace:*
         version: link:../../database

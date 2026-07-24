@@ -3,17 +3,20 @@ export type GlassLevel = "light" | "medium" | "heavy";
 /**
  * Three reusable glass materials (design system: light/medium/heavy).
  * Each combines a tinted translucent fill, blur, a thin border, an inset
- * highlight ring (the "soft inner highlight" a flat bg-white/opacity
- * card doesn't have), and a layered ambient shadow — never just a
- * lowered-opacity white box.
+ * highlight ring, and a layered ambient shadow. Fill opacity is kept low
+ * enough that the page's background blobs actually read through — a
+ * card at 55%+ white sitting on a near-white page base is indistinguishable
+ * from a solid surface, which is what "glass looked white" traced back to.
+ * `heavy` stays more opaque since it's used for text-dense overlays
+ * (dropdowns) where legibility matters more than translucency.
  */
 const GLASS: Record<GlassLevel, string> = {
   light:
-    "bg-white/55 dark:bg-zinc-900/45 backdrop-blur-xl border border-white/60 dark:border-white/10 shadow-[0_1px_1px_rgba(255,255,255,0.6),0_20px_40px_-16px_rgba(15,23,42,0.18)] dark:shadow-[0_1px_1px_rgba(255,255,255,0.04),0_20px_40px_-16px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/50 dark:ring-white/5",
+    "bg-white/30 dark:bg-zinc-900/30 backdrop-blur-2xl border border-white/50 dark:border-white/10 shadow-[0_1px_1px_rgba(255,255,255,0.7),0_20px_40px_-16px_rgba(15,23,42,0.22)] dark:shadow-[0_1px_1px_rgba(255,255,255,0.04),0_20px_40px_-16px_rgba(0,0,0,0.55)] ring-1 ring-inset ring-white/40 dark:ring-white/5",
   medium:
-    "bg-white/65 dark:bg-zinc-900/55 backdrop-blur-2xl border border-white/60 dark:border-white/10 shadow-[0_1px_1px_rgba(255,255,255,0.6),0_24px_48px_-20px_rgba(15,23,42,0.22)] dark:shadow-[0_1px_1px_rgba(255,255,255,0.04),0_24px_48px_-20px_rgba(0,0,0,0.55)] ring-1 ring-inset ring-white/50 dark:ring-white/5",
+    "bg-white/38 dark:bg-zinc-900/40 backdrop-blur-2xl border border-white/55 dark:border-white/10 shadow-[0_1px_1px_rgba(255,255,255,0.7),0_24px_48px_-20px_rgba(15,23,42,0.26)] dark:shadow-[0_1px_1px_rgba(255,255,255,0.04),0_24px_48px_-20px_rgba(0,0,0,0.6)] ring-1 ring-inset ring-white/45 dark:ring-white/5",
   heavy:
-    "bg-white/80 dark:bg-zinc-900/75 backdrop-blur-2xl border border-white/70 dark:border-white/10 shadow-[0_1px_1px_rgba(255,255,255,0.7),0_32px_64px_-24px_rgba(15,23,42,0.3)] dark:shadow-[0_1px_1px_rgba(255,255,255,0.04),0_32px_64px_-24px_rgba(0,0,0,0.6)] ring-1 ring-inset ring-white/60 dark:ring-white/10",
+    "bg-white/60 dark:bg-zinc-900/70 backdrop-blur-2xl border border-white/70 dark:border-white/10 shadow-[0_1px_1px_rgba(255,255,255,0.7),0_32px_64px_-24px_rgba(15,23,42,0.32)] dark:shadow-[0_1px_1px_rgba(255,255,255,0.04),0_32px_64px_-24px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/60 dark:ring-white/10",
 };
 
 export function glassClass(level: GlassLevel = "light"): string {

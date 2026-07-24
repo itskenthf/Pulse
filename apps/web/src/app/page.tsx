@@ -17,9 +17,10 @@ export default async function Home() {
       {/* Layered ambient background: soft neutral base + blurred color
           blobs, fixed behind everything — atmosphere, not a gradient card. */}
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-32 -left-24 h-[26rem] w-[26rem] rounded-full bg-sky-300/40 blur-3xl dark:bg-sky-500/10" />
-        <div className="absolute top-1/4 -right-40 h-[30rem] w-[30rem] rounded-full bg-violet-300/30 blur-3xl dark:bg-violet-500/10" />
-        <div className="absolute bottom-0 left-1/4 h-96 w-96 rounded-full bg-amber-200/30 blur-3xl dark:bg-amber-500/10" />
+        <div className="absolute -top-32 -left-24 h-[30rem] w-[30rem] rounded-full bg-sky-400/60 blur-3xl dark:bg-sky-500/25" />
+        <div className="absolute top-1/4 -right-40 h-[34rem] w-[34rem] rounded-full bg-violet-400/50 blur-3xl dark:bg-violet-500/25" />
+        <div className="absolute top-1/2 left-1/3 h-[26rem] w-[26rem] rounded-full bg-sky-300/40 blur-3xl dark:bg-sky-500/15" />
+        <div className="absolute bottom-0 left-1/4 h-[26rem] w-[26rem] rounded-full bg-amber-300/45 blur-3xl dark:bg-amber-500/20" />
       </div>
 
       {session?.user && (
@@ -39,7 +40,7 @@ export default async function Home() {
       <div className="relative flex min-h-screen flex-1 flex-col">
         <Navbar session={session} />
 
-        <main className="flex flex-1 flex-col gap-6 p-4 pb-24 sm:p-6 sm:pb-6">
+        <main className="flex flex-1 flex-col gap-6 p-4 pb-24 sm:p-6 sm:pb-6 lg:pb-28">
           {session?.user?.id ? (
             <WidgetGrid userId={session.user.id} />
           ) : (
@@ -51,6 +52,7 @@ export default async function Home() {
       </div>
 
       {session?.user && <BottomNav />}
+      {session?.user && <Dock />}
     </div>
   );
 }
@@ -70,7 +72,7 @@ function Navbar({ session }: { session: { user?: SessionUser } | null }) {
         {session?.user && (
           <label
             htmlFor={DRAWER_ID}
-            className={`hidden h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-950/5 sm:flex lg:hidden dark:text-zinc-400 dark:hover:bg-white/5 ${SPRING_PRESS}`}
+            className={`hidden h-8 w-8 cursor-pointer items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-950/5 sm:flex lg:hidden dark:text-zinc-400 dark:hover:bg-white/5 ${SPRING_PRESS}`}
             aria-label="Toggle navigation"
           >
             <Menu className="h-4.5 w-4.5" aria-hidden="true" />
@@ -123,7 +125,7 @@ function NavIconButton({
     <span
       title={label}
       aria-label={label}
-      className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+      className={`flex h-8 w-8 items-center justify-center rounded-xl ${
         disabled
           ? "cursor-not-allowed text-zinc-300 dark:text-zinc-700"
           : `text-zinc-500 hover:bg-zinc-950/5 dark:text-zinc-400 dark:hover:bg-white/5 ${SPRING_PRESS}`
@@ -136,28 +138,26 @@ function NavIconButton({
 
 /**
  * Adaptive per breakpoint, not just resized: hidden below `sm` (BottomNav
- * takes over), an off-canvas drawer toggled by the navbar's Menu button
- * from `sm` to `lg` ("collapsible sidebar" on tablet), permanently pinned
- * from `lg` up ("sidebar on desktop"). Only "Dashboard" is real — Tasks and
- * Habits are visible, disabled placeholders for future sections, not
- * routed anywhere; UI signposting, not scaffolded feature infrastructure.
+ * takes over) and at `lg`+ (Dock takes over) — this is specifically the
+ * tablet-range off-canvas drawer, toggled by the navbar's Menu button.
+ * Only "Dashboard" is real — Tasks and Habits are visible, disabled
+ * placeholders for future sections, not routed anywhere; UI signposting,
+ * not scaffolded feature infrastructure.
  */
 function Sidebar() {
   return (
     <nav
       aria-label="Primary"
-      className={`fixed inset-y-0 left-0 z-40 hidden w-64 -translate-x-full flex-col gap-8 p-4 transition-transform duration-300 peer-checked:translate-x-0 sm:flex lg:sticky lg:top-0 lg:h-screen lg:w-20 lg:translate-x-0 lg:items-center lg:rounded-none lg:border-0 ${glassClass("medium")} lg:bg-transparent lg:shadow-none lg:ring-0 lg:backdrop-blur-none`}
+      className={`fixed inset-y-0 left-0 z-40 hidden w-64 -translate-x-full flex-col gap-8 p-4 transition-transform duration-300 peer-checked:translate-x-0 sm:flex lg:hidden ${glassClass("medium")}`}
     >
-      <div className="flex items-center gap-2.5 px-1 pt-1 lg:px-0">
+      <div className="flex items-center gap-2.5 px-1 pt-1">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-zinc-950 text-sm font-semibold text-zinc-50 dark:bg-zinc-50 dark:text-zinc-950">
           P
         </span>
-        <span className="text-sm font-semibold text-zinc-950 lg:hidden dark:text-zinc-50">
-          Pulse
-        </span>
+        <span className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">Pulse</span>
       </div>
 
-      <div className={`flex flex-col gap-2 lg:items-center lg:gap-3 lg:rounded-3xl lg:p-2 ${glassClass("light")} lg:bg-transparent lg:shadow-none lg:ring-0 lg:border-0 lg:backdrop-blur-none`}>
+      <div className="flex flex-col gap-2">
         <SidebarLink label="Dashboard" active>
           <LayoutDashboard className="h-[18px] w-[18px]" aria-hidden="true" />
         </SidebarLink>
@@ -187,7 +187,7 @@ function SidebarLink({
     <span
       title={label}
       aria-label={label}
-      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium lg:h-10 lg:w-10 lg:justify-center lg:px-0 lg:py-0 ${
+      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${
         active
           ? "bg-sky-500/15 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300"
           : disabled
@@ -196,7 +196,62 @@ function SidebarLink({
       }`}
     >
       {children}
-      <span className="lg:hidden">{label.replace(" — coming soon", "")}</span>
+      <span>{label.replace(" — coming soon", "")}</span>
+    </span>
+  );
+}
+
+/**
+ * Desktop-only (`lg`+) floating glass dock, replacing what was a
+ * permanently pinned sidebar rail — bottom-center, inspired by desktop-OS
+ * docks without copying one (rounded pill, glass material matching the
+ * rest of Pulse, an active-state dot instead of a filled background).
+ */
+function Dock() {
+  return (
+    <nav
+      aria-label="Primary"
+      className={`fixed bottom-6 left-1/2 z-30 hidden -translate-x-1/2 items-center gap-1.5 rounded-full px-2.5 py-2 lg:flex ${glassClass("heavy")}`}
+    >
+      <DockIcon label="Dashboard" active>
+        <LayoutDashboard className="h-5 w-5" aria-hidden="true" />
+      </DockIcon>
+      <DockIcon label="Tasks — coming soon" disabled>
+        <ListChecks className="h-5 w-5" aria-hidden="true" />
+      </DockIcon>
+      <DockIcon label="Habits — coming soon" disabled>
+        <Repeat2 className="h-5 w-5" aria-hidden="true" />
+      </DockIcon>
+    </nav>
+  );
+}
+
+function DockIcon({
+  label,
+  active,
+  disabled,
+  children,
+}: {
+  label: string;
+  active?: boolean;
+  disabled?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <span title={label} aria-label={label} className="flex flex-col items-center gap-1 px-1.5">
+      <span
+        className={`flex h-11 w-11 items-center justify-center rounded-full ${
+          disabled
+            ? "cursor-not-allowed text-zinc-300 dark:text-zinc-700"
+            : `text-zinc-600 hover:bg-zinc-950/5 dark:text-zinc-300 dark:hover:bg-white/10 ${SPRING_PRESS}`
+        }`}
+      >
+        {children}
+      </span>
+      <span
+        className={`h-1 w-1 rounded-full ${active ? "bg-sky-500 dark:bg-sky-400" : "bg-transparent"}`}
+        aria-hidden="true"
+      />
     </span>
   );
 }
@@ -252,8 +307,13 @@ function BottomNavLink({
 }
 
 /**
- * A `<details>` dropdown, not a client component with useState — avatar +
- * name summary, Settings (placeholder) + Sign out inside, no extra JS.
+ * A real `<button>` + CSS `:focus-within` on the wrapper, not a checkbox +
+ * fixed backdrop: Navbar's own backdrop-blur establishes a new containing
+ * block for `position: fixed` descendants (a real CSS quirk — see
+ * docs/DECISIONS.md), so a backdrop nested inside it only ever covers the
+ * navbar's own box, not the viewport, and never catches an outside click.
+ * `:focus-within` sidesteps that: click elsewhere moves focus out of the
+ * group and the menu hides on its own, no backdrop element needed.
  */
 function ProfileMenu({
   user,
@@ -264,9 +324,10 @@ function ProfileMenu({
   const initial = label.charAt(0).toUpperCase();
 
   return (
-    <details className="relative">
-      <summary
-        className={`ml-1 flex cursor-pointer list-none items-center gap-2 rounded-full py-1 pr-3 pl-1 text-sm font-medium text-zinc-950 [&::-webkit-details-marker]:hidden dark:text-zinc-50 ${SPRING_PRESS}`}
+    <div className="group/profile relative ml-1 inline-block">
+      <button
+        type="button"
+        className={`flex cursor-pointer items-center gap-2 rounded-full py-1 pr-3 pl-1 text-sm font-medium text-zinc-950 dark:text-zinc-50 ${SPRING_PRESS}`}
       >
         {user.image ? (
           // Plain <img>: external GitHub avatar URL, tiny fixed size — not
@@ -279,10 +340,10 @@ function ProfileMenu({
           </span>
         )}
         <span className="hidden sm:inline">{label}</span>
-      </summary>
+      </button>
 
       <div
-        className={`absolute right-0 z-10 mt-2 w-48 overflow-hidden rounded-2xl py-1 ${glassClass("heavy")}`}
+        className={`invisible absolute right-0 z-20 mt-2 w-48 origin-top-right scale-95 overflow-hidden rounded-2xl py-1 opacity-0 transition motion-safe:duration-150 group-focus-within/profile:visible group-focus-within/profile:scale-100 group-focus-within/profile:opacity-100 ${glassClass("heavy")}`}
       >
         <span
           title="Coming soon"
@@ -304,7 +365,7 @@ function ProfileMenu({
           </button>
         </form>
       </div>
-    </details>
+    </div>
   );
 }
 

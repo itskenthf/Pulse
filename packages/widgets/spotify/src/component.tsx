@@ -1,4 +1,4 @@
-import { ActionForm, WidgetCard } from "@pulse/ui";
+import { WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
 import { SpotifyIcon } from "./icon";
 import type { SpotifyData } from "./types";
@@ -24,32 +24,40 @@ export function SpotifyComponent({
     <WidgetCard
       title="Spotify"
       icon={<SpotifyIcon />}
-      action={<ActionForm action={actions.refresh} submitLabel="Refresh" variant="icon" />}
+      action={<WidgetMenu id="spotify" actions={actions} />}
       accent="green"
     >
       {data.tracks.length > 0 ? (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-4">
           {data.tracks.map((track) => (
-            <li key={track.id} className="flex items-center gap-2">
+            <li key={track.id} className="flex items-center gap-3">
               {track.imageUrl ? (
                 // Plain <img>: external Spotify CDN artwork, tiny fixed
                 // size — not worth routing through next/image's optimizer.
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={track.imageUrl} alt="" width={20} height={20} className="rounded-sm" />
+                <img
+                  src={track.imageUrl}
+                  alt=""
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 shrink-0 rounded-xl object-cover shadow-sm"
+                />
               ) : (
-                <span className="h-5 w-5 rounded-sm bg-zinc-200 dark:bg-zinc-800" />
+                <span className="h-10 w-10 shrink-0 rounded-xl bg-gradient-to-br from-emerald-200 to-teal-200 dark:from-emerald-500/20 dark:to-teal-500/20" />
               )}
-              <a
-                href={track.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="min-w-0 flex-1 truncate text-zinc-950 hover:underline dark:text-zinc-50"
-              >
-                {track.name}
-              </a>
-              <span className="shrink-0 truncate text-xs text-zinc-500 dark:text-zinc-500">
-                {track.artist}
-              </span>
+              <div className="min-w-0 flex-1">
+                <a
+                  href={track.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block truncate text-sm font-medium text-zinc-900 hover:underline dark:text-zinc-100"
+                >
+                  {track.name}
+                </a>
+                <span className="block truncate text-xs text-zinc-500 dark:text-zinc-500">
+                  {track.artist}
+                </span>
+              </div>
             </li>
           ))}
         </ul>

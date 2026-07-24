@@ -206,9 +206,15 @@ A widget is only considered complete when it has:
 - Error state
 - Empty state
 - Manual refresh
-- Settings support
+- Settings support, **unless** the widget is meant to run fully automatically
+  with no per-user configuration (2026-07-24, Ken's request — see
+  docs/DECISIONS.md; currently just Hero: name comes from the login
+  profile, time zone/location are fixed constants)
 - Responsive layout
-- Dark mode support
+- Dark mode support, kept functional as a fallback for OS/device dark mode
+  but not the actively designed theme as of the 2026-07-24 light-blue
+  redesign (see docs/DECISIONS.md) — light mode gets the design/polish
+  pass, dark mode just needs to not break
 - No TypeScript errors
 - No ESLint warnings
 
@@ -430,18 +436,26 @@ Do not proceed to Phase 2 until these conditions are met.
 
 - Reference points for feel: Arc Browser, Raycast, Linear, Vercel Dashboard,
   GitHub — not Notion. Simple, lots of spacing, very little decoration.
-- Flat, minimalist, generous whitespace — no gradients, background texture,
-  or sidebar navigation (single-page dashboard, not a multi-view app)
-- Bolder than the original flat baseline (2026-07 redesign, see
-  docs/DECISIONS.md): a two-tone card system where select widgets invert to
-  a solid black/white card against the mostly-white/black grid, larger
-  border radius, and a soft shadow — adapted from a user-provided design
-  reference, keeping the two-tone/bold/radius elements but deliberately
-  dropping that reference's heavy drop shadows, decorative background
-  texture, and sidebar nav
+- Flat, minimalist, generous whitespace — no background texture or sidebar
+  navigation (single-page dashboard, not a multi-view app)
+- Light-blue theme (2026-07-24 redesign, see docs/DECISIONS.md): a soft
+  blue gradient page background, white cards with larger border radius and
+  a soft shadow, and small colored icon badges — adapted from a
+  user-provided design reference. An earlier same-day attempt used
+  two-tone black/white cards instead of the gradient background; the user
+  reviewed it live and asked for all-white cards, which is the current
+  direction — see docs/DECISIONS.md for both entries.
 - One reusable card component (consistent padding, radius, label style, icon
   placement) used for every widget, so mobile and desktop feel like the same
-  app, not two designs
+  app, not two designs. One exception: a single "hero" banner widget
+  (greeting + date/time + weather + quote — originally 5 separate widgets,
+  merged 2026-07-24 at Ken's request) renders full-width above the grid,
+  outside card chrome, rather than as its own card.
+- Widgets with real magnitude data (Steam's hours played, GitHub's
+  contributions) get a lightweight bar/heatmap visualization in a single
+  sequential blue hue, rather than a plain number — see docs/DESIGN_SYSTEM.md
+  "Graphs". Not applied where there's no real magnitude data to show (e.g.
+  Spotify, whose API doesn't expose play counts).
 - Responsive grid, not separate mobile/desktop builds:
   - Desktop (>1024px): 3-column grid
   - Tablet (600–1024px): 2-column grid

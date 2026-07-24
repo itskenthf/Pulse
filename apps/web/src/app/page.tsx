@@ -8,7 +8,7 @@ export default async function Home() {
   const session = await auth();
 
   return (
-    <div className="flex flex-1 flex-col gap-6 bg-zinc-50 p-4 sm:p-6 dark:bg-black">
+    <div className="flex flex-1 flex-col gap-6 bg-gradient-to-br from-sky-50 via-blue-50 to-white p-4 sm:p-6 dark:from-slate-950 dark:via-blue-950 dark:to-slate-950">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
           Pulse
@@ -64,7 +64,7 @@ export default async function Home() {
 async function WidgetGrid({ userId }: { userId: string }) {
   const widgets = getAllWidgets();
 
-  const cards = await Promise.all(
+  const rendered = await Promise.all(
     widgets.map(async (widget) => {
       const [cached, settings] = await Promise.all([
         readWidgetCache(userId, widget.id),
@@ -88,9 +88,25 @@ async function WidgetGrid({ userId }: { userId: string }) {
         },
       } as Parameters<typeof widget.render>[0];
 
-      return <div key={widget.id}>{widget.render(props)}</div>;
+      return { id: widget.id, size: widget.size, node: widget.render(props) };
     }),
   );
 
-  return <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">{cards}</div>;
+  // "hero" widgets render full-width, chromeless, above the card grid —
+  // every other size renders inside the responsive grid as a WidgetCard.
+  const heroItems = rendered.filter((item) => item.size === "hero");
+  const cardItems = rendered.filter((item) => item.size !== "hero");
+
+  return (
+    <div className="flex flex-col gap-6">
+      {heroItems.map((item) => (
+        <div key={item.id}>{item.node}</div>
+      ))}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {cardItems.map((item) => (
+          <div key={item.id}>{item.node}</div>
+        ))}
+      </div>
+    </div>
+  );
 }

@@ -44,17 +44,24 @@ export async function GET(request: Request) {
   }
 
   const redirectUri = `${baseUrl}/api/auth/callback/spotify`;
-  const tokens = await exchangeCodeForTokens({ code, redirectUri, clientId, clientSecret });
-  const providerAccountId = await fetchSpotifyProfileId(tokens.accessToken);
 
-  await upsertProviderAccount(session.user.id, "spotify", {
-    providerAccountId,
-    accessToken: tokens.accessToken,
-    refreshToken: tokens.refreshToken,
-    expiresAt: tokens.expiresAt,
-  });
+  try {
+    const tokens = await exchangeCodeForTokens({ code, redirectUri, clientId, clientSecret });
+    const providerAccountId = await fetchSpotifyProfileId(tokens.accessToken);
 
-  await refreshWidget("spotify", session.user.id);
+    await upsertProviderAccount(session.user.id, "spotify", {
+      providerAccountId,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      expiresAt: tokens.expiresAt,
+    });
+
+    await refreshWidget("spotify", session.user.id);
+  } catch {
+    // Network blip, an already-used/expired code, etc. — fail back to the
+    // dashboard rather than a raw 500 page; the user can just click
+    // "Connect Spotify" again.
+  }
 
   return NextResponse.redirect(homeUrl);
 }

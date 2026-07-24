@@ -32,11 +32,20 @@ export async function fetchSpotifyData(context: WidgetFetchContext): Promise<Spo
       throw new Error("AUTH_SPOTIFY_ID/AUTH_SPOTIFY_SECRET are not configured");
     }
 
-    const refreshed = await refreshAccessToken({
-      refreshToken: account.refreshToken,
-      clientId,
-      clientSecret,
-    });
+    let refreshed;
+    try {
+      refreshed = await refreshAccessToken({
+        refreshToken: account.refreshToken,
+        clientId,
+        clientSecret,
+      });
+    } catch {
+      // Most commonly a revoked/invalid refresh token (e.g. the user
+      // disconnected Spotify's access from their own account settings) —
+      // treat it the same as "never connected" so the widget prompts to
+      // reconnect instead of showing a generic error.
+      return { connected: false };
+    }
     accessToken = refreshed.accessToken;
 
     await upsertProviderAccount(context.userId, PROVIDER, {

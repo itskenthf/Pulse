@@ -9,7 +9,7 @@ export function SpotifyComponent({
 }: WidgetRenderProps<SpotifyData, Record<string, unknown>>) {
   if (!data || !data.connected) {
     return (
-      <WidgetCard title="Spotify" icon={<SpotifyIcon />}>
+      <WidgetCard title="Spotify" icon={<SpotifyIcon />} accent="green">
         <a
           href="/api/connect/spotify"
           className="inline-block rounded-md bg-zinc-950 px-3 py-1.5 text-xs font-medium text-zinc-50 hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-zinc-200"
@@ -25,6 +25,7 @@ export function SpotifyComponent({
       title="Spotify"
       icon={<SpotifyIcon />}
       action={<ActionForm action={actions.refresh} submitLabel="Refresh" variant="icon" />}
+      accent="green"
     >
       {data.tracks.length > 0 ? (
         <ul className="flex flex-col gap-2">

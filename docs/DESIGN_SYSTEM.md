@@ -50,11 +50,16 @@ UI work doesn't drift from them, and tracks what's actually built in
 - No background texture, no sidebar nav, no heavy drop shadows beyond the
   cards' own soft shadow — single-page dashboard, not a multi-view app.
 - Generous whitespace over dense information.
-- Dark mode is required for every widget (reference doc §7, definition of
-  done) — styled via Tailwind's `dark:` variants, following the
-  `apps/web/src/app/globals.css` theme tokens (`--background`,
-  `--foreground`).
+- **Light-blue is the only actively designed theme** (2026-07-24, Ken's
+  request) — dark mode's `dark:` variants stay in the code as a cheap
+  fallback for OS/device dark mode, but aren't the design target and don't
+  get the same visual polish pass. Still satisfies reference doc §7's
+  literal "doesn't break in dark mode" bar, just not its original "equally
+  designed" intent — see docs/DECISIONS.md.
 - Body font is Geist Sans (`--font-sans`, loaded in `apps/web/src/app/layout.tsx`).
+- Refresh buttons are icon-only (circular-arrow SVG, `ActionForm`'s
+  `variant="icon"`) — `aria-label`/`title` carry the "Refresh" text for
+  accessibility. Settings-save buttons keep the default text variant.
 
 ## Hero banner
 
@@ -64,21 +69,56 @@ UI work doesn't drift from them, and tracks what's actually built in
 in `WidgetCard`. It's a generic mechanism (driven by `size`, not a
 hardcoded widget id in the shell), but in practice only one widget uses it.
 
-Hero combines what were three separate cards (Greeting, Weather, Quote)
-into one flowing banner: a large greeting headline, "Today" with a one-line
-weather summary, a static tagline, and "Quote" with a random quote — see
-the widget's own `component.tsx`. It aggregates its own data in
-`fetch.ts` (reusing `@pulse/adapter-weather` directly and an inlined copy
-of the greeting/quote logic) rather than reading other widgets' cache, so
-the shell still never needs to know what's inside any widget's data. The
-old `packages/widgets/greeting`, `packages/widgets/weather`, and
-`packages/widgets/quote` packages were deleted — their card UI is fully
-superseded by Hero. `packages/adapters/weather` is unchanged and still used,
-just by Hero instead of a `weather` widget.
+Hero combines what were five separate cards (Greeting, Weather, Quote,
+Clock, Calendar) into one flowing banner: a large greeting headline, a
+date + live-ticking time line, "Today" with a one-line weather summary, a
+static tagline, and "Quote" with a random quote — see the widget's own
+`component.tsx`. It aggregates its own data in `fetch.ts` (reusing
+`@pulse/adapter-weather` directly and an inlined copy of the greeting/quote
+logic) rather than reading other widgets' cache, so the shell still never
+needs to know what's inside any widget's data. The live clock is a small
+`"use client"` sub-component (`hero-clock.tsx`) that ticks every second,
+same pattern the old standalone Clock widget used. The old
+`packages/widgets/greeting`, `weather`, `quote`, `clock`, and
+`calendar-date` packages were all deleted — their UI is fully superseded
+by Hero. `packages/adapters/weather` is unchanged and still used, just by
+Hero instead of a `weather` widget.
+
+**No settings UI** (2026-07-24, Ken's request): Hero has no settings form
+at all. Name comes from the GitHub login profile automatically
+(`readUserName` in `packages/database`, reading `next_auth.users.name` —
+the same OAuth profile the user already signed in with, no extra setting
+needed). Time zone and weather location are fixed constants in
+`packages/widgets/hero/src/constants.ts` (`Asia/Kuching` / Kuching's
+coordinates) rather than a per-user setting — reasonable for a single-user
+app; revisit if Pulse ever supports more than one user. See
+docs/DECISIONS.md for the auto-location tradeoffs considered.
+
+## Graphs
+
+Widgets with real magnitude data get a lightweight bar visualization instead
+of a plain number/text list — plain CSS/SVG, no charting library, per the
+`dataviz` skill's method (form → color → marks, in that order):
+
+- **Steam** (`packages/widgets/steam/src/playtime-bar.tsx`): each recently
+  played game gets a horizontal bar sized relative to the longest-played
+  game in the list (magnitude comparison → bar, single sequential hue —
+  identity/categorical color isn't the job here, so no per-game color
+  coding). Track is a lighter step of the same blue ramp (`bg-sky-100`),
+  fill is the solid accent (`bg-sky-500`) — the "meter" pattern. Value
+  labeled directly at the bar's end rather than requiring a hover/legend.
+- **GitHub** (`packages/widgets/github/src/heatmap.tsx`): the existing
+  contribution heatmap recolored from green to the same sequential blue
+  ramp used everywhere else, for theme consistency — no structural change,
+  it was already the right form for this data (a magnitude grid).
+- **Spotify** deliberately has **no graph** — its public API doesn't expose
+  play counts or listening-time totals, so there's no real magnitude data
+  to visualize; forcing a fake number would be worse than the current
+  ranked list. See docs/DECISIONS.md.
 
 ## Components
 
-`packages/ui` — used by all 7 live widgets (6 cards + Hero):
+`packages/ui` — used by all 5 live widgets (4 cards + Hero):
 
 - **`WidgetCard`** — the one reusable card (`widget-card.tsx`): title, icon
   (rendered in a colored badge circle), action slot (top-right — usually

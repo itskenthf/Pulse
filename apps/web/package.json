@@ -15,8 +15,6 @@
     "@pulse/database": "workspace:*",
     "@pulse/sdk": "workspace:*",
     "@pulse/ui": "workspace:*",
-    "@pulse/widget-calendar-date": "workspace:*",
-    "@pulse/widget-clock": "workspace:*",
     "@pulse/widget-github": "workspace:*",
     "@pulse/widget-hero": "workspace:*",
     "@pulse/widget-quick-launch": "workspace:*",

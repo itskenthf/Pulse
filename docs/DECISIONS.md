@@ -459,3 +459,77 @@ Greeting/Weather widget settings (name, time zone, location) in
 once via Hero's own Settings panel after this deploys. Defaulted Hero's
 location to Kuching (matching the user's already-known location from the
 original Weather widget setup) to minimize the reconfiguration needed.
+
+## 2026-07-24 — Redesign v3: light-blue only, Hero absorbs Clock/Calendar, real graphs, icon refresh
+
+**Context:** after redesign v2 shipped (previous entry), Ken asked for
+several further changes, each with a real tradeoff worth recording:
+
+**1. Dark mode.** Ken wants light-blue only, matching the design reference
+exactly. This is a direct exception to reference doc §7's "dark mode
+support" line in the definition of done. Flagged this before touching
+anything, since CLAUDE.md requires explaining + explicit approval before
+contradicting the reference doc. Given the choice between deleting all
+`dark:` classes (matches the ask exactly, but throws away something already
+working and correctly styled) versus keeping them as an unmaintained
+fallback (costs nothing to leave in place, protects anyone who hits Pulse
+in OS/device dark mode from a broken/blinding page), Ken chose to keep the
+fallback. §7 amended: dark mode support means "doesn't break," not
+"equally designed" — light-blue is the only theme that gets actual design
+attention going forward.
+
+**2. Hero absorbs Clock and Calendar.** Extends the same-day Hero merge
+(previous entry) to also fold in the two remaining "simple info" widgets.
+`packages/widgets/clock` and `packages/widgets/calendar-date` deleted;
+their date-line + live-ticking-time display moved into
+`packages/widgets/hero/src/hero-clock.tsx` (a small `"use client"`
+sub-component, same ticking pattern the old Clock widget used) and
+`fetch.ts` (date string, computed server-side per fetch). No architecture
+conflict here — Hero already established the "one widget can own several
+merged concerns internally" pattern in the previous entry.
+
+**3. No settings, fetch automatically.** Real tradeoff by field:
+- **Name**: solved cleanly — `readUserName()` (new helper in
+  `packages/database/src/users.ts`) reads `next_auth.users.name`, which
+  Auth.js already populated from the GitHub OAuth profile at login. Zero
+  new setting, zero new UI, genuinely automatic.
+- **Time zone / weather location**: there's no clean "automatic" for a
+  server-rendered, cron-fetched dashboard without adding either a browser
+  permission prompt (geolocation — not silent) or a new IP-geolocation
+  adapter (silent, but only city-accurate, and net-new external dependency
+  for a problem that doesn't really exist for a single, fixed-location
+  user). Presented these tradeoffs to Ken; he chose the simplest option:
+  hardcoded constants in `packages/widgets/hero/src/constants.ts`
+  (`Asia/Kuching`, and Kuching's lat/long — matching what was already
+  configured on the old Weather widget). This is a deliberate, scoped
+  exception to §7's "settings support" requirement, not a general pattern —
+  amended §7 to note it explicitly rather than silently dropping the
+  requirement everywhere.
+
+**4. Real graphs, not fake ones.** Loaded the `dataviz` skill before
+building any chart. Followed its form-first method: Steam's playtime is
+genuine magnitude data across a handful of games → horizontal bar chart is
+the correct form (not a pie, not a donut), single sequential hue since the
+bars encode magnitude, not identity — no legend needed for one series. Bar
+spec follows the skill's mark rules: thin (8px) marks, rounded only at the
+data-end (the tip, not the baseline), value labeled directly at the tip
+instead of requiring hover, unfilled track as a lighter step of the same
+ramp (the "meter" pattern). GitHub's contribution heatmap was already the
+right form for that data — just recolored from green to the same blue
+ramp for theme consistency, no structural change.
+
+Investigated Spotify for the same treatment (Ken's original ask mentioned
+"any widget with numbers") and confirmed via the adapter code that
+Spotify's public Web API doesn't expose play counts or cumulative listening
+time on the top-tracks endpoint — that data only exists inside
+Spotify-internal products (Wrapped) with no public API. Rather than
+inventing a number to chart, Spotify intentionally keeps its plain ranked
+list. Flagged this rather than building something that looks like data but
+isn't.
+
+**5. Icon-only refresh button.** `ActionForm` (`packages/ui`) gained a
+`variant?: "text" | "icon"` prop rather than a blanket change — "Refresh"
+across every widget switches to a minimal circular-arrow SVG button
+(`aria-label`/`title` carry the accessible name), while "Save" (settings
+forms) keeps the text variant, since that's a distinct, deliberate action a
+user takes after filling out a form and benefits from a clear label.

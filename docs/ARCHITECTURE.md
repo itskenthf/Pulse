@@ -15,13 +15,12 @@ packages/
   auth/               Auth.js configuration
   database/           Supabase client, widget_cache/widget_settings/registry/account/user helpers
   widgets/
-    hero/             Greeting + weather + quote, one full-width banner (size: "hero")
-    clock/            Live client-ticking clock, no external service
-    github/           Contribution counts + mini heatmap (reuses your GitHub login token)
-    steam/            Recently played games
+    hero/             Greeting + date/time + weather + quote, one full-width banner
+                      (size: "hero"), no settings — fetches everything automatically
+    github/           Contribution counts + blue heatmap (reuses your GitHub login token)
+    steam/            Recently played games, playtime bar chart
     quick-launch/     Fixed-slot link shortcuts, no external service
     spotify/          Top tracks, custom OAuth connect flow
-    calendar-date/    Plain-text today's date, no external service
   adapters/
     weather/          Open-Meteo client (used by widgets/hero)
     github/           GitHub GraphQL contributions client
@@ -52,9 +51,12 @@ dependency graph (`turbo.json`'s `dependsOn: ["^build"]`).
   `widget_cache`/`widget_settings`/`widget_registry`/user helpers that any
   widget's fetch/settings code reuses (`readWidgetCache`, `writeWidgetCache`,
   `readWidgetSettings`, `writeWidgetSettings`, `ensureWidgetRegistered`,
-  `listUserIds`, `readProviderAccessToken`). `createServiceClient()` is
-  server-only (uses the service role key, bypasses RLS) — never import it
-  into a client component. `readProviderAccessToken(userId, provider)`
+  `listUserIds`, `readUserName`, `readProviderAccessToken`).
+  `createServiceClient()` is server-only (uses the service role key, bypasses
+  RLS) — never import it into a client component. `readUserName(userId)`
+  reads the login profile's display name from `next_auth.users` — lets a
+  widget greet by name automatically without its own name setting (used by
+  `widgets/hero`). `readProviderAccessToken(userId, provider)`
   reads a stored OAuth token from `next_auth.accounts` — this is how a
   widget gets API access for a service the user already signed in with
   (the GitHub widget uses this; Spotify will too), without a second OAuth

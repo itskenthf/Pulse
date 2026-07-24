@@ -1,10 +1,17 @@
 import { fetchCurrentWeather } from "@pulse/adapter-weather";
-import { ensureWidgetRegistered, readWidgetCache, readWidgetSettings } from "@pulse/database";
+import { ensureWidgetRegistered, readUserName, readWidgetCache } from "@pulse/database";
 import type { WidgetFetchContext } from "@pulse/sdk";
-import { WIDGET_DESCRIPTION, WIDGET_ID, WIDGET_NAME } from "./constants";
+import {
+  HERO_TIME_ZONE,
+  WEATHER_LATITUDE,
+  WEATHER_LOCATION_LABEL,
+  WEATHER_LONGITUDE,
+  WIDGET_DESCRIPTION,
+  WIDGET_ID,
+  WIDGET_NAME,
+} from "./constants";
 import { QUOTES } from "./quotes";
-import { defaultHeroSettings } from "./settings";
-import type { HeroData, HeroPeriod, HeroSettings } from "./types";
+import type { HeroData, HeroPeriod } from "./types";
 
 const GREETINGS: Record<HeroPeriod, string> = {
   morning: "Good morning",
@@ -34,16 +41,22 @@ function hourInTimeZone(timeZone: string, date: Date): number {
 export async function fetchHeroData(context: WidgetFetchContext): Promise<HeroData> {
   await ensureWidgetRegistered(WIDGET_ID, WIDGET_NAME, WIDGET_DESCRIPTION);
 
-  const settings =
-    (await readWidgetSettings<HeroSettings>(context.userId, WIDGET_ID)) ?? defaultHeroSettings;
-
   const now = new Date();
-  const period = periodForHour(hourInTimeZone(settings.timeZone, now));
-  const greeting = settings.name ? `${GREETINGS[period]}, ${settings.name}` : GREETINGS[period];
+  const period = periodForHour(hourInTimeZone(HERO_TIME_ZONE, now));
+  const name = await readUserName(context.userId);
+  const greeting = name ? `${GREETINGS[period]}, ${name}` : GREETINGS[period];
+
+  const dateFormatted = new Intl.DateTimeFormat("en-US", {
+    timeZone: HERO_TIME_ZONE,
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(now);
 
   const weather = await fetchCurrentWeather({
-    latitude: settings.latitude,
-    longitude: settings.longitude,
+    latitude: WEATHER_LATITUDE,
+    longitude: WEATHER_LONGITUDE,
   });
 
   const previous = await readWidgetCache<HeroData>(context.userId, WIDGET_ID);
@@ -54,8 +67,9 @@ export async function fetchHeroData(context: WidgetFetchContext): Promise<HeroDa
 
   return {
     greeting,
+    dateFormatted,
     weatherSummary: `${Math.round(weather.temperatureC)}°C, ${weather.description}`,
-    weatherLocation: settings.weatherLabel,
+    weatherLocation: WEATHER_LOCATION_LABEL,
     quote: quotePick?.text ?? QUOTES[0]!.text,
     generatedAt: now.toISOString(),
   };

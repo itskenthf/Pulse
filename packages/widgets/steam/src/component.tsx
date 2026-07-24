@@ -15,6 +15,7 @@ export function SteamComponent({
       title="Steam"
       icon={<SteamIcon />}
       action={<ActionForm action={actions.refresh} submitLabel="Refresh" variant="icon" />}
+      accent="indigo"
     >
       {data ? (
         data.games.length > 0 ? (

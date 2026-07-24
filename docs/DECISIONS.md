@@ -356,3 +356,47 @@ differently-nested structure), its classes would silently drop out of the
 build the same way, with no error — only a visually broken/unstyled
 result. Worth a quick visual check after adding any new package with
 Tailwind classes, not just a green typecheck/build.
+
+## 2026-07-24 — Redesign: two-tone cards, adapted from a user-provided reference
+
+**Context:** user shared an "iDraft" dashboard mockup as the interface
+direction for Pulse's Phase 1 redesign: bold two-tone black/white cards,
+large rounded corners, soft shadows, a decorative background texture, and
+a sidebar nav. Reference doc §19 specifies a flatter Arc/Raycast/Linear
+style ("no gradients or heavy shadows") — a real tension, surfaced to the
+user before implementing rather than silently picking one.
+
+**Decision:** adopt the reference's two-tone cards, bolder radius
+(`rounded-2xl`), and a soft shadow, since those don't structurally
+conflict with §19's "one reusable card, consistent everywhere" rule — they
+just make that one card bolder. Deliberately drop the background texture
+and sidebar nav: Pulse is a single-page dashboard shell (`apps/web`'s
+`page.tsx`), not a multi-view app, so a sidebar has nothing to navigate
+between; decorative background texture is exactly the "heavy decoration"
+§19 rules out and doesn't survive contact with dark mode or mobile widths
+cleanly. Confirmed with the user before implementing.
+
+**Implementation:** `WidgetCard` (`packages/ui/src/widget-card.tsx`) gained
+a `tone?: "default" | "accent"` prop — deliberately kept out of
+`packages/sdk`'s `Widget` interface since it's a per-widget visual choice,
+not part of the data contract. `"accent"` inverts to the opposite end of
+the zinc scale from whichever color scheme is active, so the "dark" card
+stays dark in both light and dark mode instead of collapsing into the page
+background. Applied `tone="accent"` to Greeting, Clock, and Quote (3 of 9
+widgets) to echo the reference's mostly-light-with-a-few-dark-cards
+balance. `ActionForm`'s button switched from hardcoded zinc colors to
+`border-current`/`text-current`/`hover:bg-current/10` so it automatically
+reads correctly inside either tone without its own tone prop. Widget body
+text switched to `text-current` for the same reason. Also fixed the body
+font, which had been hardcoded to Arial since the original create-next-app
+scaffold despite Geist Sans already being loaded and unused.
+
+**Responsive verification:** screenshotted the real `WidgetCard`/
+`ActionForm` components (mock data, on a temporary route deleted before
+committing) at phone (390px), tablet (820px), and desktop (1440px)
+viewports, in both light and dark mode, via a Playwright script
+(`chromium-cli` wasn't available in this environment — see the run skill's
+documented fallback). Single column on phone, 2-column on tablet, 3-column
+on desktop; header wraps cleanly on narrow widths. `apps/web/src/app/page.tsx`
+picked up `flex-wrap` on the header and responsive padding (`p-4 sm:p-6`)
+for the phone case.

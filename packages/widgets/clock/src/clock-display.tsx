@@ -16,9 +16,7 @@ export function ClockDisplay({ settings }: { settings: ClockSettings }) {
     // Nothing time-dependent renders on the server, avoiding a
     // hydration mismatch — filled in once the client clock mounts.
     return (
-      <p className="text-2xl font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">
-        --:--:--
-      </p>
+      <p className="text-2xl font-semibold tabular-nums text-current">--:--:--</p>
     );
   }
 
@@ -30,7 +28,5 @@ export function ClockDisplay({ settings }: { settings: ClockSettings }) {
     hour12: settings.hour12,
   }).format(now);
 
-  return (
-    <p className="text-2xl font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">{time}</p>
-  );
+  return <p className="text-2xl font-semibold tabular-nums text-current">{time}</p>;
 }

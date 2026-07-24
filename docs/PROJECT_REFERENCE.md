@@ -430,7 +430,15 @@ Do not proceed to Phase 2 until these conditions are met.
 
 - Reference points for feel: Arc Browser, Raycast, Linear, Vercel Dashboard,
   GitHub — not Notion. Simple, lots of spacing, very little decoration.
-- Flat, minimalist, generous whitespace — no gradients or heavy shadows
+- Flat, minimalist, generous whitespace — no gradients, background texture,
+  or sidebar navigation (single-page dashboard, not a multi-view app)
+- Bolder than the original flat baseline (2026-07 redesign, see
+  docs/DECISIONS.md): a two-tone card system where select widgets invert to
+  a solid black/white card against the mostly-white/black grid, larger
+  border radius, and a soft shadow — adapted from a user-provided design
+  reference, keeping the two-tone/bold/radius elements but deliberately
+  dropping that reference's heavy drop shadows, decorative background
+  texture, and sidebar nav
 - One reusable card component (consistent padding, radius, label style, icon
   placement) used for every widget, so mobile and desktop feel like the same
   app, not two designs

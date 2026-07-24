@@ -27,7 +27,7 @@ export function ActionForm({ action, submitLabel, children, className }: ActionF
       <button
         type="submit"
         disabled={isPending}
-        className="rounded-md border border-zinc-300 px-2 py-1 text-xs font-medium text-zinc-950 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-50 dark:hover:bg-zinc-900"
+        className="rounded-md border border-current px-2 py-1 text-xs font-medium text-current hover:bg-current/10 disabled:opacity-50"
       >
         {isPending ? "…" : submitLabel}
       </button>

@@ -8,14 +8,14 @@ export default async function Home() {
   const session = await auth();
 
   return (
-    <div className="flex flex-1 flex-col gap-6 bg-zinc-50 p-6 dark:bg-black">
-      <header className="flex items-center justify-between">
+    <div className="flex flex-1 flex-col gap-6 bg-zinc-50 p-4 sm:p-6 dark:bg-black">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
           Pulse
         </h1>
 
         {session?.user ? (
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <span className="text-sm text-zinc-600 dark:text-zinc-400">
               Signed in as {session.user.name ?? session.user.email}
             </span>

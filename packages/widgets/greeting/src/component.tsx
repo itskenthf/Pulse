@@ -14,9 +14,10 @@ export function GreetingComponent({
       title="Greeting"
       icon={<GreetingIcon />}
       action={<ActionForm action={actions.refresh} submitLabel="Refresh" />}
+      tone="accent"
     >
       {data ? (
-        <p className="text-lg font-medium text-zinc-950 dark:text-zinc-50">{data.message}</p>
+        <p className="text-lg font-medium text-current">{data.message}</p>
       ) : (
         <p>No greeting yet — click refresh.</p>
       )}

@@ -2,10 +2,10 @@ import type { ContributionWeek } from "@pulse/adapter-github";
 
 const LEVEL_CLASSES = [
   "bg-zinc-200 dark:bg-zinc-800",
-  "bg-emerald-200 dark:bg-emerald-900",
-  "bg-emerald-400 dark:bg-emerald-700",
-  "bg-emerald-500 dark:bg-emerald-500",
-  "bg-emerald-700 dark:bg-emerald-300",
+  "bg-sky-200 dark:bg-sky-900",
+  "bg-sky-400 dark:bg-sky-700",
+  "bg-sky-500 dark:bg-sky-500",
+  "bg-sky-700 dark:bg-sky-300",
 ] as const;
 
 export function Heatmap({ weeks }: { weeks: ContributionWeek[] }) {

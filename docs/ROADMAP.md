@@ -170,10 +170,37 @@ and Quote cards to become one full-width hero banner above the grid
 `docs/DECISIONS.md`. `packages/widgets/greeting`, `packages/widgets/weather`,
 and `packages/widgets/quote` were deleted (their logic now lives inside
 `hero`); `packages/adapters/weather` is unchanged and reused directly by
-`hero`. **Note for Ken:** the previous Greeting/Weather widget settings
-(name, time zone, location) don't carry over automatically since Hero is a
-new widget id — reconfigure them once via the Hero banner's own Settings
-after this deploys.
+`hero`. (Superseded by the next entry below — Hero no longer has a Settings
+panel at all.)
+
+### Redesign v2 (2026-07-24): light-blue theme, Clock/Calendar into Hero, graphs, icon refresh
+
+Same-day follow-up after Ken reviewed the live redesign above. Changes:
+
+- **Theme:** reverted the two-tone black/white cards to a light-blue theme
+  (gradient page background, white cards, colored icon badges) matching a
+  second design reference. Dark mode's `dark:` variants stay in the code as
+  a fallback but are no longer the actively designed target — see
+  docs/DECISIONS.md and the amended §7 in `docs/PROJECT_REFERENCE.md`.
+- **Hero absorbs Clock and Calendar too**: `packages/widgets/clock` and
+  `packages/widgets/calendar-date` were deleted; their date/live-clock
+  display now lives inside `packages/widgets/hero` alongside the
+  greeting/weather/quote. Hero is now genuinely one banner replacing what
+  were 5 separate widgets.
+- **No settings anywhere in Hero**: name comes automatically from the
+  GitHub login profile (`readUserName` in `packages/database`), time zone
+  and weather location are fixed constants (`Asia/Kuching`) rather than a
+  setting — Ken asked for this to "just work" with no configuration step.
+  This is a real, deliberate scope-down from reference doc §7's normal
+  "settings support" requirement — amended there with the exception noted.
+- **Graphs**: Steam's recently-played list now shows a horizontal bar per
+  game (relative to the longest-played game, single blue hue) instead of
+  plain text; GitHub's contribution heatmap recolored from green to the
+  same blue. Spotify intentionally has no graph — its API doesn't expose
+  play counts or listening time, so there's no real data to chart.
+- **Refresh buttons are icon-only** now (`ActionForm`'s `variant="icon"`)
+  across every widget — a circular-arrow SVG instead of a text button,
+  `aria-label`/`title` keep it accessible.
 
 **Gate to move on:** the Phase 1 success gates in the reference doc §18 —
 daily use for two consecutive weeks, trusted data, at least one widget

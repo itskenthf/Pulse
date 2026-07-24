@@ -206,9 +206,15 @@ A widget is only considered complete when it has:
 - Error state
 - Empty state
 - Manual refresh
-- Settings support
+- Settings support, **unless** the widget is meant to run fully automatically
+  with no per-user configuration (2026-07-24, Ken's request — see
+  docs/DECISIONS.md; currently just Hero: name comes from the login
+  profile, time zone/location are fixed constants)
 - Responsive layout
-- Dark mode support
+- Dark mode support, kept functional as a fallback for OS/device dark mode
+  but not the actively designed theme as of the 2026-07-24 light-blue
+  redesign (see docs/DECISIONS.md) — light mode gets the design/polish
+  pass, dark mode just needs to not break
 - No TypeScript errors
 - No ESLint warnings
 
@@ -442,8 +448,14 @@ Do not proceed to Phase 2 until these conditions are met.
 - One reusable card component (consistent padding, radius, label style, icon
   placement) used for every widget, so mobile and desktop feel like the same
   app, not two designs. One exception: a single "hero" banner widget
-  (greeting + weather + quote) renders full-width above the grid, outside
-  card chrome, rather than as its own card.
+  (greeting + date/time + weather + quote — originally 5 separate widgets,
+  merged 2026-07-24 at Ken's request) renders full-width above the grid,
+  outside card chrome, rather than as its own card.
+- Widgets with real magnitude data (Steam's hours played, GitHub's
+  contributions) get a lightweight bar/heatmap visualization in a single
+  sequential blue hue, rather than a plain number — see docs/DESIGN_SYSTEM.md
+  "Graphs". Not applied where there's no real magnitude data to show (e.g.
+  Spotify, whose API doesn't expose play counts).
 - Responsive grid, not separate mobile/desktop builds:
   - Desktop (>1024px): 3-column grid
   - Tablet (600–1024px): 2-column grid

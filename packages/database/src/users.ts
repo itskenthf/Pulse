@@ -12,3 +12,21 @@ export async function listUserIds(): Promise<string[]> {
   if (error) throw new Error(`Failed to list users: ${error.message}`);
   return (data ?? []).map((row) => row.id as string);
 }
+
+/**
+ * Reads a user's display name from their OAuth login profile (next_auth's
+ * own users table) — lets a widget greet by name automatically instead of
+ * needing a separate name setting.
+ */
+export async function readUserName(userId: string): Promise<string | null> {
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .schema("next_auth")
+    .from("users")
+    .select("name")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to read user name: ${error.message}`);
+  return (data?.name as string | null) ?? null;
+}

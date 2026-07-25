@@ -1,3 +1,5 @@
-import type { NormalizedContributions } from "@pulse/adapter-github";
+import type { LatestActivity, NormalizedContributions } from "@pulse/adapter-github";
 
-export type GitHubData = NormalizedContributions;
+export interface GitHubData extends NormalizedContributions {
+  latestActivity: LatestActivity | null;
+}

@@ -310,6 +310,58 @@ reasoning behind each):
 - Card density improved generally by the above (real content replacing
   what would otherwise be sparse layout), not by inventing filler data.
 
+### Follow-up polish (2026-07-25): mobile click fix, nav removal, GitHub/Steam/Hero content passes
+
+Ken tested on real mobile/iPad devices and reported the overflow/profile
+menus couldn't be opened by tap at all — a real, device-confirmed bug, not
+a hypothetical. Combined with a further redesign list; all four open
+decisions resolved via `AskUserQuestion` before writing code (nav removal,
+GitHub content, Steam detail-page split, Hero intelligence style — see
+`docs/DECISIONS.md` for the full reasoning):
+
+- **Fixed the mobile/iPad click bug** (the real defect, not optional
+  polish): `WidgetMenu` and `ProfileMenu` (the latter extracted out of
+  `page.tsx` into its own `apps/web/src/app/profile-menu.tsx` client
+  component) rebuilt with real `useState` open/close state and a
+  document-level `pointerdown` outside-click listener, replacing the CSS
+  `:focus-within` approach from the previous pass — `:focus-within`
+  depends on a tap reliably moving DOM focus onto a plain `<button>`,
+  which mobile/iPad Safari doesn't always do. Verified with a real
+  touch-simulated Playwright tap, not just a screenshot. Also added
+  `overflow-hidden` to `WidgetMenu`'s dropdown, fixing a hover-corner
+  clipping bug (square item hover backgrounds poking past the rounded
+  container — `ProfileMenu`'s dropdown already had this, `WidgetMenu`'s
+  didn't).
+- **Navigation removed entirely**: Sidebar, Dock, and BottomNav (and the
+  drawer-toggle checkbox plumbing) deleted from `page.tsx` — Ken reported
+  never using it, wants "just cards." Search and Notification icon buttons
+  (both permanently disabled placeholders) removed from the navbar too.
+- **GitHub card filled out**: new `fetchLatestActivity` in
+  `packages/adapters/github` (GraphQL `viewer.repositories(first: 1,
+  orderBy: PUSHED_AT DESC)` → default branch's latest commit) renders as a
+  "latest repo + commit" row beneath the heatmap — the "considered and
+  deferred" item from the previous pass, now built since the card still
+  read as half-empty.
+- **Steam split into card + detail page**: the card now shows only large
+  portrait cover art (Steam's CDN convention,
+  `library_600x900.jpg`, built from `appId` with no extra API call) and
+  the game title — matching a reference game-library shelf look. Hours,
+  last-played, and achievements moved off the card onto a new
+  `apps/web/src/app/steam/[appId]/page.tsx` detail page, reading the same
+  already-cached `SteamData` (no new fetch). `playtime-bar.tsx` deleted
+  (superseded).
+- **Hero redesigned toward "assistant," not "stats"**: the three separate
+  glass chips (date/time, weather, quote) replaced with one flowing
+  sentence, plus a deterministic weather tip
+  (`packages/widgets/hero/src/weather-tip.ts`, rule-based on the adapter's
+  `weatherCode` — e.g. rain codes → "Take an umbrella") — explicitly *not*
+  an LLM call, per Ken's stated preference. Cross-widget insights (GitHub
+  streak / Steam playtime referenced from Hero) were considered but left
+  out of this pass to keep scope to what was actually asked for.
+- Quick Launch's icon tiles shrunk from large `aspect-square` grid cells
+  to small (`h-11 w-11`) flex-wrapped tiles, matching icon size instead of
+  stretching to fill a grid column.
+
 **Gate to move on:** the Phase 1 success gates in the reference doc §18 —
 daily use for two consecutive weeks, trusted data, at least one widget
 replacing a separately-checked tool.

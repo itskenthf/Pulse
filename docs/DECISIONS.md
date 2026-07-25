@@ -1314,3 +1314,91 @@ similar-looking thing through one component regardless of fit.
 Deferred to later stages, still not forgotten: 44×44px touch targets,
 menu accessibility (`role="menu"`, Escape, focus return), consistent
 `EmptyState` styling, responsive verification sweep.
+
+## 2026-07-25 — Hardening pass, Stage 3: accessibility
+
+Verified with an automated audit, not just eyeballing: ran `axe-core`
+(the same engine Lighthouse's accessibility category uses) against a
+rendered preview with every widget populated — **zero WCAG 2A/2AA
+violations**, before and after this stage's changes. The fixes below
+came from a manual pass reading through the interactive components with
+keyboard/screen-reader use in mind, since axe-core catches structural
+issues (missing labels, contrast, invalid ARIA) but can't tell you a
+touch target is 32px or that Escape doesn't close a menu — those needed
+actual measurement/interaction testing.
+
+**Touch targets bumped to a real 44×44px hit area**: `WidgetMenu`'s "⋯"
+trigger and `ActionForm`'s icon-refresh button, both previously
+`h-8 w-8` (32px) — now `h-11 w-11`. `ProfileMenu`'s trigger, and the
+"menu"/"text" row variants used inside dropdowns (Refresh/Save/Sign out
+rows, the Settings disclosure summary), previously ~36px tall — now
+`min-h-11`. Verified via `boundingBox()` in Playwright:
+`WidgetMenu` trigger measures 44×44, `ProfileMenu`'s 76.7×44 (wider
+because of the name label, still ≥44 on both axes). Quick Launch's
+tiles were already 44×44 (`h-11 w-11`, unrelated to this pass) — the one
+surface that happened to already be correct.
+
+**`WidgetMenu`/`ProfileMenu` keyboard support**, folded into
+`useDismissableMenu` (`packages/ui/src/use-dismissable-menu.ts`) so both
+components get it from one place:
+- Escape closes the menu **and returns focus to the trigger** — a new
+  `close()` returned alongside `setOpen`, used by Escape's internal
+  handler and by `WidgetMenu`'s Refresh action (`onSubmitted={close}`,
+  replacing `onSubmitted={() => setOpen(false)}`) so completing an
+  action from inside the menu doesn't strand focus on a control that's
+  about to disappear. Deliberately *not* used for the outside-
+  click/tap dismissal path — the user already moved their attention
+  elsewhere on purpose there, so yanking focus back to the trigger would
+  be the surprising thing, not the helpful thing.
+- The closed panel gets `inert` (a real, previously-unnoticed bug: the
+  panel was only hidden via `invisible`/`opacity-0` for the transition,
+  which doesn't remove it from the tab order — a keyboard user tabbing
+  through the page could land on menu items that were invisible on
+  screen). `inert` (React 19 passes it straight through to the DOM)
+  removes it from both the tab order and the accessibility tree while
+  it's closed, without breaking the open/close CSS transition.
+- Verified end to end with Playwright: focus the trigger → Enter opens
+  the menu (native `<button>` behavior, nothing custom needed) → Escape
+  closes it, `inert` flips back on, and `document.activeElement` is
+  confirmed to be the trigger button again.
+
+**Considered and explicitly rejected**: `role="menu"`/`role="menuitem"`
+on these dropdowns. That ARIA pattern implies arrow-key navigation
+between items and a constrained set of valid children — and once
+`WidgetMenu`'s "Settings" disclosure is expanded, the panel contains a
+real `<form>` with text `<input>`s, which isn't valid content under a
+strict ARIA menu. Forcing `role="menu"` here would tell assistive tech
+to expect keyboard behavior (arrow keys, typeahead) that isn't
+implemented, which is worse than no role at all. These are disclosure
+panels that visually resemble dropdowns, not application menus — plain
+buttons/forms (already keyboard-operable via Tab/Enter/Space, per the
+axe-core pass finding nothing wrong) are the semantically correct
+choice, not a shortcut around implementing "real" menu semantics.
+`aria-haspopup="true"` (generic popup) is used instead of `"menu"`, so
+the trigger's accessible description doesn't promise a pattern this
+doesn't implement either.
+
+**Reduced motion**: the dropdown open/close transition
+(`scale-95`→`scale-100` + opacity) wasn't actually gated by
+`prefers-reduced-motion` — `motion-safe:duration-150` only constrained
+the *duration*, but Tailwind's bare `transition` utility already
+animates by default regardless of that preference, so the scale
+transform played unconditionally. Restructured so the `scale-*`
+utilities themselves are `motion-safe:`-prefixed (opacity/visibility
+still transition, which is a much gentler change than a size
+transform) — verified via Playwright with a `reducedMotion: 'reduce'`
+browser context: the panel's computed `transform` is `none` when open,
+where it was previously a scale matrix.
+
+**Semantic landmarks**: `WidgetCard` changed from a bare `<div>` to
+`<section aria-labelledby={useId()}>`, with the title `<h2>` as the
+labelled element — each widget is now a real landmark region a screen
+reader can jump between (e.g. VoiceOver's rotor) instead of
+undifferentiated page content. `Hero`'s existing `<section>` got the
+same treatment, labelled by its `<h1>` greeting. Verified via
+`document.querySelectorAll('section[aria-labelledby]')` resolving each
+one's label correctly: "Good afternoon, Ken", "GitHub", "Steam", "Quick
+Launch".
+
+Deferred to later stages, still not forgotten: consistent `EmptyState`
+styling, responsive verification sweep.

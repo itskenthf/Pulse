@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import { GLASS_HOVER, glassClass } from "./glass";
 import { RADIUS } from "./tokens";
 
@@ -30,10 +30,18 @@ const ACCENT_BADGE: Record<WidgetCardAccent, string> = {
  * of, so every widget shares the same material (docs/DESIGN_SYSTEM.md).
  * Widgets own their own content — this only standardizes the chrome
  * around it. Not used by "hero"-sized widgets, which render chromeless.
+ *
+ * A `<section aria-labelledby>`, not a bare `<div>` — each widget is a
+ * real landmark region a screen reader can jump between (e.g. VoiceOver's
+ * rotor), announced by its own title instead of reading as undifferentiated
+ * page content.
  */
 export function WidgetCard({ title, icon, action, children, accent = "none" }: WidgetCardProps) {
+  const titleId = useId();
+
   return (
-    <div
+    <section
+      aria-labelledby={titleId}
       className={`flex h-full flex-col gap-4 ${RADIUS.card} p-5 ${glassClass("light")} ${GLASS_HOVER}`}
     >
       <div className="flex items-center justify-between gap-2">
@@ -45,11 +53,13 @@ export function WidgetCard({ title, icon, action, children, accent = "none" }: W
               {icon}
             </span>
           )}
-          <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
+          <h2 id={titleId} className="text-sm font-semibold tracking-tight">
+            {title}
+          </h2>
         </div>
         {action}
       </div>
       <div className="flex-1 text-sm text-zinc-600 dark:text-zinc-400">{children}</div>
-    </div>
+    </section>
   );
 }

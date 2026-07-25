@@ -276,6 +276,37 @@ decision in `docs/DECISIONS.md`. Summary:
 - Spotify's "now playing" emphasis treatment and the commit-signature stop
   hook were explicitly out of scope for this pass, per Ken's instruction.
 
+### Follow-up polish (2026-07-24): reference-matched gradient, denser cards, Steam achievements, icon-only Quick Launch
+
+Ken shared a reference screenshot and asked for the background/cards to
+match it, cards to feel fuller, Quick Launch to go icon-only, and Steam to
+show more per-game detail — with explicit instruction to ask clarifying
+questions first (four real open decisions, all resolved via
+`AskUserQuestion` before writing code; see docs/DECISIONS.md for the full
+reasoning behind each):
+
+- **Background**: replaced the layered-blob approach with one smooth
+  diagonal gradient (sky → cyan → violet), matching the reference more
+  closely. Also fixed a real bug surfaced along the way — the blob
+  approach's low glass opacity had been a workaround for making color
+  visible behind cards; the smooth gradient needed the same low-opacity
+  glass tokens to actually read through.
+- **Steam**: now shows only 2 games (was 5), each with real **last-played**
+  date (`GetOwnedGames`'s `rtime_last_played` — one call for the whole
+  library) and real **achievement completion** (`GetPlayerAchievements`,
+  per game — only 2 calls now that the list is shorter). Returns `null`
+  (not an error) for games with no achievements, which is the common case.
+- **Quick Launch**: icon-only, no text labels — each link's own
+  `https://{domain}/favicon.ico`, fetched directly (no third-party favicon
+  proxy), with a generic fallback icon. Fixed a real SSR race along the
+  way: a fast favicon failure can fire the image's error event before
+  React hydrates and attaches `onError`, silently losing the fallback —
+  caught with a `complete && naturalWidth === 0` check in a `useEffect`
+  on mount, verified via a DOM-state Playwright check (not just a
+  screenshot) before and after.
+- Card density improved generally by the above (real content replacing
+  what would otherwise be sparse layout), not by inventing filler data.
+
 **Gate to move on:** the Phase 1 success gates in the reference doc §18 —
 daily use for two consecutive weeks, trusted data, at least one widget
 replacing a separately-checked tool.

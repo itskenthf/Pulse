@@ -863,3 +863,71 @@ previous pass; no changes needed there.
 warning (those are GitHub's own web-UI merge-commit attribution, not
 something to rewrite history over — explained to Ken twice already,
 not revisited here).
+
+## 2026-07-24 — Reference-matched gradient, Steam achievements, icon-only Quick Launch
+
+**Context:** Ken shared a reference screenshot (a mockup with broken image
+placeholders — "Game art or browse", "Cover or browse" — showing the
+*intent* was real cover art / track art / service icons, not that the
+placeholders themselves were the design) and asked for: the background and
+cards to match it, cards to feel fuller instead of sparse, Quick Launch to
+become icon-only with no text, and Steam to show more per-game detail
+(last played, achievements). Explicitly asked to be asked clarifying
+questions before implementing — four real open decisions, resolved via
+`AskUserQuestion`:
+
+1. **Background — smooth gradient vs. tuned blobs.** Chose to match the
+   reference exactly: one smooth diagonal gradient (`from-sky-200
+   via-cyan-100 to-violet-200`, dark equivalents), replacing the three-blob
+   ambient-lighting approach from the previous redesign pass entirely.
+2. **Hero contextual action buttons** ("Continue Palworld", "Play liked
+   songs" in the reference) — Ken chose to skip this. Correctly so: it's a
+   real, nontrivial feature (deriving "what to resume" from live Steam/
+   Spotify state, plus real deep-link behavior like `steam://run/<appid>`)
+   that would have expanded this pass well beyond "polish," and skipping it
+   was offered as an explicit option rather than assumed.
+3. **Quick Launch icons.** Ken chose fetching each link's own
+   `favicon.ico` directly over a third-party favicon proxy (e.g. Google's
+   service) or a manual icon picker — no new dependency on a third party
+   knowing every domain the user links to, same trust boundary as visiting
+   the site.
+4. **Steam depth.** Ken chose to add real achievement data *and* reduce
+   the shown game count (5 → 2) so each game has room for the extra
+   detail, rather than keeping 5 games and cramming achievements into a
+   denser list.
+
+**Implementation:**
+
+- `packages/adapters/steam/src/client.ts` gained `fetchLastPlayedMap`
+  (one `GetOwnedGames` call → `Record<appId, unixSeconds>`, since
+  `GetRecentlyPlayedGames` doesn't include a last-played timestamp, only
+  2-week/forever playtime) and `fetchAchievementSummary` (one
+  `GetPlayerAchievements` call per game — cheap now that only 2 games are
+  shown). The achievement call returns `null`, not a thrown error, when a
+  game has no achievements or the data isn't available — the common case
+  (most games don't support Steam achievements at all), not a failure.
+- `packages/widgets/steam`: `MAX_GAMES` 5 → 2; `fetch.ts` fetches the
+  last-played map and per-game achievements in parallel after narrowing to
+  the top 2 recently-played games; `playtime-bar.tsx` rewritten to show
+  cover art, a glass progress bar, "last played" (real, formatted via a
+  small local `formatRelativeDay` helper — day-level granularity, no need
+  for exact timestamps), and achievement completion when available.
+- `packages/widgets/quick-launch`: new `link-icon.tsx` client component
+  rendering `<img src="https://{hostname}/favicon.ico">` with a Lucide
+  `Link2` fallback. **Found and fixed a real SSR race along the way**: the
+  image starts loading from the server-rendered HTML immediately, before
+  React's JS bundle finishes loading and hydrating; a *fast* failure (no
+  favicon at that path, DNS failure, etc.) can fire the native `error`
+  event before hydration attaches React's `onError` listener, so the
+  fallback silently never appears — confirmed via `page.evaluate` checking
+  `img.complete && img.naturalWidth === 0` after the fact, which was `true`
+  even though the fallback hadn't rendered. Fixed with a `useEffect` on
+  mount that checks that same condition and sets the failed state manually,
+  catching failures that happened before hydration, in addition to the
+  `onError` handler catching ones that happen after. Verified the fix with
+  a DOM-state assertion (`querySelectorAll` for the fallback `<svg>`), not
+  just a screenshot — a screenshot alone wouldn't have caught this bug in
+  the first place, since a static image and a "failed to load" placeholder
+  can look identical depending on timing.
+- `apps/web/src/app/page.tsx`: background switched from the layered-blob
+  `<div>`s to a single `bg-gradient-to-br` on the root container.

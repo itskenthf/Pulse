@@ -33,9 +33,9 @@ export function SpotifyComponent({
       accent="green"
     >
       {data.tracks.length > 0 ? (
-        <ul className="flex flex-col gap-4">
+        <ul className="flex min-w-0 flex-col gap-4">
           {data.tracks.map((track) => (
-            <li key={track.id} className="flex items-center gap-3">
+            <li key={track.id} className="flex min-w-0 items-center gap-3">
               {track.imageUrl ? (
                 // Plain <img>: external Spotify CDN artwork, tiny fixed
                 // size — not worth routing through next/image's optimizer.

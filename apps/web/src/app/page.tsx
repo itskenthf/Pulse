@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getAllWidgets, type Widget, type WidgetSize } from "@pulse/sdk";
+import { getAllWidgets, type Widget } from "@pulse/sdk";
 import { readWidgetCache, readWidgetSettings } from "@pulse/database";
 import { glassClass, RADIUS, Skeleton, SPRING_PRESS, WidgetErrorBoundary } from "@pulse/ui";
 import { auth, signIn } from "@/auth";
@@ -11,7 +11,7 @@ export default async function Home() {
   const session = await auth();
 
   return (
-    <div className="relative flex min-h-screen bg-gradient-to-br from-sky-200 via-cyan-100 to-violet-200 dark:from-slate-950 dark:via-blue-950 dark:to-violet-950">
+    <div className="relative flex min-h-screen overflow-x-hidden bg-gradient-to-br from-sky-200 via-cyan-100 to-violet-200 dark:from-slate-950 dark:via-blue-950 dark:to-violet-950">
       <div className="relative flex min-h-screen flex-1 flex-col">
         <Navbar session={session} />
 
@@ -65,12 +65,6 @@ function Navbar({ session }: { session: { user?: SessionUser } | null }) {
   );
 }
 
-const SPAN_CLASS: Record<Exclude<WidgetSize, "hero">, string> = {
-  lg: "sm:col-span-2 lg:col-span-2",
-  md: "col-span-1",
-  sm: "col-span-1",
-};
-
 /**
  * One widget's cache read + render. Deliberately has no try/catch of its
  * own — a plain try/catch here would only catch synchronous errors in
@@ -108,18 +102,43 @@ async function WidgetSlot({ widget, userId }: { widget: Widget; userId: string }
   return <>{widget.render(props)}</>;
 }
 
+function WidgetCell({ widget, userId }: { widget: Widget; userId: string }) {
+  return (
+    <WidgetErrorBoundary name={widget.name}>
+      <Suspense fallback={<Skeleton />}>
+        <WidgetSlot widget={widget} userId={userId} />
+      </Suspense>
+    </WidgetErrorBoundary>
+  );
+}
+
+/**
+ * "hero" renders full-width, chromeless, above everything else. Every
+ * other widget splits into two independently-stacked flows rather than
+ * one shared CSS Grid: "lg" widgets (currently just GitHub) in a wide
+ * left column, everything else in a narrower right column. This isn't
+ * how it started — a single `grid-cols-3` with GitHub spanning 2 columns
+ * left the remaining single-column widgets sharing GitHub's grid row,
+ * and CSS Grid sizes a row's height to its tallest cell regardless of
+ * `align-items` — so whenever a shorter widget (e.g. Quick Launch) sat
+ * in the same row as a taller one (Steam, once it grew stacked cover
+ * art), the shorter cell's card was fine, but the row underneath it sat
+ * empty. That's not a hover/hydration bug, it's how CSS Grid tracks
+ * work — confirmed by reproducing it at multiple widths (desktop through
+ * iPad portrait) during the responsive sweep, not guessed at. Two
+ * independent flex columns don't have shared row tracks, so each one's
+ * cards simply stack tight regardless of what's in the other column.
+ * Assumes at least one "lg" widget exists to anchor the left column —
+ * true today (GitHub) and not worth generalizing further until it isn't.
+ */
 function WidgetGrid({ userId }: { userId: string }) {
   const widgets = getAllWidgets();
 
-  // "hero" renders full-width, chromeless, above the grid. Every other
-  // widget flows into a bento-style grid — its `size` (sm/md/lg) picks how
-  // many columns it spans, so the richest widget (GitHub, "lg") becomes an
-  // actual focal point instead of every card getting equal width. Layout
-  // (which bucket, which span) only depends on `widget.size`, known
-  // synchronously from the registry — no need to await any widget's data
-  // before the grid itself can render.
   const heroWidgets = widgets.filter((widget) => widget.size === "hero");
-  const cardWidgets = widgets.filter((widget) => widget.size !== "hero");
+  const wideWidgets = widgets.filter((widget) => widget.size === "lg");
+  const railWidgets = widgets.filter(
+    (widget) => widget.size !== "hero" && widget.size !== "lg",
+  );
 
   return (
     <>
@@ -130,19 +149,17 @@ function WidgetGrid({ userId }: { userId: string }) {
           </Suspense>
         </WidgetErrorBoundary>
       ))}
-      <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {cardWidgets.map((widget) => (
-          <div
-            key={widget.id}
-            className={SPAN_CLASS[widget.size as Exclude<WidgetSize, "hero">]}
-          >
-            <WidgetErrorBoundary name={widget.name}>
-              <Suspense fallback={<Skeleton />}>
-                <WidgetSlot widget={widget} userId={userId} />
-              </Suspense>
-            </WidgetErrorBoundary>
-          </div>
-        ))}
+      <div className="flex min-w-0 flex-col items-start gap-4 sm:flex-row">
+        <div className="flex min-w-0 w-full flex-col gap-4 sm:basis-2/3">
+          {wideWidgets.map((widget) => (
+            <WidgetCell key={widget.id} widget={widget} userId={userId} />
+          ))}
+        </div>
+        <div className="flex min-w-0 w-full flex-col gap-4 sm:basis-1/3">
+          {railWidgets.map((widget) => (
+            <WidgetCell key={widget.id} widget={widget} userId={userId} />
+          ))}
+        </div>
       </div>
     </>
   );

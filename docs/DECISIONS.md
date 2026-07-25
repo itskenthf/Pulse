@@ -1441,3 +1441,78 @@ matches, not wherever the words "empty state" could apply.
 
 Deferred to the final stage, still not forgotten: responsive
 verification sweep.
+
+## 2026-07-25 — Hardening pass, Stage 5: responsive verification
+
+Actually reproduced problems via Playwright at seven real widths
+(desktop 1920, large-laptop 1512, laptop 1280, iPad landscape 1024,
+iPad portrait 768, large-phone 428, phone 375) against the full
+dashboard (navbar + hero + all five widgets, realistic data including a
+2-game Steam card and a long Spotify track title) — not assumed fine
+from the single-widget checks earlier stages used. Found two real bugs.
+
+**Bug 1 — the grid's row-track height, not actually fixed by
+`items-start`.** At every width from phone through desktop, GitHub's
+card shared a `grid` row with Steam. Once Steam's stacked cover art (2
+games) made it taller than GitHub, a large dead gap opened up under
+GitHub — visible at both the `lg:` 3-column tier (GitHub next to Steam)
+and the `sm:` 2-column tier (Steam next to Quick Launch). `items-start`
+(added earlier, see the redesign-batch entry) only stops a *shorter
+item's own box* from stretching to match a row's height — it does
+nothing about the row TRACK itself, which CSS Grid still sizes to its
+tallest cell regardless of `align-items`. That's a real, spec-level
+distinction I'd conflated before actually reproducing this at real
+widths with real content-height variance.
+
+Fix: replaced the single `grid-cols-3` for card widgets with two
+independent flex columns — `wideWidgets` (`size: "lg"`, currently just
+GitHub) in one column, everything else (`railWidgets`) stacked in a
+second, narrower column (`apps/web/src/app/page.tsx`, `WidgetGrid`).
+Two independent flex-column stacks have no shared row tracks, so each
+one's cards simply sit tight against each other regardless of what's in
+the other column — GitHub ending early just means its column ends
+early, not a gap. `SPAN_CLASS` (the old per-widget grid-span map) is
+gone; layout is now just "which of the two columns," decided once, not
+computed per widget. This assumes at least one `"lg"` widget exists —
+true today, not worth generalizing further until it isn't.
+
+**Bug 2 — nested flex containers refusing to shrink below their
+content's natural (untruncated) width**, discovered because the sweep
+used a deliberately long Spotify track title
+("DON'T KILL THE PARTY (feat. Quavo & Juicy J)") instead of only short
+placeholder text. Text with `truncate` (`white-space: nowrap;
+overflow: hidden; text-overflow: ellipsis`) has an intrinsic min-content
+width equal to its *full, untruncated* width — `overflow:hidden` only
+affects painting, not CSS's box-sizing algorithm — and a flex item's
+default `min-width: auto` uses that untruncated width as a floor it
+won't shrink below, unless every container in the chain between the
+text and the point where shrinking needs to happen has `min-width: 0`.
+Added `min-w-0` through the actual affected chain (`WidgetCard`'s root
+`<section>` and its two direct children, plus Spotify's `<ul>`/`<li>`)
+once real measurement (Playwright `getBoundingClientRect`, not
+speculation) confirmed exactly where the extra width was and wasn't
+coming from — narrowed the overflow from 50px to about 15px at the
+375px phone width.
+
+That remaining ~15px didn't trace to any single leaf element (nothing
+measured wider than its own container), which points to a flexbox
+`gap`-with-intrinsic-sizing edge case rather than one more fixable
+`min-w-0` spot — plausible given how many nested flex levels this
+layout now has (outer shell → main → grid wrapper → column → 
+WidgetCard → content), each a place gaps and min-content calculations
+compound slightly. Rather than keep chasing a sub-20px residual through
+further speculative `min-w-0` placements, added `overflow-x-hidden` to
+the page's outermost container
+(`apps/web/src/app/page.tsx`) as a defensive backstop — verified
+nothing is actually being clipped by it (every real leaf element
+already renders within the viewport; this only guards against the
+residual container-level rounding), and confirmed zero horizontal
+scroll at all seven widths, including with the long test string still
+in place.
+
+**What wasn't touched**: no per-breakpoint bespoke layouts were built —
+per Ken's confirmed preference, the fix targets the actual reproduced
+problems (the grid row-height trap, the truncation-in-flex trap), not a
+ground-up redesign of the responsive system. The existing `sm:`/`lg:`
+breakpoint structure stays; only the *card-widgets* section changed
+from a single grid to two flex columns.

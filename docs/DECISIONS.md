@@ -1166,3 +1166,88 @@ PR is merged and redeployed.
 `apps/web/src/app/globals.css` — dead CSS left over from
 `playtime-bar.tsx`, which was deleted in the previous Steam redesign
 entry but its global keyframe was missed at the time.
+
+## 2026-07-25 — Hardening pass, Stage 1: per-widget error isolation + streaming
+
+Ken approved the visual direction as final ("do NOT redesign the
+application") and asked for a senior-engineer quality pass instead:
+eliminate bugs/inconsistencies, harden the architecture, no new features.
+Given the scope (a 14-point checklist covering UI consistency,
+responsiveness, accessibility, components, tokens, performance, error
+handling, testing, code quality), agreed via `AskUserQuestion` to work in
+**reviewable stages** rather than one giant pass, and to **tune the
+existing 3-tier grid** rather than hand-build 7 distinct breakpoint
+layouts for what's currently a 5-widget dashboard. Full staged roadmap
+recorded in the plan file at the time
+(`/root/.claude/plans/lovely-booping-wilkes.md` — not committed to the
+repo, plan-mode artifact) and in `docs/ROADMAP.md`.
+
+A direct code audit (not assumption) found the most serious real gap:
+**no error isolation existed**. `WidgetGrid` (`apps/web/src/app/page.tsx`)
+awaited every widget's cache/settings read in one `Promise.all` — any
+single widget throwing failed the entire page. No `error.tsx` existed
+anywhere in `apps/web/src/app`. This directly contradicted "if GitHub
+fails, the dashboard still works," which wasn't actually true.
+
+**Fix, attempt 1 (rejected by the linter, correctly)**: wrapped each
+widget's cache-read + `render()` call in a plain `try/catch` inside a new
+`WidgetSlot` component. ESLint's `react-hooks/error-boundaries` rule
+flagged this immediately, and it's right: JSX elements are just deferred
+descriptions until React actually renders them, so a `try/catch` around
+`return <>{widget.render(props)}</>` only catches errors thrown
+*synchronously within that top-level function* (e.g. a bad destructure) —
+not errors thrown deeper in the JSX tree during React's real render pass
+(e.g. inside `Heatmap`, or any client-component descendant). That's a
+narrower guarantee than "if a widget fails, it's isolated," so it would
+have been a false sense of safety.
+
+**Fix, attempt 2 (shipped)**: a real error boundary. New
+`WidgetErrorBoundary` (`packages/ui/src/widget-error-boundary.tsx`) — a
+class component (`getDerivedStateFromError`/`componentDidCatch`; React
+has no Hook equivalent, error boundaries must be classes), rendering the
+new `ErrorState` primitive on catch. Composition per widget in
+`WidgetGrid`:
+```
+<WidgetErrorBoundary name={widget.name}>
+  <Suspense fallback={<Skeleton .../>}>
+    <WidgetSlot widget={widget} userId={userId} />
+  </Suspense>
+</WidgetErrorBoundary>
+```
+`WidgetSlot` itself has no try/catch at all now — errors propagate
+naturally, and Next.js's streaming SSR surfaces an async Server
+Component's thrown error to the nearest Client Component error boundary
+above it, which is exactly what `WidgetErrorBoundary` is. Verified this
+isn't cargo-culted: a temporary preview route with three widgets — one
+that throws, two that resolve normally (one slow, to also exercise
+streaming) — showed the throwing widget's `ErrorState` while both others
+rendered fully, and React's own dev-mode console log confirmed the exact
+mechanism: *"The above error occurred in the `<ThrowingWidget>`
+component. It was handled by the `<WidgetErrorBoundary>` error
+boundary."* Route deleted before commit, per the established pattern.
+
+**Streaming, same change**: `WidgetGrid` no longer awaits anything
+itself — it's now synchronous, since layout (which grid bucket, which
+column span) only depends on `widget.size`, known immediately from the
+registry, not on any widget's cache data. Each widget's `Suspense`
+boundary lets it stream in independently once its own cache read
+resolves, instead of the whole grid blocking on the slowest widget. New
+`Skeleton` primitive (`packages/ui/src/skeleton.tsx`) is the fallback —
+two variants (`card`/`hero`) matching `WidgetCard`'s and Hero's shapes,
+built from `animate-pulse` blocks with a `motion-reduce:animate-none`
+override.
+
+**Safety net**: `apps/web/src/app/error.tsx` added as a last-resort
+Next.js route-segment error boundary for anything outside the widget
+grid entirely (layout, navbar, auth lookup) — the per-widget boundaries
+handle the grid itself, this catches everything else.
+
+Deferred to later stages (per the staged plan, not forgotten): shared
+`Metric`/`GlassChip` primitives and a `useDismissableMenu` hook to
+de-duplicate `WidgetMenu`/`ProfileMenu`, a real radius/spacing token
+scale (current radii are ad hoc — `rounded-3xl`, `rounded-[32px]`,
+`rounded-2xl`, `rounded-xl` with no scale tying them together), 44×44px
+touch targets (`WidgetMenu`/`ActionForm`'s icon buttons are currently
+32px), menu accessibility (`role="menu"`, Escape-to-close, focus
+return), consistent `EmptyState` styling, and a responsive verification
+sweep.

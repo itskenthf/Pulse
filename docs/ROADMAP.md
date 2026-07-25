@@ -383,6 +383,38 @@ working) with no hydration errors found — Ken's "can't click any button"
 report is most likely against the still-deployed `main`, which doesn't
 yet include the previous entry's click-fix PR.
 
+### Hardening pass (2026-07-25 onward): quality over features
+
+Ken confirmed the visual direction/layout are final — "do NOT redesign
+the application" — and reframed the work going forward as a senior-
+engineer quality pass across the whole app: consistency, responsiveness,
+accessibility, maintainability, performance, error handling, no
+shortcuts. Given the scope, agreed to work in reviewable stages rather
+than one pass, and to tune the existing 3-tier grid rather than build 7
+distinct hand-designed breakpoint layouts (5 widgets doesn't warrant 7
+layout variants) — see `docs/DECISIONS.md` for the full reasoning and
+the complete staged roadmap.
+
+- [x] **Stage 1 — Resilience**: a direct audit found the dashboard had
+  no error isolation at all (`WidgetGrid` awaited every widget in one
+  `Promise.all`; any single widget throwing failed the whole page) and
+  no streaming (the grid blocked entirely on the slowest widget). Fixed
+  with a real `WidgetErrorBoundary` (`packages/ui`) wrapping each
+  widget's own `Suspense` boundary — verified with a temporary preview
+  route where one widget deliberately threw: it showed an `ErrorState`
+  while the other widgets, including a deliberately slow one, rendered
+  normally. New `Skeleton` primitive as the Suspense fallback; new root
+  `apps/web/src/app/error.tsx` as a last-resort safety net outside the
+  grid. See `docs/DECISIONS.md` for why the first attempt (a plain
+  `try/catch`) was wrong and how the real fix works.
+- [ ] Stage 2 — shared primitives & design tokens (Metric, GlassChip,
+  `useDismissableMenu`, a real radius scale)
+- [ ] Stage 3 — accessibility (44×44 touch targets, menu ARIA/keyboard,
+  semantic landmarks)
+- [ ] Stage 4 — consistent `EmptyState` primitive
+- [ ] Stage 5 — responsive verification sweep (fix real breakage only)
+- [ ] Stage 6 — final review, Lighthouse, docs wrap-up
+
 ## Phase 2 — make it actionable
 
 Not started. Blocked on Phase 1 gate.

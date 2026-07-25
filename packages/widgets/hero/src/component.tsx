@@ -1,5 +1,6 @@
 import { Sparkles } from "lucide-react";
-import { glassClass, WidgetMenu } from "@pulse/ui";
+import { useId } from "react";
+import { glassClass, RADIUS, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
 import { HeroClock } from "./hero-clock";
 import type { HeroData } from "./types";
@@ -14,10 +15,18 @@ export function HeroComponent({
   data,
   actions,
 }: WidgetRenderProps<HeroData, Record<string, unknown>>) {
+  const headingId = useId();
+
   return (
-    <section className={`flex flex-col gap-5 rounded-[32px] p-6 sm:p-8 ${glassClass("medium")}`}>
+    <section
+      aria-labelledby={headingId}
+      className={`flex flex-col gap-5 ${RADIUS.hero} p-6 sm:p-8 ${glassClass("medium")}`}
+    >
       <div className="flex items-start justify-between gap-3">
-        <h1 className="text-4xl font-bold tracking-tight text-zinc-950 sm:text-5xl dark:text-zinc-50">
+        <h1
+          id={headingId}
+          className="text-4xl font-bold tracking-tight text-zinc-950 sm:text-5xl dark:text-zinc-50"
+        >
           {data?.greeting ?? "Hello"}
         </h1>
         <WidgetMenu id="hero" actions={actions} />

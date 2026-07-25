@@ -2,7 +2,7 @@ import { ArrowLeft, Clock, Trophy } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { readWidgetCache } from "@pulse/database";
-import { glassClass } from "@pulse/ui";
+import { glassClass, Metric, RADIUS } from "@pulse/ui";
 import {
   CoverArt,
   formatHours,
@@ -43,7 +43,7 @@ export default async function SteamGamePage({
           <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Dashboard
         </Link>
 
-        <div className={`flex flex-col gap-6 rounded-3xl p-6 ${glassClass("light")}`}>
+        <div className={`flex flex-col gap-6 ${RADIUS.card} p-6 ${glassClass("light")}`}>
           <CoverArt appId={game.appId} name={game.name} />
 
           <div className="flex flex-1 flex-col gap-5">
@@ -52,10 +52,10 @@ export default async function SteamGamePage({
             </h1>
 
             <div className="flex flex-wrap gap-x-8 gap-y-4">
-              <Stat label="Total playtime" value={formatHours(game.playtimeForeverMinutes)} />
-              <Stat label="Last 2 weeks" value={formatHours(game.playtime2WeeksMinutes)} />
+              <Metric label="Total playtime" value={formatHours(game.playtimeForeverMinutes)} />
+              <Metric label="Last 2 weeks" value={formatHours(game.playtime2WeeksMinutes)} />
               {game.lastPlayedAt !== undefined && (
-                <Stat label="Last played" value={formatRelativeDay(game.lastPlayedAt)} />
+                <Metric label="Last played" value={formatRelativeDay(game.lastPlayedAt)} />
               )}
             </div>
 
@@ -84,17 +84,6 @@ export default async function SteamGamePage({
           </div>
         </div>
       </main>
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col">
-      <span className="text-2xl font-bold tracking-tight text-zinc-950 dark:text-zinc-50">
-        {value}
-      </span>
-      <span className="text-xs text-zinc-500 dark:text-zinc-500">{label}</span>
     </div>
   );
 }

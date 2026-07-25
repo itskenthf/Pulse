@@ -383,6 +383,104 @@ working) with no hydration errors found — Ken's "can't click any button"
 report is most likely against the still-deployed `main`, which doesn't
 yet include the previous entry's click-fix PR.
 
+### Hardening pass (2026-07-25 onward): quality over features
+
+Ken confirmed the visual direction/layout are final — "do NOT redesign
+the application" — and reframed the work going forward as a senior-
+engineer quality pass across the whole app: consistency, responsiveness,
+accessibility, maintainability, performance, error handling, no
+shortcuts. Given the scope, agreed to work in reviewable stages rather
+than one pass, and to tune the existing 3-tier grid rather than build 7
+distinct hand-designed breakpoint layouts (5 widgets doesn't warrant 7
+layout variants) — see `docs/DECISIONS.md` for the full reasoning and
+the complete staged roadmap.
+
+- [x] **Stage 1 — Resilience**: a direct audit found the dashboard had
+  no error isolation at all (`WidgetGrid` awaited every widget in one
+  `Promise.all`; any single widget throwing failed the whole page) and
+  no streaming (the grid blocked entirely on the slowest widget). Fixed
+  with a real `WidgetErrorBoundary` (`packages/ui`) wrapping each
+  widget's own `Suspense` boundary — verified with a temporary preview
+  route where one widget deliberately threw: it showed an `ErrorState`
+  while the other widgets, including a deliberately slow one, rendered
+  normally. New `Skeleton` primitive as the Suspense fallback; new root
+  `apps/web/src/app/error.tsx` as a last-resort safety net outside the
+  grid. See `docs/DECISIONS.md` for why the first attempt (a plain
+  `try/catch`) was wrong and how the real fix works.
+- [x] **Stage 2 — Shared primitives & design tokens**: four real
+  duplicates found by direct inspection, each extracted into
+  `packages/ui` — `useDismissableMenu` (WidgetMenu/ProfileMenu's
+  identical open/close logic), `Metric` (GitHub's and Steam's
+  near-identical "label + big value" components, which had already
+  drifted to different text sizes), `GLASS_CHIP` (the soft-tile surface
+  copy-pasted between GitHub's commit row and Quick Launch, with
+  inconsistent radii), and a `RADIUS` token scale (`chip`/`card`/`hero`,
+  replacing ad hoc literals including Hero's bare `rounded-[32px]` magic
+  value). One real visual fix included: Quick Launch's tiles now match
+  the same 16px corner radius every other chip-shaped surface uses
+  (previously 12px, the one true outlier). See `docs/DECISIONS.md` for
+  what was deliberately *not* merged (Steam's achievement progress
+  track stays its own literal — visually similar to `GLASS_CHIP` but not
+  interactive, so forcing it through that token would carry an
+  inapplicable hover state).
+- [x] **Stage 3 — Accessibility**: verified with an automated `axe-core`
+  audit (zero WCAG 2A/2AA violations, both before and after) plus manual
+  keyboard/measurement testing axe-core can't catch on its own. Real
+  fixes: touch targets bumped to a genuine 44×44px (`WidgetMenu`/
+  `ActionForm`'s icon buttons were 32px), Escape now closes
+  `WidgetMenu`/`ProfileMenu` and returns focus to the trigger, closed
+  dropdown panels get `inert` (previously still tabbable while
+  invisible — a real bug), the dropdown's scale transition is properly
+  `motion-safe:`-gated (it wasn't, despite looking gated), and every
+  `WidgetCard`/Hero is now a labelled `<section>` landmark instead of a
+  bare `<div>`. `role="menu"` was considered and deliberately rejected —
+  see `docs/DECISIONS.md` for why forcing that pattern here would be
+  wrong, not just unfinished.
+- [x] **Stage 4 — Consistent empty states**: six widgets each had their
+  own bare-`<p>` "nothing yet" text with no shared layout. New
+  `EmptyState` primitive (`packages/ui`) centers within the card's
+  available height instead of sitting left-aligned at the top with dead
+  space below, and supports an optional action (used by Spotify's
+  "not connected" case, which previously showed a bare button with no
+  explanatory text). Also caught and fixed three more Stage 2/3-class
+  misses found while in these files: two more literal `rounded-2xl`/
+  `rounded-xl` spots that should've been `RADIUS.chip`, and two more
+  buttons under the 44px touch-target minimum.
+- [x] **Stage 5 — Responsive verification**: reproduced real breakage
+  via Playwright at 7 widths (desktop through phone) against the full
+  dashboard, not assumed fine from single-widget checks. Found the
+  `items-start` grid fix from an earlier pass never actually fixed the
+  underlying issue — CSS Grid still sizes a row's *track* to its
+  tallest cell regardless of `align-items`, so GitHub sharing a row
+  with a tall Steam card left a large dead gap under GitHub at every
+  width. Replaced the shared grid with two independent flex columns
+  (wide column for `"lg"` widgets, a stacked rail for everything else)
+  — no shared row tracks, no gap. Also found and fixed a classic
+  flex-truncation bug (`min-width: auto` using untruncated text width
+  as a floor) once the sweep used a realistically long track title
+  instead of only short placeholders. See `docs/DECISIONS.md` for the
+  full trace — both were reproduced and fixed with real measurements,
+  not guessed at.
+- [x] **Stage 6 — Final review**: Lighthouse run against a real
+  production build (`next build && next start`, not the dev server —
+  confirmed dev mode alone was worth 33 performance points of
+  difference on the identical page). Final: **Performance 98,
+  Accessibility 100, Best Practices 96, SEO 100** — all meet the ≥95
+  target. The one Best Practices point comes entirely from this
+  sandbox's network restrictions blocking external CDN/favicon domains
+  (verified by reading the actual audit detail), not a code issue.
+  Code-quality sweep found no TODOs, no stray `any`, no orphaned
+  exports. See `docs/DECISIONS.md` for the full self-review and a
+  summary of all six stages.
+
+**Hardening pass complete** (Stages 1–6, all on `dev`). Honest gaps,
+named rather than glossed over: no permanent automated test suite
+exists in the repo (verification used the project's established ad hoc
+Playwright-against-a-temporary-route pattern throughout, not a
+committed suite), and cross-browser testing was Chromium-only (this
+sandbox has no Safari/Firefox/real device access). Both are real scope
+decisions for later, not silently assumed done.
+
 ## Phase 2 — make it actionable
 
 Not started. Blocked on Phase 1 gate.

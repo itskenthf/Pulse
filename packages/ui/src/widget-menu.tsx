@@ -1,10 +1,12 @@
 "use client";
 
 import { MoreHorizontal, RefreshCw, Settings as SettingsIcon } from "lucide-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import type { WidgetActions } from "@pulse/sdk";
 import { ActionForm } from "./action-form";
 import { glassClass, SPRING_PRESS } from "./glass";
+import { RADIUS } from "./tokens";
+import { useDismissableMenu } from "./use-dismissable-menu";
 
 export interface WidgetMenuProps {
   id: string;
@@ -20,28 +22,12 @@ export interface WidgetMenuProps {
  * replacing a bare icon-refresh button (and, for Steam/Quick Launch, a
  * separate below-card Settings toggle) — one consistent action surface
  * per widget, room for future actions without redesigning the card.
- *
- * Open state is real React state toggled on click, closed via a
- * document-level `pointerdown` listener outside the menu — not CSS
- * `:focus-within`, which relies on a tap reliably moving DOM focus onto a
- * plain `<button>`. Mobile/iPad Safari doesn't always do that on tap, so
- * `:focus-within` silently made the menu unopenable on touch devices.
- * `pointerdown` (not `click`) covers touch and mouse identically.
+ * Open/close state comes from `useDismissableMenu` — see its own doc
+ * comment for why it's `pointerdown`-based rather than CSS
+ * `:focus-within`.
  */
 export function WidgetMenu({ id, actions, settingsFields }: WidgetMenuProps) {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function handlePointerDown(event: PointerEvent) {
-      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [open]);
+  const { open, setOpen, rootRef } = useDismissableMenu<HTMLDivElement>();
 
   return (
     <div ref={rootRef} className="relative inline-block" data-widget-menu={id}>
@@ -55,7 +41,7 @@ export function WidgetMenu({ id, actions, settingsFields }: WidgetMenuProps) {
         <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
       </button>
       <div
-        className={`absolute right-0 z-20 mt-2 w-48 origin-top-right overflow-hidden rounded-2xl py-1 transition motion-safe:duration-150 ${
+        className={`absolute right-0 z-20 mt-2 w-48 origin-top-right overflow-hidden ${RADIUS.chip} py-1 transition motion-safe:duration-150 ${
           open ? "visible scale-100 opacity-100" : "invisible scale-95 opacity-0"
         } ${glassClass("heavy")}`}
       >

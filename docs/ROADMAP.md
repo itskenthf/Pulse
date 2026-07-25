@@ -407,8 +407,22 @@ the complete staged roadmap.
   `apps/web/src/app/error.tsx` as a last-resort safety net outside the
   grid. See `docs/DECISIONS.md` for why the first attempt (a plain
   `try/catch`) was wrong and how the real fix works.
-- [ ] Stage 2 — shared primitives & design tokens (Metric, GlassChip,
-  `useDismissableMenu`, a real radius scale)
+- [x] **Stage 2 — Shared primitives & design tokens**: four real
+  duplicates found by direct inspection, each extracted into
+  `packages/ui` — `useDismissableMenu` (WidgetMenu/ProfileMenu's
+  identical open/close logic), `Metric` (GitHub's and Steam's
+  near-identical "label + big value" components, which had already
+  drifted to different text sizes), `GLASS_CHIP` (the soft-tile surface
+  copy-pasted between GitHub's commit row and Quick Launch, with
+  inconsistent radii), and a `RADIUS` token scale (`chip`/`card`/`hero`,
+  replacing ad hoc literals including Hero's bare `rounded-[32px]` magic
+  value). One real visual fix included: Quick Launch's tiles now match
+  the same 16px corner radius every other chip-shaped surface uses
+  (previously 12px, the one true outlier). See `docs/DECISIONS.md` for
+  what was deliberately *not* merged (Steam's achievement progress
+  track stays its own literal — visually similar to `GLASS_CHIP` but not
+  interactive, so forcing it through that token would carry an
+  inapplicable hover state).
 - [ ] Stage 3 — accessibility (44×44 touch targets, menu ARIA/keyboard,
   semantic landmarks)
 - [ ] Stage 4 — consistent `EmptyState` primitive

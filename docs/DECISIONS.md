@@ -1242,12 +1242,75 @@ Next.js route-segment error boundary for anything outside the widget
 grid entirely (layout, navbar, auth lookup) — the per-widget boundaries
 handle the grid itself, this catches everything else.
 
-Deferred to later stages (per the staged plan, not forgotten): shared
-`Metric`/`GlassChip` primitives and a `useDismissableMenu` hook to
-de-duplicate `WidgetMenu`/`ProfileMenu`, a real radius/spacing token
-scale (current radii are ad hoc — `rounded-3xl`, `rounded-[32px]`,
-`rounded-2xl`, `rounded-xl` with no scale tying them together), 44×44px
+Deferred to later stages (per the staged plan, not forgotten): 44×44px
 touch targets (`WidgetMenu`/`ActionForm`'s icon buttons are currently
 32px), menu accessibility (`role="menu"`, Escape-to-close, focus
 return), consistent `EmptyState` styling, and a responsive verification
 sweep.
+
+## 2026-07-25 — Hardening pass, Stage 2: shared primitives & design tokens
+
+Four real duplicates/inconsistencies found by direct inspection (not
+guessing), each fixed by extracting the shared piece into `packages/ui`
+rather than leaving the copies in place:
+
+1. **`WidgetMenu` and `ProfileMenu` duplicated the exact same
+   open/close logic** — `useState` + a `pointerdown`-outside listener,
+   line for line identical (the click-fix from an earlier entry landed
+   in both places separately). Extracted to
+   `packages/ui/src/use-dismissable-menu.ts` (`useDismissableMenu`),
+   returning `{ open, setOpen, rootRef }`; both components now just call
+   the hook. Behavior is unchanged — this is a pure de-duplication, not
+   a rewrite.
+2. **GitHub's `Stat` and Steam's detail-page `Stat`** were two
+   near-identical local components (label + big value, optional suffix)
+   defined in two different files, drifting slightly apart already —
+   GitHub's was `text-3xl`, Steam's `text-2xl`, for no recorded reason.
+   Extracted to `packages/ui/src/metric.tsx` (`Metric`), standardized on
+   `text-3xl`. `value` is typed `number | string` — GitHub passes raw
+   counts, Steam passes its own already-formatted strings
+   (`formatHours`/`formatRelativeDay`); both are legitimately "one big
+   labeled value," so widening the type was the correct fix rather than
+   maintaining two components for what's really the same shape.
+3. **The "soft glass chip" surface** (`bg-white/40 shadow-sm ring-1
+   ring-inset ring-white/50 transition hover:bg-white/60 dark:bg-white/5
+   dark:ring-white/10 dark:hover:bg-white/10`) was copy-pasted verbatim
+   between GitHub's latest-commit row and Quick Launch's link tiles —
+   with different radii (`rounded-2xl` vs `rounded-xl`), an inconsistency
+   nobody would have caught by reading either file in isolation.
+   Extracted as `GLASS_CHIP` in `packages/ui/src/glass.ts`, alongside the
+   existing `glassClass`/`GLASS_HOVER`/`SPRING_PRESS` tokens it's a
+   sibling to. Quick Launch's tiles now use the same radius as
+   everything else using this surface (see next point) — a real,
+   deliberate visual change, not just a refactor: 12px → 16px corners on
+   those five tiles.
+4. **No radius scale existed** — `rounded-3xl` (WidgetCard/ErrorState/
+   Skeleton), `rounded-[32px]` (Hero, a bare magic value also
+   copy-pasted into Skeleton's hero variant), `rounded-2xl` (dropdowns,
+   navbar, GitHub's commit row, Steam's cover art), `rounded-xl` (Quick
+   Launch, the one true outlier) were each typed fresh at their own call
+   site. New `packages/ui/src/tokens.ts` exports `RADIUS.chip`/`.card`/
+   `.hero` — named by the surface role they represent, not an abstract
+   sm/md/lg scale, since Pulse only has these three actually-distinct
+   radii and a semantic name is more useful than a size rung for each.
+   Applied everywhere the three now-named radii were already in use
+   (`WidgetCard`, `ErrorState`, `Skeleton`, `WidgetMenu`/`ProfileMenu`
+   dropdowns, the navbar, GitHub's commit row, Steam's cover art and its
+   detail page's outer panel) plus the one real fix (Quick Launch). This
+   doesn't change most of those surfaces' appearance — it changes where
+   the value comes from, so a future radius change or a new primitive
+   needing to match an existing surface has one source of truth instead
+   of hoping every call site was copied correctly.
+
+Deliberately did **not** force every visually-similar surface into
+`GlassChip`/`Metric` where the actual layout differs meaningfully — e.g.
+Steam's achievement progress-bar track uses a similar translucent fill
+but isn't interactive (no hover state), so it stays its own literal
+rather than being wedged into `GLASS_CHIP`, which carries a hover
+transition that wouldn't make sense on a static track. Consistency
+means removing duplicate *identical* patterns, not forcing every
+similar-looking thing through one component regardless of fit.
+
+Deferred to later stages, still not forgotten: 44×44px touch targets,
+menu accessibility (`role="menu"`, Escape, focus return), consistent
+`EmptyState` styling, responsive verification sweep.

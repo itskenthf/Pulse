@@ -1,38 +1,23 @@
 "use client";
 
 import { LogOut, Settings } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { glassClass, SPRING_PRESS } from "@pulse/ui";
+import { glassClass, RADIUS, SPRING_PRESS, useDismissableMenu } from "@pulse/ui";
 import { signOutAction } from "./actions/sign-out";
 
 /**
- * Open state is real React state toggled on click, closed via a
- * document-level `pointerdown` listener outside the menu — not CSS
- * `:focus-within`, which relies on a tap reliably moving DOM focus onto a
- * plain `<button>`. Mobile/iPad Safari doesn't always do that on tap, so
- * `:focus-within` silently made this menu unopenable on touch devices
- * (same root cause, same fix, as WidgetMenu — see docs/DECISIONS.md).
+ * Open/close state comes from `useDismissableMenu` (`@pulse/ui`) — the
+ * same `pointerdown`-based dismissal `WidgetMenu` uses, not CSS
+ * `:focus-within` (see that hook's doc comment, or docs/DECISIONS.md, for
+ * why). Previously hand-rolled identically here and in WidgetMenu.
  */
 export function ProfileMenu({
   user,
 }: {
   user: { name?: string | null; email?: string | null; image?: string | null };
 }) {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
+  const { open, setOpen, rootRef } = useDismissableMenu<HTMLDivElement>();
   const label = user.name ?? user.email ?? "Account";
   const initial = label.charAt(0).toUpperCase();
-
-  useEffect(() => {
-    if (!open) return;
-    function handlePointerDown(event: PointerEvent) {
-      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [open]);
 
   return (
     <div ref={rootRef} className="relative ml-1 inline-block">
@@ -56,7 +41,7 @@ export function ProfileMenu({
       </button>
 
       <div
-        className={`absolute right-0 z-20 mt-2 w-48 origin-top-right overflow-hidden rounded-2xl py-1 transition motion-safe:duration-150 ${
+        className={`absolute right-0 z-20 mt-2 w-48 origin-top-right overflow-hidden ${RADIUS.chip} py-1 transition motion-safe:duration-150 ${
           open ? "visible scale-100 opacity-100" : "invisible scale-95 opacity-0"
         } ${glassClass("heavy")}`}
       >

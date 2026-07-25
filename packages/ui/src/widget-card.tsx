@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { GLASS_HOVER, glassClass } from "./glass";
+import { RADIUS } from "./tokens";
 
 export type WidgetCardAccent = "blue" | "green" | "indigo" | "sky" | "none";
 
@@ -33,13 +34,13 @@ const ACCENT_BADGE: Record<WidgetCardAccent, string> = {
 export function WidgetCard({ title, icon, action, children, accent = "none" }: WidgetCardProps) {
   return (
     <div
-      className={`flex h-full flex-col gap-4 rounded-3xl p-5 ${glassClass("light")} ${GLASS_HOVER}`}
+      className={`flex h-full flex-col gap-4 ${RADIUS.card} p-5 ${glassClass("light")} ${GLASS_HOVER}`}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-3 text-zinc-950 dark:text-zinc-50">
           {icon && (
             <span
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${ACCENT_BADGE[accent]}`}
+              className={`flex h-9 w-9 shrink-0 items-center justify-center ${RADIUS.chip} ${ACCENT_BADGE[accent]}`}
             >
               {icon}
             </span>

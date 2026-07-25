@@ -1087,3 +1087,82 @@ column (`flex flex-col`) at full card width. The detail page
 cover art no longer sits in a narrow `max-w-56` side column next to the
 stats; it's full-width above them, since a horizontal image constrained
 to a narrow column would render tiny.
+
+## 2026-07-25 — Grid-stretch card sizing, static (non-motion) hover cue, cover-art fallback chain
+
+Ken flagged the GitHub and Quick Launch cards as "too big" from a
+production screenshot, wanted card hover to stop moving/scaling and
+instead just lightly indicate cursor position, wanted Steam's cover art
+hover to light up the border rather than animate, asked why cover art
+wasn't loading for one game, and reported being unable to tap any button
+at all on mobile — asked for a proper review pass and cleanup alongside.
+
+**Root cause of "too big" cards**: `apps/web/src/app/page.tsx`'s bento
+grid (`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`) never set
+`align-items`, so it defaulted to CSS Grid's `stretch` — every cell in a
+row stretches to the row's tallest cell, regardless of its own content
+height. Once Steam became a tall stack of horizontal cover-art tiles (the
+previous entry), GitHub (sharing row 1) and Quick Launch (sharing row 2
+with the taller Spotify card) both had their card *background* stretched
+to match, even though their actual content was much shorter — the "too
+big" card was really a stretched-empty card, the same underlying CSS
+mechanic as an earlier, now-fixed bug where GitHub stretched to match a
+tall Steam card by a different route. Fixed with one class: `items-start`
+on the grid container, so each card is only as tall as its own content.
+Confirmed via a real screenshot at desktop width — GitHub and Quick
+Launch now end right after their content instead of extending into empty
+space.
+
+**Hover motion removed from cards, replaced with a static color cue**:
+Ken's ask was specific — no movement or scale on card hover, just "less
+obvious" acknowledgment that the cursor is over the card. `GLASS_HOVER`
+(`packages/ui/src/glass.ts`) changed from `motion-safe:hover:-translate-y-0.5`
+(a lift) to `hover:border-white/80 dark:hover:border-white/25
+hover:ring-white/60 dark:hover:ring-white/15` — brightening the existing
+border/ring instead of moving the element. `WidgetCard` also dropped the
+`motion-safe:hover:shadow-[...]` growing-shadow effect that was stacked
+on top, since a shadow that visibly grows reads as animation even without
+a transform. Verified via a Playwright hover + `getComputedStyle` check:
+`transform` stays `"none"` before and after hover; `border-color` alpha
+goes from `0.5` to `0.8`. `SPRING_PRESS` (scale-on-hover/press) is
+unchanged and still used for actual buttons (refresh, settings, profile,
+sign-in) — Ken's ask was about cards and cover art specifically, not
+button press feedback, which is a different, expected interaction pattern.
+
+**Steam cover art**: the `<a>` tile wrapping each game's `CoverArt` lost
+`SPRING_PRESS` (was scaling the whole tile on hover) and gained `group`;
+`CoverArt` (`packages/widgets/steam/src/cover-art.tsx`) now renders a
+`ring-1 ring-transparent` that turns `group-hover:ring-sky-400/70` via
+`transition-colors` — a border light-up with no scale, matching Ken's
+ask, applied to both the loaded-image state and the placeholder fallback
+state so the affordance is consistent either way.
+
+**Why cover art didn't load for one game**: the screenshot showed
+"Forza Horizon 6" falling back to the placeholder tile while "Palworld"
+loaded fine — not a bug in the fetch logic, just that `header.jpg` isn't
+guaranteed to exist for every appId (newer or unusually-listed titles
+sometimes only have a store capsule image, not a header capsule). Added a
+one-step fallback chain: on the first image's `onError`, `CoverArt` now
+retries with `capsule_616x353.jpg` before giving up to the placeholder,
+via an `attempt` state bumped in a shared `handleFailure` used by both the
+`onError` handler and the mount-time SSR-race check. Still zero extra API
+calls — both URLs are constructible from just the `appId`.
+
+**Mobile "can't click any button at all"**: re-verified the
+`pointerdown`-based `WidgetMenu`/`ProfileMenu` fix from the previous entry
+with a fresh touch-simulated Playwright pass (`hasTouch: true, isMobile:
+true` context) against the GitHub menu, Steam menu, profile menu, the
+Steam cover-art link, and a Quick Launch link — all five opened/navigated
+correctly, and `pageerror`/console-error listeners caught nothing beyond
+expected sandbox network failures (cover-art CDN unreachable from this
+environment). No app-breaking hydration error, no leftover full-screen
+`fixed inset-0` overlay, no stray `pointer-events` rule, found in the
+current code. This strongly suggests the screenshots were taken against
+the still-deployed `main` build, which doesn't yet include the click-fix
+PR — the fix is real and verified in code, it just isn't live until that
+PR is merged and redeployed.
+
+**Cleanup**: removed `.pulse-bar-fill`/`@keyframes pulse-bar-grow` from
+`apps/web/src/app/globals.css` — dead CSS left over from
+`playtime-bar.tsx`, which was deleted in the previous Steam redesign
+entry but its global keyframe was missed at the time.

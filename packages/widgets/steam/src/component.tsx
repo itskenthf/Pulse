@@ -1,4 +1,4 @@
-import { SPRING_PRESS, WidgetCard, WidgetMenu } from "@pulse/ui";
+import { WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
 import { CoverArt } from "./cover-art";
 import { SteamIcon } from "./icon";
@@ -36,7 +36,7 @@ export function SteamComponent({
               <a
                 key={game.appId}
                 href={`/steam/${game.appId}`}
-                className={`flex flex-col gap-2 rounded-2xl transition ${SPRING_PRESS}`}
+                className="group flex flex-col gap-2 rounded-2xl"
               >
                 <CoverArt appId={game.appId} name={game.name} />
                 <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">

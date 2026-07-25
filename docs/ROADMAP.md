@@ -436,7 +436,16 @@ the complete staged roadmap.
   bare `<div>`. `role="menu"` was considered and deliberately rejected —
   see `docs/DECISIONS.md` for why forcing that pattern here would be
   wrong, not just unfinished.
-- [ ] Stage 4 — consistent `EmptyState` primitive
+- [x] **Stage 4 — Consistent empty states**: six widgets each had their
+  own bare-`<p>` "nothing yet" text with no shared layout. New
+  `EmptyState` primitive (`packages/ui`) centers within the card's
+  available height instead of sitting left-aligned at the top with dead
+  space below, and supports an optional action (used by Spotify's
+  "not connected" case, which previously showed a bare button with no
+  explanatory text). Also caught and fixed three more Stage 2/3-class
+  misses found while in these files: two more literal `rounded-2xl`/
+  `rounded-xl` spots that should've been `RADIUS.chip`, and two more
+  buttons under the 44px touch-target minimum.
 - [ ] Stage 5 — responsive verification sweep (fix real breakage only)
 - [ ] Stage 6 — final review, Lighthouse, docs wrap-up
 

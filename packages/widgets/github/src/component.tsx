@@ -1,5 +1,5 @@
 import { GitCommit } from "lucide-react";
-import { GLASS_CHIP, Metric, RADIUS, WidgetCard, WidgetMenu } from "@pulse/ui";
+import { EmptyState, GLASS_CHIP, Metric, RADIUS, WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
 import { formatRelativeDay } from "./format";
 import { Heatmap } from "./heatmap";
@@ -57,7 +57,7 @@ export function GitHubComponent({
           )}
         </div>
       ) : (
-        <p>No data yet — click refresh to load your contributions.</p>
+        <EmptyState message="No data yet — click refresh to load your contributions." />
       )}
     </WidgetCard>
   );

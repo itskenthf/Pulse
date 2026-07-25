@@ -1402,3 +1402,42 @@ Launch".
 
 Deferred to later stages, still not forgotten: consistent `EmptyState`
 styling, responsive verification sweep.
+
+## 2026-07-25 — Hardening pass, Stage 4: consistent empty states
+
+Six widgets, six hand-written "nothing to show yet" states, each a bare
+`<p>` inheriting `WidgetCard`'s body text color/size but with no
+consistent layout — left-aligned at the top of the card body, leaving
+the rest of the card's height as dead space rather than centered within
+it. New `EmptyState` (`packages/ui/src/empty-state.tsx`) — centers
+within available height, matching `ErrorState`'s layout language for
+the other "non-content" state a widget can be in, with an optional
+`action` slot for cases where the empty state has a fix (a button, not
+just text). Applied to GitHub, Steam (both its "nothing cached yet" and
+"zero games" cases), Quick Launch, and Spotify (both its "zero tracks"
+case and, with the `action` slot, its "not connected" case — which
+previously showed a bare button with no explanatory text at all).
+
+Found and fixed three more radius/touch-target misses while working
+through these same files (not new scope — the same fixes from Stages 2–3,
+just at call sites that weren't touched in those passes): Steam's game
+tile wrapper `<a>` still had a literal `rounded-2xl` instead of
+`RADIUS.chip`; Spotify's track-artwork thumbnails (image and fallback
+block) had a literal `rounded-xl`, same fix; Spotify's "Connect Spotify"
+button and the navbar's "Sign in with GitHub" button were both still
+under the 44px touch-target minimum (`px-3 py-1.5`/`px-4 py-2` with no
+explicit height) — both now `min-h-11`.
+
+**Deliberately not touched**: the top-level "Sign in to see your
+dashboard" message (page.tsx) — a whole-app unauthenticated state, not a
+widget's data state, so routing it through a widget-scoped primitive
+would be a context mismatch. The Steam detail page's "No achievement
+data available for this game" line — an inline note sitting among
+otherwise-populated content, not a widget's entire empty body, so
+`EmptyState`'s centered-in-available-height layout would look wrong
+there; it stays its own small icon+text row. Same principle as Stage 2:
+consistency means applying a shared primitive where the actual shape
+matches, not wherever the words "empty state" could apply.
+
+Deferred to the final stage, still not forgotten: responsive
+verification sweep.

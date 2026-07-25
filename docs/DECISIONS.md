@@ -931,3 +931,24 @@ questions before implementing — four real open decisions, resolved via
   can look identical depending on timing.
 - `apps/web/src/app/page.tsx`: background switched from the layered-blob
   `<div>`s to a single `bg-gradient-to-br` on the root container.
+
+## 2026-07-24 — Renamed Vercel domain to [redacted-old-domain]
+
+Ken renamed the Vercel project's domain from the auto-generated
+`[redacted-old-domain]` to `[redacted-old-domain]` (free rename via
+Vercel's project settings, not a purchased custom domain — Vercel keeps
+the old domain as a 307 redirect to the new one, so nothing broke
+mid-transition). Three things had to match the new domain for auth to
+keep working, all external-dashboard changes Ken made himself (not
+reachable from this environment):
+
+- Vercel env var `AUTH_URL` → `https://[redacted-old-domain]`
+- GitHub OAuth App's Authorization callback URL →
+  `https://[redacted-old-domain]/api/auth/callback/github`
+- Spotify app's Redirect URI →
+  `https://[redacted-old-domain]/api/auth/callback/spotify`
+
+No app code hardcodes the domain (`AUTH_URL` env var is the single source
+used to build callback URLs — see `apps/web/src/app/api/auth/callback/spotify/route.ts`
+and `packages/auth`), so this was a docs-only fix on the repo side —
+`docs/ROADMAP.md`'s Phase 0 entry updated to the new domain.

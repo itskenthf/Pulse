@@ -1069,3 +1069,21 @@ sandbox (real deploy has real secrets) — the one failure without dummy
 vars was `supabaseUrl is required`, not a code defect. The temporary
 preview route and its mock-action helper file were deleted before commit,
 per the established pattern.
+
+## 2026-07-25 — Steam cover art switched from portrait to horizontal
+
+Ken caught that the Steam card's cover art rendered portrait
+(`library_600x900.jpg`) rather than the horizontal art from the reference
+image he'd shared earlier. Switched `CoverArt`
+(`packages/widgets/steam/src/cover-art.tsx`) to Steam's CDN "header"
+convention — `https://cdn.akamai.steamstatic.com/steam/apps/{appId}/header.jpg`,
+same "just the appId, no extra API call" property as before, aspect
+changed `2/3` → `16/9` on both the image and its failure-state
+placeholder. The card's layout followed: two horizontal tiles side by
+side (the previous `grid-cols-2`) would each be too narrow and short to
+read as cover art, so `SteamComponent` now stacks them in a single
+column (`flex flex-col`) at full card width. The detail page
+(`apps/web/src/app/steam/[appId]/page.tsx`) changed the same way — the
+cover art no longer sits in a narrow `max-w-56` side column next to the
+stats; it's full-width above them, since a horizontal image constrained
+to a narrow column would render tiny.

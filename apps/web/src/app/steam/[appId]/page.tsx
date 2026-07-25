@@ -43,10 +43,8 @@ export default async function SteamGamePage({
           <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Dashboard
         </Link>
 
-        <div className={`flex flex-col gap-6 rounded-3xl p-6 sm:flex-row ${glassClass("light")}`}>
-          <div className="w-full max-w-56 sm:shrink-0">
-            <CoverArt appId={game.appId} name={game.name} />
-          </div>
+        <div className={`flex flex-col gap-6 rounded-3xl p-6 ${glassClass("light")}`}>
+          <CoverArt appId={game.appId} name={game.name} />
 
           <div className="flex flex-1 flex-col gap-5">
             <h1 className="text-2xl font-bold tracking-tight text-zinc-950 dark:text-zinc-50">

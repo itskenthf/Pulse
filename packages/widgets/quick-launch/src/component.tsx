@@ -1,4 +1,4 @@
-import { GLASS_CHIP, RADIUS, SPRING_PRESS, WidgetCard, WidgetMenu } from "@pulse/ui";
+import { EmptyState, GLASS_CHIP, RADIUS, SPRING_PRESS, WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
 import { QuickLaunchIcon } from "./icon";
 import { LinkIcon } from "./link-icon";
@@ -40,7 +40,7 @@ export function QuickLaunchComponent({
           ))}
         </div>
       ) : (
-        <p>No links yet — add some in settings.</p>
+        <EmptyState message="No links yet — add some in settings." />
       )}
     </WidgetCard>
   );

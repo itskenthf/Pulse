@@ -19,6 +19,9 @@ export interface HeroData {
   dateFormatted: string;
   weatherSummary: string;
   weatherLocation: string;
+  /** Deterministic suggestion derived from the weather code — null when
+   *  conditions don't warrant one (see weather-tip.ts). */
+  weatherTip: string | null;
   quote: string;
   generatedAt: string;
 }

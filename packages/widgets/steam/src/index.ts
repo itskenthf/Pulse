@@ -1,2 +1,5 @@
 export { steamWidget } from "./widget";
-export type { SteamData, SteamSettings } from "./types";
+export { WIDGET_ID } from "./constants";
+export { CoverArt } from "./cover-art";
+export { formatHours, formatRelativeDay } from "./format";
+export type { SteamData, SteamGame, SteamSettings } from "./types";

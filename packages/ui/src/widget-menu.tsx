@@ -1,5 +1,7 @@
+"use client";
+
 import { MoreHorizontal, RefreshCw, Settings as SettingsIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { WidgetActions } from "@pulse/sdk";
 import { ActionForm } from "./action-form";
 import { glassClass, SPRING_PRESS } from "./glass";
@@ -19,32 +21,50 @@ export interface WidgetMenuProps {
  * separate below-card Settings toggle) — one consistent action surface
  * per widget, room for future actions without redesigning the card.
  *
- * Closes on outside click via CSS `:focus-within` on the wrapper, not a
- * checkbox + fixed backdrop: WidgetCard's own backdrop-blur establishes a
- * new containing block for `position: fixed` descendants (a real, easy to
- * miss CSS quirk — see docs/DECISIONS.md), so a backdrop nested inside a
- * glass card only ever covers the card's own box, not the viewport. A
- * plain `<button>` + `group-focus-within:` sidesteps that entirely: click
- * elsewhere moves focus out of the group and the menu hides on its own.
+ * Open state is real React state toggled on click, closed via a
+ * document-level `pointerdown` listener outside the menu — not CSS
+ * `:focus-within`, which relies on a tap reliably moving DOM focus onto a
+ * plain `<button>`. Mobile/iPad Safari doesn't always do that on tap, so
+ * `:focus-within` silently made the menu unopenable on touch devices.
+ * `pointerdown` (not `click`) covers touch and mouse identically.
  */
 export function WidgetMenu({ id, actions, settingsFields }: WidgetMenuProps) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handlePointerDown(event: PointerEvent) {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [open]);
+
   return (
-    <div className="group/menu relative inline-block" data-widget-menu={id}>
+    <div ref={rootRef} className="relative inline-block" data-widget-menu={id}>
       <button
         type="button"
         aria-label="Widget actions"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
         className={`flex h-8 w-8 items-center justify-center rounded-full text-current hover:bg-current/10 ${SPRING_PRESS}`}
       >
         <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
       </button>
       <div
-        className={`invisible absolute right-0 z-20 mt-2 w-48 origin-top-right scale-95 rounded-2xl py-1 opacity-0 transition motion-safe:duration-150 group-focus-within/menu:visible group-focus-within/menu:scale-100 group-focus-within/menu:opacity-100 ${glassClass("heavy")}`}
+        className={`absolute right-0 z-20 mt-2 w-48 origin-top-right overflow-hidden rounded-2xl py-1 transition motion-safe:duration-150 ${
+          open ? "visible scale-100 opacity-100" : "invisible scale-95 opacity-0"
+        } ${glassClass("heavy")}`}
       >
         <ActionForm
           action={actions.refresh}
           submitLabel="Refresh"
           variant="menu"
           icon={<RefreshCw className="h-4 w-4" aria-hidden="true" />}
+          onSubmitted={() => setOpen(false)}
         />
         {actions.updateSettings && settingsFields && (
           <details>

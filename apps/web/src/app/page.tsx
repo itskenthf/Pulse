@@ -1,6 +1,7 @@
-import { getAllWidgets, type WidgetSize } from "@pulse/sdk";
+import { Suspense } from "react";
+import { getAllWidgets, type Widget, type WidgetSize } from "@pulse/sdk";
 import { readWidgetCache, readWidgetSettings } from "@pulse/database";
-import { glassClass, SPRING_PRESS } from "@pulse/ui";
+import { glassClass, Skeleton, SPRING_PRESS, WidgetErrorBoundary } from "@pulse/ui";
 import { auth, signIn } from "@/auth";
 import { refreshWidgetAction, updateWidgetSettingsAction } from "./actions/widgets";
 import { ProfileMenu } from "./profile-menu";
@@ -70,53 +71,76 @@ const SPAN_CLASS: Record<Exclude<WidgetSize, "hero">, string> = {
   sm: "col-span-1",
 };
 
-async function WidgetGrid({ userId }: { userId: string }) {
+/**
+ * One widget's cache read + render. Deliberately has no try/catch of its
+ * own — a plain try/catch here would only catch synchronous errors in
+ * this function's own body, not errors thrown by `widget.render()`'s JSX
+ * descendants during React's actual render phase (JSX elements are just
+ * deferred descriptions until React renders them). Real isolation comes
+ * from the WidgetErrorBoundary each call site wraps this in (see
+ * WidgetGrid below), which Next.js's streaming SSR lets catch errors
+ * thrown by this async Server Component itself, not just client-side
+ * descendants.
+ */
+async function WidgetSlot({ widget, userId }: { widget: Widget; userId: string }) {
+  const [cached, settings] = await Promise.all([
+    readWidgetCache(userId, widget.id),
+    readWidgetSettings(userId, widget.id),
+  ]);
+
+  const resolvedSettings = settings ?? widget.settings?.() ?? {};
+
+  // Every widget in this array was type-checked against the SDK
+  // contract when it was authored — this cast just re-attaches that
+  // widget's own generic types, which TypeScript can't track once
+  // heterogeneous widgets share one array.
+  const props = {
+    data: cached?.data ?? null,
+    settings: resolvedSettings,
+    actions: {
+      refresh: refreshWidgetAction.bind(null, widget.id),
+      updateSettings: widget.parseSettingsForm
+        ? updateWidgetSettingsAction.bind(null, widget.id)
+        : undefined,
+    },
+  } as Parameters<typeof widget.render>[0];
+
+  return <>{widget.render(props)}</>;
+}
+
+function WidgetGrid({ userId }: { userId: string }) {
   const widgets = getAllWidgets();
-
-  const rendered = await Promise.all(
-    widgets.map(async (widget) => {
-      const [cached, settings] = await Promise.all([
-        readWidgetCache(userId, widget.id),
-        readWidgetSettings(userId, widget.id),
-      ]);
-
-      const resolvedSettings = settings ?? widget.settings?.() ?? {};
-
-      // Every widget in this array was type-checked against the SDK
-      // contract when it was authored — this cast just re-attaches that
-      // widget's own generic types, which TypeScript can't track once
-      // heterogeneous widgets share one array.
-      const props = {
-        data: cached?.data ?? null,
-        settings: resolvedSettings,
-        actions: {
-          refresh: refreshWidgetAction.bind(null, widget.id),
-          updateSettings: widget.parseSettingsForm
-            ? updateWidgetSettingsAction.bind(null, widget.id)
-            : undefined,
-        },
-      } as Parameters<typeof widget.render>[0];
-
-      return { id: widget.id, size: widget.size, node: widget.render(props) };
-    }),
-  );
 
   // "hero" renders full-width, chromeless, above the grid. Every other
   // widget flows into a bento-style grid — its `size` (sm/md/lg) picks how
   // many columns it spans, so the richest widget (GitHub, "lg") becomes an
-  // actual focal point instead of every card getting equal width.
-  const heroItems = rendered.filter((item) => item.size === "hero");
-  const cardItems = rendered.filter((item) => item.size !== "hero");
+  // actual focal point instead of every card getting equal width. Layout
+  // (which bucket, which span) only depends on `widget.size`, known
+  // synchronously from the registry — no need to await any widget's data
+  // before the grid itself can render.
+  const heroWidgets = widgets.filter((widget) => widget.size === "hero");
+  const cardWidgets = widgets.filter((widget) => widget.size !== "hero");
 
   return (
     <>
-      {heroItems.map((item) => (
-        <div key={item.id}>{item.node}</div>
+      {heroWidgets.map((widget) => (
+        <WidgetErrorBoundary key={widget.id} name={widget.name}>
+          <Suspense fallback={<Skeleton variant="hero" />}>
+            <WidgetSlot widget={widget} userId={userId} />
+          </Suspense>
+        </WidgetErrorBoundary>
       ))}
       <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {cardItems.map((item) => (
-          <div key={item.id} className={SPAN_CLASS[item.size as Exclude<WidgetSize, "hero">]}>
-            {item.node}
+        {cardWidgets.map((widget) => (
+          <div
+            key={widget.id}
+            className={SPAN_CLASS[widget.size as Exclude<WidgetSize, "hero">]}
+          >
+            <WidgetErrorBoundary name={widget.name}>
+              <Suspense fallback={<Skeleton />}>
+                <WidgetSlot widget={widget} userId={userId} />
+              </Suspense>
+            </WidgetErrorBoundary>
           </div>
         ))}
       </div>

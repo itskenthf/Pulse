@@ -23,9 +23,10 @@ export function glassClass(level: GlassLevel = "light"): string {
   return GLASS[level];
 }
 
-/** Gentle elevation + spring-ish scale on interaction, skipped entirely
- *  under prefers-reduced-motion via the motion-safe: variant. */
+/** A static "you're over this" cue — brighter border/ring — with no
+ *  movement or scale, for large surfaces (cards) where a lift/scale
+ *  effect reads as distracting rather than helpful. */
 export const GLASS_HOVER =
-  "transition-[transform,box-shadow] duration-200 ease-out motion-safe:hover:-translate-y-0.5";
+  "transition-colors duration-150 ease-out hover:border-white/80 dark:hover:border-white/25 hover:ring-white/60 dark:hover:ring-white/15";
 export const SPRING_PRESS =
   "transition-transform duration-150 ease-out motion-safe:hover:scale-105 motion-safe:active:scale-95";

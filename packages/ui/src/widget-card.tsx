@@ -33,7 +33,7 @@ const ACCENT_BADGE: Record<WidgetCardAccent, string> = {
 export function WidgetCard({ title, icon, action, children, accent = "none" }: WidgetCardProps) {
   return (
     <div
-      className={`flex h-full flex-col gap-4 rounded-3xl p-5 ${glassClass("light")} ${GLASS_HOVER} motion-safe:hover:shadow-[0_1px_1px_rgba(255,255,255,0.6),0_28px_56px_-16px_rgba(15,23,42,0.28)]`}
+      className={`flex h-full flex-col gap-4 rounded-3xl p-5 ${glassClass("light")} ${GLASS_HOVER}`}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-3 text-zinc-950 dark:text-zinc-50">

@@ -12,7 +12,8 @@
     "@pulse/adapter-steam": "workspace:*",
     "@pulse/database": "workspace:*",
     "@pulse/sdk": "workspace:*",
-    "@pulse/ui": "workspace:*"
+    "@pulse/ui": "workspace:*",
+    "lucide-react": "^1.26.0"
   },
   "peerDependencies": {
     "react": "^19"

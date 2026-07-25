@@ -1,6 +1,7 @@
 import { WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
 import { QuickLaunchIcon } from "./icon";
+import { LinkIcon } from "./link-icon";
 import { SettingsFormFields } from "./settings-form-fields";
 import type { QuickLaunchData, QuickLaunchSettings } from "./types";
 
@@ -23,20 +24,21 @@ export function QuickLaunchComponent({
       }
     >
       {links.length > 0 ? (
-        <ul className="flex flex-col gap-1">
+        <div className="grid grid-cols-3 gap-3">
           {links.map((link) => (
-            <li key={link.url}>
-              <a
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-zinc-950 hover:underline dark:text-zinc-50"
-              >
-                {link.label}
-              </a>
-            </li>
+            <a
+              key={link.url}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={link.label}
+              aria-label={link.label}
+              className="flex aspect-square items-center justify-center rounded-2xl bg-white/40 shadow-sm ring-1 ring-inset ring-white/50 transition hover:bg-white/60 dark:bg-white/5 dark:ring-white/10 dark:hover:bg-white/10"
+            >
+              <LinkIcon url={link.url} />
+            </a>
           ))}
-        </ul>
+        </div>
       ) : (
         <p>No links yet — add some in settings.</p>
       )}

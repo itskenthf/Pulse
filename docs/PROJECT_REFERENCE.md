@@ -442,8 +442,13 @@ only the structural/layout decisions that doc doesn't cover:
 
 - A real glass system (`packages/ui/src/glass.ts`: light/medium/heavy —
   tint, blur, inset highlight, layered shadow), not `bg-white/opacity`.
-  Layered ambient background: soft neutral base + three large blurred
-  color blobs (sky/violet/amber), fixed behind everything.
+- **Background is one smooth diagonal gradient** (sky → cyan → violet;
+  `apps/web/src/app/page.tsx`), not the earlier layered-blob approach —
+  changed 2026-07-24 to match a reference image Ken provided. Fill opacity
+  on the glass tokens is deliberately low (30–40% for `light`/`medium`) so
+  the gradient's color genuinely reads through every card — see
+  docs/DECISIONS.md for the investigation that found the original glass
+  was rendering as near-solid white.
 - **Bento-style grid, not uniform columns**: each widget's existing SDK
   `size` field (`sm`/`md`/`lg`) picks how many grid columns it spans, so
   the richest widget becomes an actual focal point (currently GitHub,
@@ -483,6 +488,14 @@ only the structural/layout decisions that doc doesn't cover:
   "Signed in as X / Sign out" text row. Search and Notifications sit beside
   it as disabled placeholder icons, future-proofing the navbar without
   building either feature ahead of need.
+- Cards should be full of real content, not sparse — but only ever real,
+  fetched data (2026-07-24: Steam gained last-played and achievement
+  completion, both real API data; GitHub's "latest repo/commit" was
+  considered and explicitly not added since it'd need a new API call — see
+  docs/DECISIONS.md). Never fill empty space with an invented number.
+- Quick Launch is icon-only (no text labels) — each link's own favicon,
+  fetched directly from its domain, with a generic fallback icon on load
+  failure.
 - Avoid adding more detail to mobile cards just because there's a full
   screen — keep cards content-appropriate per breakpoint rather than a
   uniformly shrunk desktop layout; extra detail belongs behind a

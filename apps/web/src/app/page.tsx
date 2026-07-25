@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { getAllWidgets, type Widget, type WidgetSize } from "@pulse/sdk";
 import { readWidgetCache, readWidgetSettings } from "@pulse/database";
-import { glassClass, Skeleton, SPRING_PRESS, WidgetErrorBoundary } from "@pulse/ui";
+import { glassClass, RADIUS, Skeleton, SPRING_PRESS, WidgetErrorBoundary } from "@pulse/ui";
 import { auth, signIn } from "@/auth";
 import { refreshWidgetAction, updateWidgetSettingsAction } from "./actions/widgets";
 import { ProfileMenu } from "./profile-menu";
@@ -38,7 +38,7 @@ interface SessionUser {
 function Navbar({ session }: { session: { user?: SessionUser } | null }) {
   return (
     <header
-      className={`sticky top-0 z-20 mx-4 mt-4 flex items-center justify-between gap-3 rounded-2xl px-4 py-2.5 sm:mx-6 sm:mt-6 ${glassClass("medium")}`}
+      className={`sticky top-0 z-20 mx-4 mt-4 flex items-center justify-between gap-3 ${RADIUS.chip} px-4 py-2.5 sm:mx-6 sm:mt-6 ${glassClass("medium")}`}
     >
       <h1 className="text-lg font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
         Pulse

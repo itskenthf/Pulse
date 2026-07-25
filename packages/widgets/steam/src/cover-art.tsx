@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Gamepad2 } from "lucide-react";
+import { RADIUS } from "@pulse/ui";
 
 /** Two CDN conventions to try, in order, before giving up — some apps
  *  (esp. ones added to Steam more recently) don't have a `header.jpg` but
@@ -42,7 +43,7 @@ export function CoverArt({ appId, name }: { appId: number; name: string }) {
 
   if (failed) {
     return (
-      <div className="flex aspect-[16/9] w-full items-center justify-center rounded-2xl bg-gradient-to-br from-sky-200 to-indigo-200 shadow-sm ring-1 ring-transparent transition-colors group-hover:ring-sky-400/70 dark:from-sky-500/20 dark:to-indigo-500/20 dark:group-hover:ring-sky-400/40">
+      <div className={`flex aspect-[16/9] w-full items-center justify-center ${RADIUS.chip} bg-gradient-to-br from-sky-200 to-indigo-200 shadow-sm ring-1 ring-transparent transition-colors group-hover:ring-sky-400/70 dark:from-sky-500/20 dark:to-indigo-500/20 dark:group-hover:ring-sky-400/40`}>
         <Gamepad2 className="h-8 w-8 text-white/70" aria-hidden="true" />
       </div>
     );
@@ -56,7 +57,7 @@ export function CoverArt({ appId, name }: { appId: number; name: string }) {
       ref={imgRef}
       src={coverArtUrl(appId, attempt)}
       alt={name}
-      className="aspect-[16/9] w-full rounded-2xl object-cover shadow-sm ring-1 ring-transparent transition-colors group-hover:ring-sky-400/70 dark:group-hover:ring-sky-400/40"
+      className={`aspect-[16/9] w-full ${RADIUS.chip} object-cover shadow-sm ring-1 ring-transparent transition-colors group-hover:ring-sky-400/70 dark:group-hover:ring-sky-400/40`}
       onError={handleFailure}
     />
   );

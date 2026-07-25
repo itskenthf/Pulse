@@ -15,10 +15,13 @@ packages/
   auth/               Auth.js configuration
   database/           Supabase client, widget_cache/widget_settings/registry/account/user helpers
   widgets/
-    hero/             Greeting + date/time + weather + quote, one full-width banner
+    hero/             Greeting + flowing date/time/weather sentence (with a
+                      rule-based weather tip) + quote, one full-width banner
                       (size: "hero"), no settings — fetches everything automatically
-    github/           Contribution counts + blue heatmap (reuses your GitHub login token)
-    steam/            Recently played games, playtime bar chart
+    github/           Contribution counts, blue heatmap, latest repo/commit
+                      (reuses your GitHub login token)
+    steam/            Cover-art + title cards; hours/last-played/achievements
+                      live on a per-game detail page (apps/web/src/app/steam/[appId])
     quick-launch/     Fixed-slot link shortcuts, no external service
     spotify/          Top tracks, custom OAuth connect flow
   adapters/
@@ -41,7 +44,11 @@ dependency graph (`turbo.json`'s `dependsOn: ["^build"]`).
 - `apps/web` — the Next.js shell: auth, routing, the widget grid, the cron
   route. Never imports a specific widget's internals — only `@pulse/sdk`'s
   `registerWidget` / `getAllWidgets`, plus each widget's single top-level
-  export (e.g. `heroWidget` from `@pulse/widget-hero`).
+  export (e.g. `heroWidget` from `@pulse/widget-hero`). No navigation chrome
+  beyond the navbar (Sidebar/Dock/BottomNav were deleted 2026-07-25, per
+  Ken's request — see docs/DECISIONS.md); the widget grid
+  (`grid ... items-start`) intentionally doesn't stretch cards to match
+  their row's tallest neighbor — each card sizes to its own content.
 - `packages/sdk` — the `Widget` interface (see below) and the in-memory
   registry. This is the only contract the shell depends on.
 - `packages/auth` — Auth.js configuration (providers, adapter, the
@@ -62,22 +69,38 @@ dependency graph (`turbo.json`'s `dependsOn: ["^build"]`).
   (the GitHub widget uses this; Spotify will too), without a second OAuth
   connection.
 - `packages/widgets/*` — one package per widget. `packages/widgets/steam`
-  or `packages/widgets/calendar-date` are good reference implementations for
-  a normal card widget — copy their shape for the next one.
+  or `packages/widgets/github` are good reference implementations for a
+  normal card widget — copy their shape for the next one.
   `packages/widgets/hero` is the one exception: it's `size: "hero"`, so it
-  renders full-width above the grid instead of inside a `WidgetCard`.
+  renders full-width above the grid instead of inside a `WidgetCard`. Steam
+  is also the one widget whose detail lives partly outside its own
+  package — `apps/web/src/app/steam/[appId]/page.tsx` reads the widget's
+  cache directly and imports a few of its exports (`CoverArt`,
+  `formatHours`, `formatRelativeDay`, `WIDGET_ID`) to render a per-game
+  page; see docs/DECISIONS.md's 2026-07-25 Steam entry for why this is
+  still within the SDK boundary (shell reads cache + renders
+  widget-owned pieces, no widget-specific business logic added to the shell).
 - `packages/adapters/*` — one package per external service. Owns the actual
   HTTP call and response normalization; widgets never fetch raw API
   responses themselves.
 - `packages/ui` — shared design system components: `glass.ts` (`glassClass(level)`
   — the light/medium/heavy glass materials every surface builds on, plus
-  `GLASS_HOVER`/`SPRING_PRESS` motion classnames), `WidgetCard` (the one
-  reusable glass card, with an `accent` prop for the icon-glow identity
-  treatment), `ActionForm` (generic `useActionState` wiring — pending/error
-  UI, with `text`/`icon`/`menu` variants), and `WidgetMenu` (the "⋯"
-  overflow menu — Refresh + Settings — every widget's `WidgetCard` `action`
-  slot uses; dropdown visibility is CSS `:focus-within`, not a backdrop —
-  see docs/DECISIONS.md's 2026-07-24 refinement entry for why).
+  `GLASS_HOVER` — a static border/ring brightening on hover, no movement —
+  and `SPRING_PRESS` — scale-on-press feedback for actual buttons),
+  `WidgetCard` (the one reusable glass card, with an `accent` prop for the
+  icon-glow identity treatment), `ActionForm` (generic `useActionState`
+  wiring — pending/error UI, with `text`/`icon`/`menu` variants, plus an
+  `onSubmitted` callback fired once an action settles without error), and
+  `WidgetMenu` (the "⋯" overflow menu — Refresh + Settings — every widget's
+  `WidgetCard` `action` slot uses; a `"use client"` component with real
+  `useState` open/close state and a `pointerdown` outside-click listener,
+  not CSS `:focus-within` — see docs/DECISIONS.md's 2026-07-25 entry for
+  why `:focus-within` didn't work on mobile/iPad Safari). The navbar's
+  account control (`apps/web/src/app/profile-menu.tsx`) is the same
+  pattern, one level up in `apps/web` rather than `packages/ui`, since it
+  needs `next-auth`'s `signOut` (via `apps/web/src/app/actions/sign-out.ts`,
+  a `"use server"` action — Server Actions defined inline inside a Client
+  Component aren't supported by Next.js, so it has to live in its own file).
 
 ## Widget SDK contract
 

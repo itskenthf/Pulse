@@ -30,3 +30,16 @@ export const GLASS_HOVER =
   "transition-colors duration-150 ease-out hover:border-white/80 dark:hover:border-white/25 hover:ring-white/60 dark:hover:ring-white/15";
 export const SPRING_PRESS =
   "transition-transform duration-150 ease-out motion-safe:hover:scale-105 motion-safe:active:scale-95";
+
+/**
+ * The small translucent "soft tile" surface used for compact interactive
+ * chips — a fill/ring/hover treatment distinct from `glassClass` (which
+ * also adds blur + a heavier shadow, meant for a whole card/panel, not a
+ * single row or icon tile). Radius is deliberately excluded — callers
+ * apply `RADIUS.chip` (or another token) themselves, since a couple of
+ * chip-shaped surfaces (e.g. a circular avatar button) need a different
+ * radius than the default. Previously copy-pasted verbatim between
+ * GitHub's latest-commit row and Quick Launch's link tiles.
+ */
+export const GLASS_CHIP =
+  "bg-white/40 shadow-sm ring-1 ring-inset ring-white/50 transition hover:bg-white/60 dark:bg-white/5 dark:ring-white/10 dark:hover:bg-white/10";

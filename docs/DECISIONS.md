@@ -1166,3 +1166,441 @@ PR is merged and redeployed.
 `apps/web/src/app/globals.css` — dead CSS left over from
 `playtime-bar.tsx`, which was deleted in the previous Steam redesign
 entry but its global keyframe was missed at the time.
+
+## 2026-07-25 — Hardening pass, Stage 1: per-widget error isolation + streaming
+
+Ken approved the visual direction as final ("do NOT redesign the
+application") and asked for a senior-engineer quality pass instead:
+eliminate bugs/inconsistencies, harden the architecture, no new features.
+Given the scope (a 14-point checklist covering UI consistency,
+responsiveness, accessibility, components, tokens, performance, error
+handling, testing, code quality), agreed via `AskUserQuestion` to work in
+**reviewable stages** rather than one giant pass, and to **tune the
+existing 3-tier grid** rather than hand-build 7 distinct breakpoint
+layouts for what's currently a 5-widget dashboard. Full staged roadmap
+recorded in the plan file at the time
+(`/root/.claude/plans/lovely-booping-wilkes.md` — not committed to the
+repo, plan-mode artifact) and in `docs/ROADMAP.md`.
+
+A direct code audit (not assumption) found the most serious real gap:
+**no error isolation existed**. `WidgetGrid` (`apps/web/src/app/page.tsx`)
+awaited every widget's cache/settings read in one `Promise.all` — any
+single widget throwing failed the entire page. No `error.tsx` existed
+anywhere in `apps/web/src/app`. This directly contradicted "if GitHub
+fails, the dashboard still works," which wasn't actually true.
+
+**Fix, attempt 1 (rejected by the linter, correctly)**: wrapped each
+widget's cache-read + `render()` call in a plain `try/catch` inside a new
+`WidgetSlot` component. ESLint's `react-hooks/error-boundaries` rule
+flagged this immediately, and it's right: JSX elements are just deferred
+descriptions until React actually renders them, so a `try/catch` around
+`return <>{widget.render(props)}</>` only catches errors thrown
+*synchronously within that top-level function* (e.g. a bad destructure) —
+not errors thrown deeper in the JSX tree during React's real render pass
+(e.g. inside `Heatmap`, or any client-component descendant). That's a
+narrower guarantee than "if a widget fails, it's isolated," so it would
+have been a false sense of safety.
+
+**Fix, attempt 2 (shipped)**: a real error boundary. New
+`WidgetErrorBoundary` (`packages/ui/src/widget-error-boundary.tsx`) — a
+class component (`getDerivedStateFromError`/`componentDidCatch`; React
+has no Hook equivalent, error boundaries must be classes), rendering the
+new `ErrorState` primitive on catch. Composition per widget in
+`WidgetGrid`:
+```
+<WidgetErrorBoundary name={widget.name}>
+  <Suspense fallback={<Skeleton .../>}>
+    <WidgetSlot widget={widget} userId={userId} />
+  </Suspense>
+</WidgetErrorBoundary>
+```
+`WidgetSlot` itself has no try/catch at all now — errors propagate
+naturally, and Next.js's streaming SSR surfaces an async Server
+Component's thrown error to the nearest Client Component error boundary
+above it, which is exactly what `WidgetErrorBoundary` is. Verified this
+isn't cargo-culted: a temporary preview route with three widgets — one
+that throws, two that resolve normally (one slow, to also exercise
+streaming) — showed the throwing widget's `ErrorState` while both others
+rendered fully, and React's own dev-mode console log confirmed the exact
+mechanism: *"The above error occurred in the `<ThrowingWidget>`
+component. It was handled by the `<WidgetErrorBoundary>` error
+boundary."* Route deleted before commit, per the established pattern.
+
+**Streaming, same change**: `WidgetGrid` no longer awaits anything
+itself — it's now synchronous, since layout (which grid bucket, which
+column span) only depends on `widget.size`, known immediately from the
+registry, not on any widget's cache data. Each widget's `Suspense`
+boundary lets it stream in independently once its own cache read
+resolves, instead of the whole grid blocking on the slowest widget. New
+`Skeleton` primitive (`packages/ui/src/skeleton.tsx`) is the fallback —
+two variants (`card`/`hero`) matching `WidgetCard`'s and Hero's shapes,
+built from `animate-pulse` blocks with a `motion-reduce:animate-none`
+override.
+
+**Safety net**: `apps/web/src/app/error.tsx` added as a last-resort
+Next.js route-segment error boundary for anything outside the widget
+grid entirely (layout, navbar, auth lookup) — the per-widget boundaries
+handle the grid itself, this catches everything else.
+
+Deferred to later stages (per the staged plan, not forgotten): 44×44px
+touch targets (`WidgetMenu`/`ActionForm`'s icon buttons are currently
+32px), menu accessibility (`role="menu"`, Escape-to-close, focus
+return), consistent `EmptyState` styling, and a responsive verification
+sweep.
+
+## 2026-07-25 — Hardening pass, Stage 2: shared primitives & design tokens
+
+Four real duplicates/inconsistencies found by direct inspection (not
+guessing), each fixed by extracting the shared piece into `packages/ui`
+rather than leaving the copies in place:
+
+1. **`WidgetMenu` and `ProfileMenu` duplicated the exact same
+   open/close logic** — `useState` + a `pointerdown`-outside listener,
+   line for line identical (the click-fix from an earlier entry landed
+   in both places separately). Extracted to
+   `packages/ui/src/use-dismissable-menu.ts` (`useDismissableMenu`),
+   returning `{ open, setOpen, rootRef }`; both components now just call
+   the hook. Behavior is unchanged — this is a pure de-duplication, not
+   a rewrite.
+2. **GitHub's `Stat` and Steam's detail-page `Stat`** were two
+   near-identical local components (label + big value, optional suffix)
+   defined in two different files, drifting slightly apart already —
+   GitHub's was `text-3xl`, Steam's `text-2xl`, for no recorded reason.
+   Extracted to `packages/ui/src/metric.tsx` (`Metric`), standardized on
+   `text-3xl`. `value` is typed `number | string` — GitHub passes raw
+   counts, Steam passes its own already-formatted strings
+   (`formatHours`/`formatRelativeDay`); both are legitimately "one big
+   labeled value," so widening the type was the correct fix rather than
+   maintaining two components for what's really the same shape.
+3. **The "soft glass chip" surface** (`bg-white/40 shadow-sm ring-1
+   ring-inset ring-white/50 transition hover:bg-white/60 dark:bg-white/5
+   dark:ring-white/10 dark:hover:bg-white/10`) was copy-pasted verbatim
+   between GitHub's latest-commit row and Quick Launch's link tiles —
+   with different radii (`rounded-2xl` vs `rounded-xl`), an inconsistency
+   nobody would have caught by reading either file in isolation.
+   Extracted as `GLASS_CHIP` in `packages/ui/src/glass.ts`, alongside the
+   existing `glassClass`/`GLASS_HOVER`/`SPRING_PRESS` tokens it's a
+   sibling to. Quick Launch's tiles now use the same radius as
+   everything else using this surface (see next point) — a real,
+   deliberate visual change, not just a refactor: 12px → 16px corners on
+   those five tiles.
+4. **No radius scale existed** — `rounded-3xl` (WidgetCard/ErrorState/
+   Skeleton), `rounded-[32px]` (Hero, a bare magic value also
+   copy-pasted into Skeleton's hero variant), `rounded-2xl` (dropdowns,
+   navbar, GitHub's commit row, Steam's cover art), `rounded-xl` (Quick
+   Launch, the one true outlier) were each typed fresh at their own call
+   site. New `packages/ui/src/tokens.ts` exports `RADIUS.chip`/`.card`/
+   `.hero` — named by the surface role they represent, not an abstract
+   sm/md/lg scale, since Pulse only has these three actually-distinct
+   radii and a semantic name is more useful than a size rung for each.
+   Applied everywhere the three now-named radii were already in use
+   (`WidgetCard`, `ErrorState`, `Skeleton`, `WidgetMenu`/`ProfileMenu`
+   dropdowns, the navbar, GitHub's commit row, Steam's cover art and its
+   detail page's outer panel) plus the one real fix (Quick Launch). This
+   doesn't change most of those surfaces' appearance — it changes where
+   the value comes from, so a future radius change or a new primitive
+   needing to match an existing surface has one source of truth instead
+   of hoping every call site was copied correctly.
+
+Deliberately did **not** force every visually-similar surface into
+`GlassChip`/`Metric` where the actual layout differs meaningfully — e.g.
+Steam's achievement progress-bar track uses a similar translucent fill
+but isn't interactive (no hover state), so it stays its own literal
+rather than being wedged into `GLASS_CHIP`, which carries a hover
+transition that wouldn't make sense on a static track. Consistency
+means removing duplicate *identical* patterns, not forcing every
+similar-looking thing through one component regardless of fit.
+
+Deferred to later stages, still not forgotten: 44×44px touch targets,
+menu accessibility (`role="menu"`, Escape, focus return), consistent
+`EmptyState` styling, responsive verification sweep.
+
+## 2026-07-25 — Hardening pass, Stage 3: accessibility
+
+Verified with an automated audit, not just eyeballing: ran `axe-core`
+(the same engine Lighthouse's accessibility category uses) against a
+rendered preview with every widget populated — **zero WCAG 2A/2AA
+violations**, before and after this stage's changes. The fixes below
+came from a manual pass reading through the interactive components with
+keyboard/screen-reader use in mind, since axe-core catches structural
+issues (missing labels, contrast, invalid ARIA) but can't tell you a
+touch target is 32px or that Escape doesn't close a menu — those needed
+actual measurement/interaction testing.
+
+**Touch targets bumped to a real 44×44px hit area**: `WidgetMenu`'s "⋯"
+trigger and `ActionForm`'s icon-refresh button, both previously
+`h-8 w-8` (32px) — now `h-11 w-11`. `ProfileMenu`'s trigger, and the
+"menu"/"text" row variants used inside dropdowns (Refresh/Save/Sign out
+rows, the Settings disclosure summary), previously ~36px tall — now
+`min-h-11`. Verified via `boundingBox()` in Playwright:
+`WidgetMenu` trigger measures 44×44, `ProfileMenu`'s 76.7×44 (wider
+because of the name label, still ≥44 on both axes). Quick Launch's
+tiles were already 44×44 (`h-11 w-11`, unrelated to this pass) — the one
+surface that happened to already be correct.
+
+**`WidgetMenu`/`ProfileMenu` keyboard support**, folded into
+`useDismissableMenu` (`packages/ui/src/use-dismissable-menu.ts`) so both
+components get it from one place:
+- Escape closes the menu **and returns focus to the trigger** — a new
+  `close()` returned alongside `setOpen`, used by Escape's internal
+  handler and by `WidgetMenu`'s Refresh action (`onSubmitted={close}`,
+  replacing `onSubmitted={() => setOpen(false)}`) so completing an
+  action from inside the menu doesn't strand focus on a control that's
+  about to disappear. Deliberately *not* used for the outside-
+  click/tap dismissal path — the user already moved their attention
+  elsewhere on purpose there, so yanking focus back to the trigger would
+  be the surprising thing, not the helpful thing.
+- The closed panel gets `inert` (a real, previously-unnoticed bug: the
+  panel was only hidden via `invisible`/`opacity-0` for the transition,
+  which doesn't remove it from the tab order — a keyboard user tabbing
+  through the page could land on menu items that were invisible on
+  screen). `inert` (React 19 passes it straight through to the DOM)
+  removes it from both the tab order and the accessibility tree while
+  it's closed, without breaking the open/close CSS transition.
+- Verified end to end with Playwright: focus the trigger → Enter opens
+  the menu (native `<button>` behavior, nothing custom needed) → Escape
+  closes it, `inert` flips back on, and `document.activeElement` is
+  confirmed to be the trigger button again.
+
+**Considered and explicitly rejected**: `role="menu"`/`role="menuitem"`
+on these dropdowns. That ARIA pattern implies arrow-key navigation
+between items and a constrained set of valid children — and once
+`WidgetMenu`'s "Settings" disclosure is expanded, the panel contains a
+real `<form>` with text `<input>`s, which isn't valid content under a
+strict ARIA menu. Forcing `role="menu"` here would tell assistive tech
+to expect keyboard behavior (arrow keys, typeahead) that isn't
+implemented, which is worse than no role at all. These are disclosure
+panels that visually resemble dropdowns, not application menus — plain
+buttons/forms (already keyboard-operable via Tab/Enter/Space, per the
+axe-core pass finding nothing wrong) are the semantically correct
+choice, not a shortcut around implementing "real" menu semantics.
+`aria-haspopup="true"` (generic popup) is used instead of `"menu"`, so
+the trigger's accessible description doesn't promise a pattern this
+doesn't implement either.
+
+**Reduced motion**: the dropdown open/close transition
+(`scale-95`→`scale-100` + opacity) wasn't actually gated by
+`prefers-reduced-motion` — `motion-safe:duration-150` only constrained
+the *duration*, but Tailwind's bare `transition` utility already
+animates by default regardless of that preference, so the scale
+transform played unconditionally. Restructured so the `scale-*`
+utilities themselves are `motion-safe:`-prefixed (opacity/visibility
+still transition, which is a much gentler change than a size
+transform) — verified via Playwright with a `reducedMotion: 'reduce'`
+browser context: the panel's computed `transform` is `none` when open,
+where it was previously a scale matrix.
+
+**Semantic landmarks**: `WidgetCard` changed from a bare `<div>` to
+`<section aria-labelledby={useId()}>`, with the title `<h2>` as the
+labelled element — each widget is now a real landmark region a screen
+reader can jump between (e.g. VoiceOver's rotor) instead of
+undifferentiated page content. `Hero`'s existing `<section>` got the
+same treatment, labelled by its `<h1>` greeting. Verified via
+`document.querySelectorAll('section[aria-labelledby]')` resolving each
+one's label correctly: "Good afternoon, Ken", "GitHub", "Steam", "Quick
+Launch".
+
+Deferred to later stages, still not forgotten: consistent `EmptyState`
+styling, responsive verification sweep.
+
+## 2026-07-25 — Hardening pass, Stage 4: consistent empty states
+
+Six widgets, six hand-written "nothing to show yet" states, each a bare
+`<p>` inheriting `WidgetCard`'s body text color/size but with no
+consistent layout — left-aligned at the top of the card body, leaving
+the rest of the card's height as dead space rather than centered within
+it. New `EmptyState` (`packages/ui/src/empty-state.tsx`) — centers
+within available height, matching `ErrorState`'s layout language for
+the other "non-content" state a widget can be in, with an optional
+`action` slot for cases where the empty state has a fix (a button, not
+just text). Applied to GitHub, Steam (both its "nothing cached yet" and
+"zero games" cases), Quick Launch, and Spotify (both its "zero tracks"
+case and, with the `action` slot, its "not connected" case — which
+previously showed a bare button with no explanatory text at all).
+
+Found and fixed three more radius/touch-target misses while working
+through these same files (not new scope — the same fixes from Stages 2–3,
+just at call sites that weren't touched in those passes): Steam's game
+tile wrapper `<a>` still had a literal `rounded-2xl` instead of
+`RADIUS.chip`; Spotify's track-artwork thumbnails (image and fallback
+block) had a literal `rounded-xl`, same fix; Spotify's "Connect Spotify"
+button and the navbar's "Sign in with GitHub" button were both still
+under the 44px touch-target minimum (`px-3 py-1.5`/`px-4 py-2` with no
+explicit height) — both now `min-h-11`.
+
+**Deliberately not touched**: the top-level "Sign in to see your
+dashboard" message (page.tsx) — a whole-app unauthenticated state, not a
+widget's data state, so routing it through a widget-scoped primitive
+would be a context mismatch. The Steam detail page's "No achievement
+data available for this game" line — an inline note sitting among
+otherwise-populated content, not a widget's entire empty body, so
+`EmptyState`'s centered-in-available-height layout would look wrong
+there; it stays its own small icon+text row. Same principle as Stage 2:
+consistency means applying a shared primitive where the actual shape
+matches, not wherever the words "empty state" could apply.
+
+Deferred to the final stage, still not forgotten: responsive
+verification sweep.
+
+## 2026-07-25 — Hardening pass, Stage 5: responsive verification
+
+Actually reproduced problems via Playwright at seven real widths
+(desktop 1920, large-laptop 1512, laptop 1280, iPad landscape 1024,
+iPad portrait 768, large-phone 428, phone 375) against the full
+dashboard (navbar + hero + all five widgets, realistic data including a
+2-game Steam card and a long Spotify track title) — not assumed fine
+from the single-widget checks earlier stages used. Found two real bugs.
+
+**Bug 1 — the grid's row-track height, not actually fixed by
+`items-start`.** At every width from phone through desktop, GitHub's
+card shared a `grid` row with Steam. Once Steam's stacked cover art (2
+games) made it taller than GitHub, a large dead gap opened up under
+GitHub — visible at both the `lg:` 3-column tier (GitHub next to Steam)
+and the `sm:` 2-column tier (Steam next to Quick Launch). `items-start`
+(added earlier, see the redesign-batch entry) only stops a *shorter
+item's own box* from stretching to match a row's height — it does
+nothing about the row TRACK itself, which CSS Grid still sizes to its
+tallest cell regardless of `align-items`. That's a real, spec-level
+distinction I'd conflated before actually reproducing this at real
+widths with real content-height variance.
+
+Fix: replaced the single `grid-cols-3` for card widgets with two
+independent flex columns — `wideWidgets` (`size: "lg"`, currently just
+GitHub) in one column, everything else (`railWidgets`) stacked in a
+second, narrower column (`apps/web/src/app/page.tsx`, `WidgetGrid`).
+Two independent flex-column stacks have no shared row tracks, so each
+one's cards simply sit tight against each other regardless of what's in
+the other column — GitHub ending early just means its column ends
+early, not a gap. `SPAN_CLASS` (the old per-widget grid-span map) is
+gone; layout is now just "which of the two columns," decided once, not
+computed per widget. This assumes at least one `"lg"` widget exists —
+true today, not worth generalizing further until it isn't.
+
+**Bug 2 — nested flex containers refusing to shrink below their
+content's natural (untruncated) width**, discovered because the sweep
+used a deliberately long Spotify track title
+("DON'T KILL THE PARTY (feat. Quavo & Juicy J)") instead of only short
+placeholder text. Text with `truncate` (`white-space: nowrap;
+overflow: hidden; text-overflow: ellipsis`) has an intrinsic min-content
+width equal to its *full, untruncated* width — `overflow:hidden` only
+affects painting, not CSS's box-sizing algorithm — and a flex item's
+default `min-width: auto` uses that untruncated width as a floor it
+won't shrink below, unless every container in the chain between the
+text and the point where shrinking needs to happen has `min-width: 0`.
+Added `min-w-0` through the actual affected chain (`WidgetCard`'s root
+`<section>` and its two direct children, plus Spotify's `<ul>`/`<li>`)
+once real measurement (Playwright `getBoundingClientRect`, not
+speculation) confirmed exactly where the extra width was and wasn't
+coming from — narrowed the overflow from 50px to about 15px at the
+375px phone width.
+
+That remaining ~15px didn't trace to any single leaf element (nothing
+measured wider than its own container), which points to a flexbox
+`gap`-with-intrinsic-sizing edge case rather than one more fixable
+`min-w-0` spot — plausible given how many nested flex levels this
+layout now has (outer shell → main → grid wrapper → column → 
+WidgetCard → content), each a place gaps and min-content calculations
+compound slightly. Rather than keep chasing a sub-20px residual through
+further speculative `min-w-0` placements, added `overflow-x-hidden` to
+the page's outermost container
+(`apps/web/src/app/page.tsx`) as a defensive backstop — verified
+nothing is actually being clipped by it (every real leaf element
+already renders within the viewport; this only guards against the
+residual container-level rounding), and confirmed zero horizontal
+scroll at all seven widths, including with the long test string still
+in place.
+
+**What wasn't touched**: no per-breakpoint bespoke layouts were built —
+per Ken's confirmed preference, the fix targets the actual reproduced
+problems (the grid row-height trap, the truncation-in-flex trap), not a
+ground-up redesign of the responsive system. The existing `sm:`/`lg:`
+breakpoint structure stays; only the *card-widgets* section changed
+from a single grid to two flex columns.
+
+## 2026-07-25 — Hardening pass, Stage 6: final review
+
+Closing stage — verification, not new fixes. Three checks, all real
+(run and read, not assumed):
+
+**Lighthouse**, run against a genuine **production build**
+(`next build && next start`), not the dev server — dev mode's lack of
+minification/code-splitting makes its Lighthouse performance score
+meaningless for judging the real app (confirmed directly: the same
+page scored 65 performance under `next dev`, 98 under `next start` —
+that gap is the dev-server tax, not a real regression). Final scores:
+
+| Category | Score |
+|---|---|
+| Performance | 98 |
+| Accessibility | 100 |
+| Best Practices | 96 |
+| SEO | 100 |
+
+All four meet the ≥95 target from Ken's original brief. The one
+Best Practices point below 100 is `errors-in-console`, and every
+logged error is `net::ERR_TUNNEL_CONNECTION_FAILED` against external
+domains (Steam's CDN, YouTube/Google/Spotify/Notion favicons) — this
+sandbox's outbound network is restricted to a small allowlist that
+doesn't include them. Real deployment has normal internet access, so
+this resolves to a clean console (and 100) there; not a code defect,
+and confirmed as such by reading the actual audit detail rather than
+assuming.
+
+**Code quality sweep**: grepped every file touched across all six
+stages for `TODO`/`FIXME`/`HACK` (none), explicit `any` (none — the one
+regex hit was the word "any" in an English comment, not a type), and
+cross-checked every new `packages/ui` export against real usage — all
+either consumed by widgets/apps/web directly, or internally within
+`packages/ui` itself (e.g. `ActionForm` only used by `WidgetMenu` now
+that Hero no longer needs it standalone, `GLASS_HOVER`/`ErrorState`
+used inside `WidgetCard`/`WidgetErrorBoundary`) — nothing exported and
+orphaned.
+
+**Self-review**, against Ken's own closing questions:
+
+- *Would this pass a professional design review?* The visual direction
+  was already approved and untouched by this pass — what changed is
+  underneath it: real error isolation, one design-token source of
+  truth instead of scattered literals, consistent empty states,
+  accessible interaction, verified layout at real widths.
+- *Would this pass a senior frontend code review?* The two real bugs
+  found in Stage 5 (the grid row-height trap, the truncation-in-flex
+  trap) are exactly the kind of thing a senior reviewer would flag —
+  the difference here is they were caught and fixed within this same
+  pass, with the fix's reasoning and a rejected first attempt (Stage
+  1's try/catch, corrected by the linter) recorded, not silently
+  reverted.
+- *Would another developer enjoy maintaining this?* Every widget now
+  shares `Metric`, `EmptyState`, `GLASS_CHIP`, `RADIUS`, and
+  `useDismissableMenu` instead of five parallel almost-identical
+  implementations — the next widget added copies an existing widget's
+  shape and inherits all of this for free.
+
+**Full stage summary** (all pushed to `dev`, each its own commit):
+
+1. Per-widget error isolation + Suspense streaming — one broken widget
+   can no longer take down the whole dashboard.
+2. Shared primitives (`Metric`, `GLASS_CHIP`, `useDismissableMenu`) and
+   a `RADIUS` token scale — four real duplicated/inconsistent
+   implementations reduced to one each.
+3. Accessibility — automated `axe-core` audit (zero WCAG 2A/2AA
+   violations) plus manual fixes an automated audit can't catch alone:
+   44×44px touch targets, keyboard Escape + focus return, `inert` on
+   closed menus, landmark regions.
+4. Consistent `EmptyState` across all six "nothing to show yet" cases,
+   plus a couple more touch-target/radius misses caught along the way.
+5. Responsive verification — two real bugs found and fixed by testing
+   at seven actual widths instead of assuming the earlier work was
+   sufficient.
+6. This entry — Lighthouse on a production build, a code-quality
+   sweep, and this summary.
+
+Not done, and deliberately not attempted in this pass: a permanent
+automated test suite (no vitest/Playwright config exists in the repo;
+verification throughout used the same ad hoc temporary-preview-route +
+Playwright pattern established earlier in the project, each route
+deleted before commit) and literal cross-browser testing on Safari/
+Firefox/real iOS/Android hardware (this sandbox only has Chromium).
+Both are real gaps worth naming plainly rather than glossing over — if
+Ken wants either pursued, that's a new, explicit scope decision, not
+something this pass silently assumed.

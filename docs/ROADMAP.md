@@ -446,7 +446,21 @@ the complete staged roadmap.
   misses found while in these files: two more literal `rounded-2xl`/
   `rounded-xl` spots that should've been `RADIUS.chip`, and two more
   buttons under the 44px touch-target minimum.
-- [ ] Stage 5 — responsive verification sweep (fix real breakage only)
+- [x] **Stage 5 — Responsive verification**: reproduced real breakage
+  via Playwright at 7 widths (desktop through phone) against the full
+  dashboard, not assumed fine from single-widget checks. Found the
+  `items-start` grid fix from an earlier pass never actually fixed the
+  underlying issue — CSS Grid still sizes a row's *track* to its
+  tallest cell regardless of `align-items`, so GitHub sharing a row
+  with a tall Steam card left a large dead gap under GitHub at every
+  width. Replaced the shared grid with two independent flex columns
+  (wide column for `"lg"` widgets, a stacked rail for everything else)
+  — no shared row tracks, no gap. Also found and fixed a classic
+  flex-truncation bug (`min-width: auto` using untruncated text width
+  as a floor) once the sweep used a realistically long track title
+  instead of only short placeholders. See `docs/DECISIONS.md` for the
+  full trace — both were reproduced and fixed with real measurements,
+  not guessed at.
 - [ ] Stage 6 — final review, Lighthouse, docs wrap-up
 
 ## Phase 2 — make it actionable

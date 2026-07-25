@@ -42,10 +42,10 @@ export function WidgetCard({ title, icon, action, children, accent = "none" }: W
   return (
     <section
       aria-labelledby={titleId}
-      className={`flex h-full flex-col gap-4 ${RADIUS.card} p-5 ${glassClass("light")} ${GLASS_HOVER}`}
+      className={`flex h-full min-w-0 flex-col gap-4 ${RADIUS.card} p-5 ${glassClass("light")} ${GLASS_HOVER}`}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-3 text-zinc-950 dark:text-zinc-50">
+      <div className="flex min-w-0 items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-3 text-zinc-950 dark:text-zinc-50">
           {icon && (
             <span
               className={`flex h-9 w-9 shrink-0 items-center justify-center ${RADIUS.chip} ${ACCENT_BADGE[accent]}`}
@@ -53,13 +53,13 @@ export function WidgetCard({ title, icon, action, children, accent = "none" }: W
               {icon}
             </span>
           )}
-          <h2 id={titleId} className="text-sm font-semibold tracking-tight">
+          <h2 id={titleId} className="truncate text-sm font-semibold tracking-tight">
             {title}
           </h2>
         </div>
         {action}
       </div>
-      <div className="flex-1 text-sm text-zinc-600 dark:text-zinc-400">{children}</div>
+      <div className="min-w-0 flex-1 text-sm text-zinc-600 dark:text-zinc-400">{children}</div>
     </section>
   );
 }

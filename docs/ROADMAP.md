@@ -12,7 +12,10 @@ and §18 — this doc tracks live status against them.
 - [x] Core DB schema migrations written (`supabase/migrations/`)
 - [x] Supabase project created
 - [x] GitHub OAuth App registered
-- [x] Deployed to Vercel (`https://[redacted-old-domain]`)
+- [x] Deployed to Vercel (`https://[redacted-old-domain]` — renamed
+      2026-07-24 from `[redacted-old-domain]`; requires `AUTH_URL`
+      and the GitHub OAuth App / Spotify app callback URLs to match, see
+      docs/DECISIONS.md)
 - [x] **Gate:** log in with GitHub, see your own name echoed back — confirmed
 
 **Phase 0 is complete.**

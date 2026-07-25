@@ -1516,3 +1516,91 @@ problems (the grid row-height trap, the truncation-in-flex trap), not a
 ground-up redesign of the responsive system. The existing `sm:`/`lg:`
 breakpoint structure stays; only the *card-widgets* section changed
 from a single grid to two flex columns.
+
+## 2026-07-25 — Hardening pass, Stage 6: final review
+
+Closing stage — verification, not new fixes. Three checks, all real
+(run and read, not assumed):
+
+**Lighthouse**, run against a genuine **production build**
+(`next build && next start`), not the dev server — dev mode's lack of
+minification/code-splitting makes its Lighthouse performance score
+meaningless for judging the real app (confirmed directly: the same
+page scored 65 performance under `next dev`, 98 under `next start` —
+that gap is the dev-server tax, not a real regression). Final scores:
+
+| Category | Score |
+|---|---|
+| Performance | 98 |
+| Accessibility | 100 |
+| Best Practices | 96 |
+| SEO | 100 |
+
+All four meet the ≥95 target from Ken's original brief. The one
+Best Practices point below 100 is `errors-in-console`, and every
+logged error is `net::ERR_TUNNEL_CONNECTION_FAILED` against external
+domains (Steam's CDN, YouTube/Google/Spotify/Notion favicons) — this
+sandbox's outbound network is restricted to a small allowlist that
+doesn't include them. Real deployment has normal internet access, so
+this resolves to a clean console (and 100) there; not a code defect,
+and confirmed as such by reading the actual audit detail rather than
+assuming.
+
+**Code quality sweep**: grepped every file touched across all six
+stages for `TODO`/`FIXME`/`HACK` (none), explicit `any` (none — the one
+regex hit was the word "any" in an English comment, not a type), and
+cross-checked every new `packages/ui` export against real usage — all
+either consumed by widgets/apps/web directly, or internally within
+`packages/ui` itself (e.g. `ActionForm` only used by `WidgetMenu` now
+that Hero no longer needs it standalone, `GLASS_HOVER`/`ErrorState`
+used inside `WidgetCard`/`WidgetErrorBoundary`) — nothing exported and
+orphaned.
+
+**Self-review**, against Ken's own closing questions:
+
+- *Would this pass a professional design review?* The visual direction
+  was already approved and untouched by this pass — what changed is
+  underneath it: real error isolation, one design-token source of
+  truth instead of scattered literals, consistent empty states,
+  accessible interaction, verified layout at real widths.
+- *Would this pass a senior frontend code review?* The two real bugs
+  found in Stage 5 (the grid row-height trap, the truncation-in-flex
+  trap) are exactly the kind of thing a senior reviewer would flag —
+  the difference here is they were caught and fixed within this same
+  pass, with the fix's reasoning and a rejected first attempt (Stage
+  1's try/catch, corrected by the linter) recorded, not silently
+  reverted.
+- *Would another developer enjoy maintaining this?* Every widget now
+  shares `Metric`, `EmptyState`, `GLASS_CHIP`, `RADIUS`, and
+  `useDismissableMenu` instead of five parallel almost-identical
+  implementations — the next widget added copies an existing widget's
+  shape and inherits all of this for free.
+
+**Full stage summary** (all pushed to `dev`, each its own commit):
+
+1. Per-widget error isolation + Suspense streaming — one broken widget
+   can no longer take down the whole dashboard.
+2. Shared primitives (`Metric`, `GLASS_CHIP`, `useDismissableMenu`) and
+   a `RADIUS` token scale — four real duplicated/inconsistent
+   implementations reduced to one each.
+3. Accessibility — automated `axe-core` audit (zero WCAG 2A/2AA
+   violations) plus manual fixes an automated audit can't catch alone:
+   44×44px touch targets, keyboard Escape + focus return, `inert` on
+   closed menus, landmark regions.
+4. Consistent `EmptyState` across all six "nothing to show yet" cases,
+   plus a couple more touch-target/radius misses caught along the way.
+5. Responsive verification — two real bugs found and fixed by testing
+   at seven actual widths instead of assuming the earlier work was
+   sufficient.
+6. This entry — Lighthouse on a production build, a code-quality
+   sweep, and this summary.
+
+Not done, and deliberately not attempted in this pass: a permanent
+automated test suite (no vitest/Playwright config exists in the repo;
+verification throughout used the same ad hoc temporary-preview-route +
+Playwright pattern established earlier in the project, each route
+deleted before commit) and literal cross-browser testing on Safari/
+Firefox/real iOS/Android hardware (this sandbox only has Chromium).
+Both are real gaps worth naming plainly rather than glossing over — if
+Ken wants either pursued, that's a new, explicit scope decision, not
+something this pass silently assumed.

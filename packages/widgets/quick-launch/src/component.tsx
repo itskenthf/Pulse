@@ -1,4 +1,4 @@
-import { WidgetCard, WidgetMenu } from "@pulse/ui";
+import { SPRING_PRESS, WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
 import { QuickLaunchIcon } from "./icon";
 import { LinkIcon } from "./link-icon";
@@ -24,7 +24,7 @@ export function QuickLaunchComponent({
       }
     >
       {links.length > 0 ? (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="flex flex-wrap gap-2.5">
           {links.map((link) => (
             <a
               key={link.url}
@@ -33,7 +33,7 @@ export function QuickLaunchComponent({
               rel="noopener noreferrer"
               title={link.label}
               aria-label={link.label}
-              className="flex aspect-square items-center justify-center rounded-2xl bg-white/40 shadow-sm ring-1 ring-inset ring-white/50 transition hover:bg-white/60 dark:bg-white/5 dark:ring-white/10 dark:hover:bg-white/10"
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/40 shadow-sm ring-1 ring-inset ring-white/50 transition hover:bg-white/60 dark:bg-white/5 dark:ring-white/10 dark:hover:bg-white/10 ${SPRING_PRESS}`}
             >
               <LinkIcon url={link.url} />
             </a>

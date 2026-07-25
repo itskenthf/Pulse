@@ -12,6 +12,7 @@ import {
 } from "./constants";
 import { QUOTES } from "./quotes";
 import type { HeroData, HeroPeriod } from "./types";
+import { weatherTip } from "./weather-tip";
 
 const GREETINGS: Record<HeroPeriod, string> = {
   morning: "Good morning",
@@ -77,6 +78,7 @@ export async function fetchHeroData(context: WidgetFetchContext): Promise<HeroDa
     dateFormatted,
     weatherSummary: `${Math.round(weather.temperatureC)}°C, ${weather.description}`,
     weatherLocation: WEATHER_LOCATION_LABEL,
+    weatherTip: weatherTip(weather.weatherCode, weather.temperatureC),
     quote: quotePick?.text ?? QUOTES[0]!.text,
     generatedAt: now.toISOString(),
   };

@@ -952,3 +952,120 @@ No app code hardcodes the domain (`AUTH_URL` env var is the single source
 used to build callback URLs — see `apps/web/src/app/api/auth/callback/spotify/route.ts`
 and `packages/auth`), so this was a docs-only fix on the repo side —
 `docs/ROADMAP.md`'s Phase 0 entry updated to the new domain.
+
+## 2026-07-25 — Mobile click bug fix, nav removal, GitHub/Steam/Hero content pass
+
+Ken tested the previous redesign on real mobile/iPad hardware and reported
+the "⋯" overflow menus and the profile menu couldn't be tapped open at
+all — confirming a risk I'd explicitly flagged when the `:focus-within`
+dropdown fix landed (see the 2026-07-24 "Refinement pass" entry above):
+"a plain `<button>` + CSS `:focus-within`... [is a] desktop Safari
+tradeoff." That tradeoff turned out to be real and broader than expected —
+not just desktop Safari, but mobile/iPad Safari generally, where a tap
+doesn't reliably move DOM focus onto a `<button>` the way a mouse click
+does. `:focus-within` had solved the *previous* bug (backdrop-blur
+breaking `position: fixed` click-outside backdrops) but introduced this
+one — two different CSS-only tricks, two different real bugs, both only
+found by testing actual rendering behavior rather than reasoning about the
+CSS in the abstract.
+
+**Fix**: `WidgetMenu` (`packages/ui/src/widget-menu.tsx`) and `ProfileMenu`
+(extracted from `page.tsx` into its own `apps/web/src/app/profile-menu.tsx`
+client component, since `page.tsx`'s `Home` must stay an async server
+component) rebuilt with real `useState` open/close state, toggled on
+`onClick`, closed via a `document.addEventListener("pointerdown", ...)`
+listener that checks whether the event target is outside the menu's root
+ref. `pointerdown` (not `click`) fires identically for touch and mouse,
+sidestepping the whole focus-reliability question — verified with a real
+Playwright touch-simulated tap (`hasTouch: true` context, `.tap()`),
+asserting the dropdown's computed `visibility` before/after, not just a
+screenshot. `WidgetMenu`'s dropdown also gained `overflow-hidden` (it was
+missing — `ProfileMenu`'s already had it), fixing a second, unrelated bug
+Ken reported in the same message: square per-item hover backgrounds poking
+past the dropdown's rounded corners.
+
+`ActionForm` (`packages/ui/src/action-form.tsx`) gained an optional
+`onSubmitted` callback, fired once a `useActionState` action settles
+without error (tracked via a `wasPending` ref across renders) — used by
+`WidgetMenu` to close the dropdown after a successful Refresh click,
+otherwise the menu stayed open over the fresh content.
+
+**Navigation removed entirely, not just hidden.** Ken said he never uses
+the sidebar/dock/bottom-nav ("all i need is just to see cards") —
+confirmed via `AskUserQuestion` that this meant deleting `Sidebar`, `Dock`,
+`BottomNav`, and the `DRAWER_ID` checkbox-drawer plumbing from `page.tsx`
+outright, not just hiding them behind a flag. The disabled Search and
+Notification `NavIconButton`s were removed from the navbar too (Ken: "i
+dont use it"). This also let `main`'s bottom padding shrink back to a flat
+`p-4 sm:p-6` — it no longer needs clearance for a fixed bottom nav or dock.
+
+**GitHub card**: previously ended in the 2026-07-24 refinement pass
+described "latest repository/commit" as a real content feature deliberately
+deferred (needs a new API call, isn't polish). Built now:
+`fetchLatestActivity` in `packages/adapters/github/src/activity.ts`, one
+GraphQL query against `viewer.repositories(first: 1, orderBy: {field:
+PUSHED_AT, direction: DESC}, ownerAffiliation: OWNER)` with
+`defaultBranchRef.target on Commit { message, committedDate, url }`.
+Returns `null` (not a thrown error) when the user has no owned repos —
+a real, non-error state. Fetched in parallel with the existing
+contributions query in `fetch.ts` (`Promise.all`), rendered as a small
+linked row beneath the heatmap.
+
+**Steam split into card + detail page**, confirmed via `AskUserQuestion`
+("real data we already fetch" over a placeholder page): the card now shows
+only large cover art and the game title, matching the reference
+game-library-shelf screenshot Ken provided. Cover art uses Steam's CDN
+convention `https://cdn.akamai.steamstatic.com/steam/apps/{appId}/library_600x900.jpg`
+— constructible directly from `appId`, no extra API call — via a new
+`CoverArt` client component (`packages/widgets/steam/src/cover-art.tsx`)
+reusing the same SSR-hydration-race-safe fallback pattern as Quick
+Launch's `LinkIcon` (`useEffect` checking `complete && naturalWidth === 0`
+on mount, in addition to `onError`), since not every appId has a cover
+(delisted/old titles 404). Hours, last-played, and achievements — previously
+on the card via `playtime-bar.tsx` (now deleted) — moved to a new
+`apps/web/src/app/steam/[appId]/page.tsx` route, reading the same
+already-cached `SteamData` via `readWidgetCache` (no new fetch, no new
+adapter call) and finding the matching game by `appId`. The steam widget
+package now exports `CoverArt`, `formatHours`, `formatRelativeDay`,
+`WIDGET_ID`, and the `SteamData`/`SteamGame` types specifically so the
+`apps/web` route can reuse them — the first time a widget package's
+internals are consumed somewhere other than its own `render()`, but still
+within the SDK boundary (the shell reads cache + renders widget-owned
+pieces, it doesn't gain widget-specific business logic of its own).
+
+**Hero redesigned toward "assistant," confirmed via `AskUserQuestion`**
+("rule-based, deterministic" over an LLM call — no new dependency, no
+per-request cost, no new failure mode from an external AI API). The three
+separate glass chips (date/time · weather · quote) became one flowing
+sentence; a new `weatherTip` field on `HeroData` is computed by
+`packages/widgets/hero/src/weather-tip.ts` — plain `Set`-membership checks
+against the adapter's `weatherCode` (rain codes → "Take an umbrella," fog
+→ "Drive carefully," clear + ≥30°C → "Stay hydrated," etc.), returning
+`null` when nothing's actionable rather than forcing a generic line onto
+every render. Cross-widget insights (e.g. referencing GitHub's streak or
+Steam's playtime from inside Hero, via `readWidgetCache` reads of another
+widget's cache — technically legal since `readWidgetCache` is already
+generic/public and this is a widget-level choice, not shell-level coupling)
+were considered but deliberately left out of this pass: Ken's answer
+confirmed the *style* (rule-based) but not this specific scope, and the
+rest of this batch was already large enough without adding an
+under-specified feature.
+
+**Quick Launch**: tiles shrunk from `grid grid-cols-3` `aspect-square`
+cells to `flex flex-wrap` with a fixed `h-11 w-11` per tile — Ken: "make it
+small and follow icon size... must always take less space." `LinkIcon`
+itself (the favicon-fetch + SSR-race-safe fallback) was untouched, only
+its container sizing changed.
+
+**Verification**: real Playwright screenshots via a temporary
+`style-preview-tmp` route (rendering each widget's `render()` directly
+with mock data and mock server-action stubs, since the sandbox can't reach
+Supabase/GitHub/Steam) at desktop and mobile viewports, plus a touch-
+simulated DOM-state assertion for the click-outside fix — the same
+"screenshots alone aren't enough for interaction bugs" lesson from the
+Quick Launch SSR-race fix, reapplied. `pnpm build` also required dummy env
+vars for Supabase/Auth/Steam/Spotify to get past static generation in this
+sandbox (real deploy has real secrets) — the one failure without dummy
+vars was `supabaseUrl is required`, not a code defect. The temporary
+preview route and its mock-action helper file were deleted before commit,
+per the established pattern.

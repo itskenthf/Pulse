@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import { RefreshCw } from "lucide-react";
 import type { WidgetAction, WidgetActionState } from "@pulse/sdk";
@@ -20,6 +20,9 @@ export interface ActionFormProps {
   /** Leading icon for the "menu" row variant — ignored by other variants
    *  ("icon" always uses its own refresh glyph). */
   icon?: ReactNode;
+  /** Called once the action settles without error — used by WidgetMenu to
+   *  close the dropdown after a successful refresh. */
+  onSubmitted?: () => void;
 }
 
 const initialState: WidgetActionState = {};
@@ -36,8 +39,17 @@ export function ActionForm({
   className,
   variant = "text",
   icon,
+  onSubmitted,
 }: ActionFormProps) {
   const [state, formAction, isPending] = useActionState(action, initialState);
+  const wasPending = useRef(false);
+
+  useEffect(() => {
+    if (wasPending.current && !isPending && !state?.error) {
+      onSubmitted?.();
+    }
+    wasPending.current = isPending;
+  }, [isPending, state?.error, onSubmitted]);
 
   return (
     <form action={formAction} className={className}>

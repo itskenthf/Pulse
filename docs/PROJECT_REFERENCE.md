@@ -455,51 +455,85 @@ only the structural/layout decisions that doc doesn't cover:
   `"lg"`, spans 2 of 3 desktop columns) instead of every card getting
   identical width. No left-border accents — widget identity comes from a
   soft colored glow behind the icon badge instead.
-- **Hero is one grouped glass panel**, not floating text: greeting
-  headline, then a row of distinct "today" chips (date/time, weather,
-  quote), each its own small glass surface.
-- **Adaptive navigation per breakpoint, not just resized** (2026-07-24,
-  Ken's request):
-  - Desktop (`lg:` 1024px+): a floating glass **dock**, bottom-center —
-    not a pinned sidebar rail (2026-07-24 refinement pass: replaced the
-    rail after Ken judged it "still feels disconnected"; see
-    docs/DECISIONS.md).
-  - Tablet (`sm:`–`lg:` 640–1024px): an off-canvas sidebar drawer, toggled
-    by a menu button in the navbar — a checkbox + `peer-checked:` CSS
-    toggle, no client JS.
-  - Mobile (below `sm:` 640px): a fixed glass bottom nav bar — a
-    "glanceable companion," not a shrunk desktop layout.
-  Only "Dashboard" is a real, active destination in any of these; Tasks
-  and Habits are visible, disabled placeholders for future sections, not
-  routed anywhere — UI signposting, not scaffolded feature infrastructure.
+- **Hero is one flowing "assistant" panel**, not floating text or stat
+  chips (2026-07-25, superseding the "row of today chips" version below):
+  a greeting headline, then one sentence combining date/time and weather
+  — plus a deterministic, rule-based weather tip (e.g. rain codes → "Take
+  an umbrella"; `packages/widgets/hero/src/weather-tip.ts`, no LLM call,
+  no external cost) — and a quote line underneath. Cross-widget insights
+  (e.g. referencing GitHub's streak from inside Hero) were considered and
+  deliberately left out to keep scope to what was actually asked for —
+  see docs/DECISIONS.md if picking this up later.
+- **No navigation chrome beyond the navbar** (2026-07-25, reversing the
+  entry below — Ken reported never using it: "all i need is just to see
+  cards"). Sidebar, Dock, and BottomNav were deleted entirely, not hidden
+  behind a flag; same for the navbar's Search/Notification icons. The
+  navbar is just the Pulse wordmark and the profile menu.
 - **Every dropdown (profile menu, per-widget "⋯" overflow menu) closes on
-  outside click** via CSS `:focus-within` on its wrapper, not a checkbox +
-  fixed backdrop — backdrop-blur on an ancestor (the navbar, a widget card)
-  creates a new CSS containing block for `position: fixed` descendants, so
-  a backdrop nested inside a glass surface only ever covers that surface's
-  own box, never the full viewport. Real, non-obvious CSS quirk — see
-  docs/DECISIONS.md if adding another dropdown.
+  outside click** via real client-side state (`useState` + a
+  `pointerdown` document listener checking whether the event's outside the
+  menu's root), not CSS `:focus-within`. `:focus-within` was the fix for
+  an earlier bug (a `position: fixed` backdrop nested inside a
+  backdrop-blur ancestor never covers the full viewport — see
+  docs/DECISIONS.md), but doesn't reliably work on mobile/iPad Safari,
+  where a tap doesn't always move DOM focus onto a `<button>` — confirmed
+  as a real bug via Ken's own device testing, fixed 2026-07-25.
 - Every widget's action slot is a single **"⋯" overflow menu**
   (`WidgetMenu` in `packages/ui`) — Refresh, and Settings when the widget
   has any — instead of a bare icon button plus a separate below-card
   Settings toggle. Room for future actions without redesigning the card.
 - The header's account control is a compact profile pill (avatar/initial +
   name) with a dropdown for Settings (placeholder) and Sign out, not a bare
-  "Signed in as X / Sign out" text row. Search and Notifications sit beside
-  it as disabled placeholder icons, future-proofing the navbar without
-  building either feature ahead of need.
+  "Signed in as X / Sign out" text row.
+- **Card hover is a static color cue, not motion** (2026-07-25, Ken's
+  request): no lift, no scale — `GLASS_HOVER` brightens the card's
+  border/ring on hover instead. Steam's cover art follows the same
+  pattern (a border light-up via `group-hover`) rather than scaling the
+  whole tile. Buttons (refresh, settings, profile, sign-in) keep their
+  scale-on-press feedback (`SPRING_PRESS`) — this only applies to card-
+  and tile-level hover, not button interaction.
+- **The bento grid doesn't stretch cards to fill their row** (2026-07-25):
+  the grid gained `items-start` after a tall Steam card (see below) was
+  stretching its shorter row-mates (GitHub, Quick Launch) to match its
+  height via CSS Grid's default `align-items: stretch` — each card now
+  sizes to its own content.
 - Cards should be full of real content, not sparse — but only ever real,
-  fetched data (2026-07-24: Steam gained last-played and achievement
-  completion, both real API data; GitHub's "latest repo/commit" was
-  considered and explicitly not added since it'd need a new API call — see
-  docs/DECISIONS.md). Never fill empty space with an invented number.
-- Quick Launch is icon-only (no text labels) — each link's own favicon,
-  fetched directly from its domain, with a generic fallback icon on load
-  failure.
+  fetched data. GitHub gained a "latest repository/commit" section
+  (2026-07-25; a new GraphQL query — deliberately deferred in an earlier
+  pass as "not polish," then built once it was actually asked for).
+  Steam's card was deliberately simplified back down the other direction
+  (2026-07-25): it now shows only cover art + title, matching a reference
+  game-library shelf image — hours/last-played/achievement data moved to
+  a new per-game detail page (`apps/web/src/app/steam/[appId]`) rather
+  than being crammed onto the card. Never fill empty space with an
+  invented number.
+- Quick Launch is icon-only (no text labels), small fixed-size tiles
+  (`h-11 w-11`, matching icon size rather than stretching to fill a grid
+  cell) — each link's own favicon, fetched directly from its domain, with
+  a generic fallback icon on load failure.
 - Avoid adding more detail to mobile cards just because there's a full
   screen — keep cards content-appropriate per breakpoint rather than a
   uniformly shrunk desktop layout; extra detail belongs behind a
   tap-through, not crammed into the card.
+
+<details>
+<summary>Superseded 2026-07-25: adaptive per-breakpoint navigation (dock/drawer/bottom-nav)</summary>
+
+Kept for history — Ken reported never using any of this, so it was
+deleted outright rather than iterated on further:
+
+- Desktop (`lg:` 1024px+): a floating glass **dock**, bottom-center — not
+  a pinned sidebar rail (2026-07-24 refinement pass: replaced the rail
+  after Ken judged it "still feels disconnected").
+- Tablet (`sm:`–`lg:` 640–1024px): an off-canvas sidebar drawer, toggled
+  by a menu button in the navbar — a checkbox + `peer-checked:` CSS
+  toggle, no client JS.
+- Mobile (below `sm:` 640px): a fixed glass bottom nav bar — a
+  "glanceable companion," not a shrunk desktop layout.
+
+Only "Dashboard" was ever a real, active destination in any of these;
+Tasks and Habits were visible, disabled placeholders for future sections.
+</details>
 
 ## 20. Known risks / things to watch
 

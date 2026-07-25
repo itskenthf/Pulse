@@ -461,7 +461,25 @@ the complete staged roadmap.
   instead of only short placeholders. See `docs/DECISIONS.md` for the
   full trace — both were reproduced and fixed with real measurements,
   not guessed at.
-- [ ] Stage 6 — final review, Lighthouse, docs wrap-up
+- [x] **Stage 6 — Final review**: Lighthouse run against a real
+  production build (`next build && next start`, not the dev server —
+  confirmed dev mode alone was worth 33 performance points of
+  difference on the identical page). Final: **Performance 98,
+  Accessibility 100, Best Practices 96, SEO 100** — all meet the ≥95
+  target. The one Best Practices point comes entirely from this
+  sandbox's network restrictions blocking external CDN/favicon domains
+  (verified by reading the actual audit detail), not a code issue.
+  Code-quality sweep found no TODOs, no stray `any`, no orphaned
+  exports. See `docs/DECISIONS.md` for the full self-review and a
+  summary of all six stages.
+
+**Hardening pass complete** (Stages 1–6, all on `dev`). Honest gaps,
+named rather than glossed over: no permanent automated test suite
+exists in the repo (verification used the project's established ad hoc
+Playwright-against-a-temporary-route pattern throughout, not a
+committed suite), and cross-browser testing was Chromium-only (this
+sandbox has no Safari/Firefox/real device access). Both are real scope
+decisions for later, not silently assumed done.
 
 ## Phase 2 — make it actionable
 

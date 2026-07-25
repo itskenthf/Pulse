@@ -13,15 +13,7 @@ export default async function Home() {
   const session = await auth();
 
   return (
-    <div className="relative flex min-h-screen bg-[#f3f4f8] dark:bg-[#0b0d12]">
-      {/* Layered ambient background: soft neutral base + blurred color
-          blobs, fixed behind everything — atmosphere, not a gradient card. */}
-      <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-32 -left-24 h-[30rem] w-[30rem] rounded-full bg-sky-400/60 blur-3xl dark:bg-sky-500/25" />
-        <div className="absolute top-1/4 -right-40 h-[34rem] w-[34rem] rounded-full bg-violet-400/50 blur-3xl dark:bg-violet-500/25" />
-        <div className="absolute top-1/2 left-1/3 h-[26rem] w-[26rem] rounded-full bg-sky-300/40 blur-3xl dark:bg-sky-500/15" />
-        <div className="absolute bottom-0 left-1/4 h-[26rem] w-[26rem] rounded-full bg-amber-300/45 blur-3xl dark:bg-amber-500/20" />
-      </div>
+    <div className="relative flex min-h-screen bg-gradient-to-br from-sky-200 via-cyan-100 to-violet-200 dark:from-slate-950 dark:via-blue-950 dark:to-violet-950">
 
       {session?.user && (
         <>

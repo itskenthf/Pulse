@@ -6,6 +6,11 @@ export interface RecentlyPlayedGame {
   playtimeForeverMinutes: number;
 }
 
+export interface AchievementSummary {
+  unlocked: number;
+  total: number;
+}
+
 interface SteamApiGame {
   appid?: number;
   name?: string;
@@ -61,4 +66,85 @@ export async function fetchRecentlyPlayed(
       playtime2WeeksMinutes: game.playtime_2weeks ?? 0,
       playtimeForeverMinutes: game.playtime_forever ?? 0,
     }));
+}
+
+interface OwnedGamesApiResponse {
+  response?: {
+    games?: { appid?: number; rtime_last_played?: number }[];
+  };
+}
+
+/**
+ * Maps appId -> last-played unix timestamp (seconds), via GetOwnedGames.
+ * One call for the whole library rather than one per game — the recently-
+ * played list is already narrow, so this just annotates it with a real
+ * "last played" date instead of only the 2-week/forever playtime figures.
+ */
+export async function fetchLastPlayedMap(
+  apiKey: string,
+  steamId64: string,
+): Promise<Record<number, number>> {
+  const url = new URL("https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/");
+  url.searchParams.set("key", apiKey);
+  url.searchParams.set("steamid", steamId64);
+  url.searchParams.set("include_appinfo", "0");
+  url.searchParams.set("format", "json");
+
+  const response = await fetch(url, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`Steam API request failed: ${response.status}`);
+  }
+
+  const body = (await response.json()) as OwnedGamesApiResponse;
+  const games = body.response?.games ?? [];
+
+  const map: Record<number, number> = {};
+  for (const game of games) {
+    if (typeof game.appid === "number" && typeof game.rtime_last_played === "number") {
+      map[game.appid] = game.rtime_last_played;
+    }
+  }
+  return map;
+}
+
+interface PlayerAchievementsApiResponse {
+  playerstats?: {
+    success?: boolean;
+    achievements?: { achieved?: number }[];
+  };
+}
+
+/**
+ * Per-game achievement completion. Returns null (not a thrown error) when
+ * the game has no achievements or the data isn't available — a common,
+ * expected case (most games don't support Steam achievements at all),
+ * not a failure the widget should surface as an error.
+ */
+export async function fetchAchievementSummary(
+  apiKey: string,
+  steamId64: string,
+  appId: number,
+): Promise<AchievementSummary | null> {
+  const url = new URL("https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v1/");
+  url.searchParams.set("key", apiKey);
+  url.searchParams.set("steamid", steamId64);
+  url.searchParams.set("appid", String(appId));
+  url.searchParams.set("format", "json");
+
+  const response = await fetch(url, { cache: "no-store" });
+  if (!response.ok) {
+    // Steam returns 400 for "this game has no stats" — not a real error.
+    return null;
+  }
+
+  const body = (await response.json()) as PlayerAchievementsApiResponse;
+  const achievements = body.playerstats?.achievements;
+  if (!body.playerstats?.success || !achievements || achievements.length === 0) {
+    return null;
+  }
+
+  return {
+    unlocked: achievements.filter((a) => a.achieved === 1).length,
+    total: achievements.length,
+  };
 }

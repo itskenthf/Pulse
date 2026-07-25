@@ -366,6 +366,23 @@ GitHub content, Steam detail-page split, Hero intelligence style — see
 daily use for two consecutive weeks, trusted data, at least one widget
 replacing a separately-checked tool.
 
+### Follow-up polish (2026-07-25): grid-stretch card sizing, static hover, cover-art fallback
+
+Ken reported the GitHub and Quick Launch cards looked oversized (a CSS
+Grid `stretch` default making them match the tallest card in their row —
+fixed with `items-start` on the grid, see `docs/DECISIONS.md`), asked for
+card hover to stop moving/scaling (replaced with a static border/ring
+brightening on both `WidgetCard` and Steam's cover art), and asked why
+one game's cover art fell back to a placeholder (added a one-step CDN
+fallback — `header.jpg` then `capsule_616x353.jpg` — rather than a real
+bug). Also did a cleanup pass: dead `.pulse-bar-fill` CSS left over from
+the deleted `playtime-bar.tsx` removed from `globals.css`, and a fresh
+touch-simulated Playwright audit re-confirming the mobile click fix
+(GitHub/Steam/profile menus, Steam link, Quick Launch link all verified
+working) with no hydration errors found — Ken's "can't click any button"
+report is most likely against the still-deployed `main`, which doesn't
+yet include the previous entry's click-fix PR.
+
 ## Phase 2 — make it actionable
 
 Not started. Blocked on Phase 1 gate.

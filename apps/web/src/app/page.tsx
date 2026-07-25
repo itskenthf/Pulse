@@ -113,7 +113,7 @@ async function WidgetGrid({ userId }: { userId: string }) {
       {heroItems.map((item) => (
         <div key={item.id}>{item.node}</div>
       ))}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cardItems.map((item) => (
           <div key={item.id} className={SPAN_CLASS[item.size as Exclude<WidgetSize, "hero">]}>
             {item.node}

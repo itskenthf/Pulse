@@ -423,8 +423,19 @@ the complete staged roadmap.
   track stays its own literal — visually similar to `GLASS_CHIP` but not
   interactive, so forcing it through that token would carry an
   inapplicable hover state).
-- [ ] Stage 3 — accessibility (44×44 touch targets, menu ARIA/keyboard,
-  semantic landmarks)
+- [x] **Stage 3 — Accessibility**: verified with an automated `axe-core`
+  audit (zero WCAG 2A/2AA violations, both before and after) plus manual
+  keyboard/measurement testing axe-core can't catch on its own. Real
+  fixes: touch targets bumped to a genuine 44×44px (`WidgetMenu`/
+  `ActionForm`'s icon buttons were 32px), Escape now closes
+  `WidgetMenu`/`ProfileMenu` and returns focus to the trigger, closed
+  dropdown panels get `inert` (previously still tabbable while
+  invisible — a real bug), the dropdown's scale transition is properly
+  `motion-safe:`-gated (it wasn't, despite looking gated), and every
+  `WidgetCard`/Hero is now a labelled `<section>` landmark instead of a
+  bare `<div>`. `role="menu"` was considered and deliberately rejected —
+  see `docs/DECISIONS.md` for why forcing that pattern here would be
+  wrong, not just unfinished.
 - [ ] Stage 4 — consistent `EmptyState` primitive
 - [ ] Stage 5 — responsive verification sweep (fix real breakage only)
 - [ ] Stage 6 — final review, Lighthouse, docs wrap-up

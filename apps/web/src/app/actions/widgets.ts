@@ -46,13 +46,17 @@ export async function refreshAllWidgetsAction(
   const results = await Promise.allSettled(
     widgets.map((widget) => refreshWidget(widget.id, userId)),
   );
-  const failures = results.filter(
-    (result): result is PromiseRejectedResult => result.status === "rejected",
-  );
+
+  // Name the widgets that actually failed — "1 of 4 failed" alone gives
+  // nothing to act on, which is what made a silently-broken GitHub query
+  // hard to place when this first shipped.
+  const failed = widgets
+    .filter((_, index) => results[index]?.status === "rejected")
+    .map((widget) => widget.name);
 
   revalidatePath("/");
-  if (failures.length > 0) {
-    return { error: `${failures.length} of ${widgets.length} widgets failed to refresh` };
+  if (failed.length > 0) {
+    return { error: `Couldn't refresh ${failed.join(", ")}` };
   }
   return {};
 }

@@ -40,15 +40,18 @@ export function GitHubComponent({
               rel="noopener noreferrer"
               className={`flex items-start gap-3 ${RADIUS.chip} px-4 py-3 ${GLASS_CHIP}`}
             >
-              <GitCommit className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500" aria-hidden="true" />
+              <GitCommit
+                className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-neutral-400)]"
+                aria-hidden="true"
+              />
               <div className="flex min-w-0 flex-col gap-0.5">
-                <span className="text-sm font-medium text-zinc-950 dark:text-zinc-50">
+                <span className="text-sm font-medium text-[var(--foreground)]">
                   {data.latestActivity.repoName}
                 </span>
-                <span className="truncate text-sm text-zinc-600 dark:text-zinc-400">
+                <span className="truncate text-sm text-[var(--color-neutral-600)]">
                   {data.latestActivity.commitMessage}
                 </span>
-                <span className="text-xs text-zinc-400 dark:text-zinc-600">
+                <span className="text-xs text-[var(--color-neutral-400)]">
                   {formatRelativeDay(data.latestActivity.committedAt)}
                 </span>
               </div>

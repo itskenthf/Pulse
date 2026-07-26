@@ -1,4 +1,4 @@
-import { WidgetCard, WidgetMenu } from "@pulse/ui";
+import { EmptyState, RADIUS, WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
 import { CoverArt } from "./cover-art";
 import { SteamIcon } from "./icon";
@@ -27,7 +27,6 @@ export function SteamComponent({
           settingsFields={<SettingsFormFields settings={settings} />}
         />
       }
-      accent="indigo"
     >
       {data ? (
         data.games.length > 0 ? (
@@ -36,23 +35,20 @@ export function SteamComponent({
               <a
                 key={game.appId}
                 href={`/steam/${game.appId}`}
-                className="group flex flex-col gap-2 rounded-2xl"
+                className={`group flex flex-col gap-2 ${RADIUS.chip}`}
               >
                 <CoverArt appId={game.appId} name={game.name} />
-                <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                <span className="truncate text-sm font-medium text-[var(--foreground)]">
                   {game.name}
                 </span>
               </a>
             ))}
           </div>
         ) : (
-          <p>
-            No games played in the last 2 weeks — or your Steam profile&apos;s
-            &quot;Game details&quot; privacy isn&apos;t set to Public.
-          </p>
+          <EmptyState message={`No games played in the last 2 weeks — or your Steam profile's "Game details" privacy isn't set to Public.`} />
         )
       ) : (
-        <p>No data yet — set your SteamID64 in settings, then refresh.</p>
+        <EmptyState message="No data yet — set your SteamID64 in settings, then refresh." />
       )}
     </WidgetCard>
   );

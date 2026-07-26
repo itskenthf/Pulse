@@ -1,6 +1,7 @@
 # Pulse Design System
 
-Version: 1.0
+Version: 2.0 — "Classical" (supersedes the Liquid Glass system below;
+see `docs/DECISIONS.md`'s 2026-07-26 entry for why).
 
 ---
 
@@ -8,27 +9,27 @@ Version: 1.0
 
 Pulse is a personal operating system.
 
-It should feel calm, premium, intelligent, and effortless.
+It should feel calm, considered, and editorial — like a well-typeset page,
+not a piece of software trying to look important.
 
-The interface should disappear into the background while surfacing information that matters.
+The interface should disappear into the background while surfacing
+information that matters.
 
 Avoid designing Pulse like:
 
 - Admin dashboards
 - Analytics software
 - Enterprise applications
+- Glossy consumer apps chasing a "premium" look through gloss and blur
 
-Instead, design it like modern desktop software.
+Instead, design it like a well-set page: hairlines, restrained color,
+serif type doing the work that glow and gradient used to.
 
 Design inspirations:
 
-- Apple Liquid Glass
-- macOS
-- Arc Browser
-- Raycast
-- Linear
-- Notion
-- Vercel
+- Editorial print layouts and type systems
+- Book design (matted photographs, tipped-in plates, colophon pages)
+- The "Classical" bundled design system this redesign is built from
 
 Pulse should establish its own identity rather than imitate any one product.
 
@@ -40,7 +41,8 @@ Pulse should establish its own identity rather than imitate any one product.
 
 The content is always more important than decoration.
 
-Glass should support information—not become the focus.
+Borders and rules should carry structure — they should never become the
+focus themselves.
 
 ---
 
@@ -51,9 +53,9 @@ Everything should feel quiet.
 Avoid:
 
 - loud colors
-- harsh shadows
-- excessive gradients
-- unnecessary borders
+- heavy drop shadows
+- gradients
+- filled cards or buttons
 
 The UI should feel effortless.
 
@@ -80,11 +82,11 @@ Users should instantly know:
 Hierarchy is created using:
 
 - spacing
-- typography
-- size
-- contrast
+- typography (serif headings, weight, size)
+- hairline rules
+- the single accent color, used sparingly
 
-NOT bright colors.
+NOT bright colors or per-widget brand colors.
 
 ---
 
@@ -92,7 +94,8 @@ NOT bright colors.
 
 Every widget should feel like it belongs to the same operating system.
 
-Never style widgets independently.
+Never style widgets independently — all chrome (card, badge, menu, states)
+comes from `packages/ui`.
 
 ---
 
@@ -100,366 +103,198 @@ Never style widgets independently.
 
 ## Primary Background
 
-Very soft neutral.
+A flat near-white paper tone (`--background`, `#f3f2f2` in light mode).
 
-Never pure white.
-
----
+Never pure white, never a gradient.
 
 ## Surface
 
-Glass surfaces.
-
-Slight translucency.
-
-Subtle tint.
-
----
+Bordered, unfilled. A hairline `--color-divider` border is what separates
+a card from the page — not a translucent fill or blur.
 
 ## Text
 
-Primary
+Primary (`--foreground`): high contrast.
 
-High contrast.
+Secondary (`--color-neutral-600`): muted.
 
-Secondary
+Tertiary (`--color-neutral-400`/`500`): low emphasis.
 
-Muted.
+Disabled: 45% opacity.
 
-Tertiary
+## Accent
 
-Low emphasis.
+One accent color, `--color-accent` (a muted gold, `#b68235`), with a
+100–900 tonal ramp (`--color-accent-100`…`--color-accent-900`). This is a
+**mono-accent system** — unlike the old per-widget brand colors
+(GitHub blue, Spotify green, Steam indigo), every widget's icon badge and
+every "identity" surface uses the same accent now. Widget identity comes
+from the icon and title, not a color.
 
-Disabled
+Only use the accent for:
 
-Minimal contrast.
+- icon badges
+- borders/underlines on interactive elements
+- focus rings
+- progress indicators (e.g. Steam's achievement bar)
 
----
-
-## Accent Colors
-
-Accent colors communicate identity.
-
-Never dominate the interface.
-
-GitHub
-
-Blue
-
-Spotify
-
-Green
-
-Steam
-
-Blue
-
-Calendar
-
-Purple
-
-Weather
-
-Sky
-
-Finance
-
-Amber
-
-Tasks
-
-Orange
-
-Productivity
-
-Indigo
-
-Only use accent colors for:
-
-- icons
-- indicators
-- small gradients
-- progress
-- highlights
-
-Avoid full colored cards.
+Never as a large fill. Never more than one accent.
 
 ---
 
-# Glass Materials
+# Surfaces (formerly "Glass Materials")
 
-Create reusable glass variants.
+`packages/ui/src/glass.ts` still exports three levels — `light`/`medium`/
+`heavy` — for source compatibility, but they're no longer glass: each is
+the same flat paper-colored card with a 1px `--color-divider` border and a
+shadow that only deepens step to step.
 
-## Glass Light
+## Light
 
-Used for:
+Used for: regular widget cards (`WidgetCard`), skeletons, error states.
 
-- widgets
-- buttons
-- cards
+## Medium
 
-Characteristics:
+Used for: nothing currently rendered with elevated chrome above a regular
+card — kept for a future surface that needs to sit slightly higher than a
+widget card without the dropdown treatment of `heavy`.
 
-- soft blur
-- subtle transparency
-- thin border
-- minimal shadow
+## Heavy
 
----
-
-## Glass Medium
-
-Used for:
-
-- sidebar
-- navigation
-- dialogs
-
-Slightly stronger blur.
-
-Higher contrast.
-
----
-
-## Glass Heavy
-
-Used for:
-
-- modals
-- overlays
-- floating menus
-
-Highest blur.
-
-Highest separation.
-
-Never use everywhere.
+Used for: dropdowns/overlays (`WidgetMenu`, `ProfileMenu`) — a marginally
+stronger shadow so they read as "above" the page, still no blur.
 
 ---
 
 # Radius Scale
 
-Small
+Small (`--radius-sm`)
 
-12px
+2px
 
-Medium
+Medium (`--radius-md`, `RADIUS.chip`)
 
-18px
+4px
 
-Large
+Large (`--radius-lg`, `RADIUS.card`/`RADIUS.hero`)
 
-24px
+7px
 
-Extra Large
-
-32px
-
-Avoid sharp corners.
+Small, editorial radii — not the soft pill/blob curves of the old system.
 
 ---
 
 # Shadow System
 
-Use layered ambient shadows.
-
-Avoid harsh elevation.
-
-The goal is floating depth.
-
-Not material design.
+Soft, ink-tinted shadows derived from the page's dark neutral
+(`color-mix(in srgb, #2d2b2b N%, transparent)`), stepped by surface level
+(`--shadow-sm/md/lg`). No glow shadows, no colored shadows tied to a
+widget's brand color.
 
 ---
 
 # Spacing System
 
-Base unit
+Density 1.15× baked into the scale (matches the bundled Classical tokens):
+`--space-1` (4.6px) through `--space-8` (36.8px).
 
-8px
-
-Scale
-
-4
-
-8
-
-12
-
-16
-
-24
-
-32
-
-40
-
-48
-
-64
-
-Use spacing tokens.
-
-Never use arbitrary values.
+Use Tailwind's spacing utilities as before; the visual density comes from
+the type/radius/border choices, not a new spacing scale layered on top.
 
 ---
 
 # Typography
 
+Two font families, loaded via `next/font/google`:
+
+- `--font-heading`: Cormorant Garamond, weight 600 — widget titles, page
+  heading, dialog/section titles.
+- `--font-body`: Lora — everything else (default `body` font).
+
 ## Hero
 
-Dashboard greeting.
-
-Largest text.
-
-Bold.
-
----
-
-## Section Heading
-
-Widget groups.
-
-Medium weight.
-
----
+Dashboard greeting. Largest text (`text-4xl sm:text-5xl`). Normal weight,
+not bold — Classical's display sizes go lighter as they get bigger.
 
 ## Widget Title
 
-Readable.
-
-Consistent.
-
----
+`font-heading`, `text-sm font-semibold`.
 
 ## Body
 
-Default content.
+Default content — Lora. Justified at wider widths where it reads well
+(e.g. Hero's flowing sentence at `sm:` and up).
 
----
+## Caption / Metadata
 
-## Caption
+Muted (`--color-neutral-500`), smaller size.
 
-Metadata.
-
-Secondary information.
+Numbers (metrics, streak counts, the clock) stay `tabular-nums`
+regardless of font.
 
 ---
 
 # Motion
 
-Animations should feel physical.
-
-Use spring motion.
+Kept from the previous system — Classical doesn't prescribe its own
+motion language, and the existing spring-press/hover-color transitions
+still read as calm and physical:
 
 Hover
 
-Gentle lift.
+A static "you're over this" cue: the border darkens to the accent. No
+lift, no scale — a moving/scaling whole card reads as distracting on a
+flat, bordered surface.
 
 Click
 
-Soft compression.
-
-Appear
-
-Fade and rise.
+`SPRING_PRESS`: `motion-safe:hover:scale-105 motion-safe:active:scale-95`
+on small interactive elements (buttons, icon tiles) only, not whole cards.
 
 Duration
 
-Fast
+Fast (150ms) for hover/press — unchanged.
 
-150ms
-
-Normal
-
-250ms
-
-Slow
-
-400ms
-
-Never animate purely for decoration.
-
-Every animation should improve usability.
+Never animate purely for decoration. Every animation should improve
+usability, and everything motion-related respects `prefers-reduced-motion`.
 
 ---
 
 # Layout
 
-Desktop first.
+Desktop first. The dashboard should feel balanced.
 
-The dashboard should feel balanced.
-
-Avoid:
-
-perfect symmetry.
-
-Instead:
-
-visual balance.
-
-Widgets may have different sizes.
-
-Important widgets deserve more space.
+Widgets may have different sizes — GitHub's wide card anchors a left
+column, everything else stacks in a narrower right column (see
+`apps/web/src/app/page.tsx`'s `WidgetGrid`).
 
 ---
 
 # Widget Rules
 
-Every widget should include:
+Every regular widget (via `WidgetCard`) includes:
 
-- title
-- icon
+- title (serif, via `font-heading`)
+- icon, in a shared outlined accent badge (not a per-widget glow color)
 - primary content
 - optional metadata
-- optional actions
+- optional actions (`WidgetMenu`)
 
-Widgets should never feel overloaded.
+Hero renders chromeless — a serif heading and flowing text above a
+hairline rule, not a card.
 
-One widget = one purpose.
-
----
-
-# Sidebar
-
-Compact.
-
-Minimal.
-
-Purpose driven.
-
-Icons should be readable without labels when collapsed.
-
-Future support:
-
-Dashboard
-
-Widgets
-
-Calendar
-
-Tasks
-
-Notes
-
-Settings
+Widgets should never feel overloaded. One widget = one purpose.
 
 ---
 
 # Navigation
 
-Top navigation should remain lightweight.
+A plain hairline-bottomed bar: serif brand mark, sign-in/profile menu.
+No floating pill, no blur.
 
-Future ready for:
-
-Search
-
-Notifications
-
-Profile
-
-Settings
-
-Sign Out
+Does not include placeholder links to unbuilt destinations (Tasks/Notes/
+Settings) — those get added when the routes exist, not before (see
+CLAUDE.md's scaffolding rule).
 
 ---
 
@@ -467,79 +302,30 @@ Sign Out
 
 Primary
 
-Filled.
+Outlined: accent-colored 1px border, transparent fill, accent-tinted
+background on hover. Never solid-filled.
 
 Secondary
 
-Glass.
+Outlined in `--color-divider`, tinted foreground-color background on hover.
 
 Icon
 
-Circular.
+Circular, same outline treatment.
 
 Ghost
 
-Minimal.
-
-Avoid heavy outlines.
+Text-only in the accent color, tinted background on hover.
 
 ---
 
 # Icons
 
-Use one icon library throughout the project.
+Use Lucide throughout, plus each widget's own hand-drawn brand mark
+(GitHub/Spotify/Steam) rendered in `currentColor` so it always matches
+whatever badge/text color it sits in — never a fixed brand color.
 
-Recommended:
-
-Lucide
-
-Consistent size.
-
-Consistent stroke.
-
----
-
-# Dashboard Flow
-
-The dashboard should naturally guide the eye.
-
-Hero
-
-↓
-
-Today's Overview
-
-↓
-
-Important Widgets
-
-↓
-
-Secondary Widgets
-
-↓
-
-Utility Widgets
-
-Users should never wonder where to look next.
-
----
-
-# Responsive
-
-Desktop
-
-Primary experience.
-
-Tablet
-
-Maintain hierarchy.
-
-Mobile
-
-Stack widgets naturally.
-
-Avoid horizontal scrolling.
+Consistent size, consistent stroke width.
 
 ---
 
@@ -547,66 +333,52 @@ Avoid horizontal scrolling.
 
 Always maintain:
 
-Readable text.
+- Readable text at AA contrast against the paper background
+- `:focus-visible` as a 2px solid accent-colored outline — never the
+  browser default
+- Keyboard navigation (unchanged from the Hardening pass)
+- Reduced-motion support (unchanged)
 
-Clear focus states.
-
-Keyboard navigation.
-
-Reduced motion support.
-
-Minimum AA contrast.
-
-Glass should never reduce readability.
+Dark mode is a functional fallback, not an actively designed theme (see
+`docs/PROJECT_REFERENCE.md` §7) — it's a straight tonal inversion of the
+background/foreground/divider variables, not Classical's own dark ramp.
 
 ---
 
 # Performance
 
-Avoid excessive backdrop blur.
+No backdrop blur anywhere in the system — one less GPU-cost concern than
+the previous system carried.
 
-Reuse components.
-
-Minimize re-renders.
-
-Prefer reusable primitives over repeated styling.
+Reuse components. Minimize re-renders. Prefer reusable primitives over
+repeated styling — unchanged from the Hardening pass's principles.
 
 ---
 
 # Code Architecture
 
-UI should be built from reusable primitives.
+UI is built from reusable primitives in `packages/ui`:
 
-Examples:
+- `glassClass` / `GLASS_HOVER` / `GLASS_CHIP` / `SPRING_PRESS` (`glass.ts`)
+  — names kept from the old system for API stability; the underlying
+  Tailwind strings are now hairline/no-blur.
+- `RADIUS` (`tokens.ts`)
+- `WidgetCard`, `WidgetMenu`, `ActionForm`, `Metric`, `Skeleton`,
+  `EmptyState`, `ErrorState`, `useDismissableMenu`
 
-GlassCard
-
-GlassPanel
-
-GlassButton
-
-GlassNavbar
-
-GlassSidebar
-
-DashboardGrid
-
-WidgetShell
-
-WidgetHeader
-
-WidgetFooter
-
-Design tokens should power the interface instead of hardcoded values.
+Design tokens (CSS variables in `apps/web/src/app/globals.css`) should
+power the interface instead of hardcoded hex/rgba values wherever a
+token exists for the role in question.
 
 ---
 
 # Future Direction
 
-Pulse should feel less like a website and more like a desktop operating system.
+Pulse should feel less like a website and more like a well-set page.
 
 Every future feature should ask:
 
-"Does this make Pulse feel more calm, premium, and intentional?"
+"Does this make Pulse feel calmer and more considered, or does it add
+noise the typography and hairlines should have carried instead?"
 
 If not, redesign it before implementation.

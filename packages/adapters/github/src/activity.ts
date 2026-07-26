@@ -30,7 +30,7 @@ interface GraphQLResponse {
 const LATEST_ACTIVITY_QUERY = `
   query {
     viewer {
-      repositories(first: 1, orderBy: { field: PUSHED_AT, direction: DESC }, ownerAffiliation: [OWNER, ORGANIZATION_MEMBER, COLLABORATOR]) {
+      repositories(first: 1, orderBy: { field: PUSHED_AT, direction: DESC }, ownerAffiliations: [OWNER, ORGANIZATION_MEMBER, COLLABORATOR]) {
         nodes {
           name
           url
@@ -52,14 +52,15 @@ const LATEST_ACTIVITY_QUERY = `
 /**
  * Most recently pushed-to repo the user has access to — owned,
  * organization-member, or collaborator — plus its default branch's latest
- * commit. `ownerAffiliation` deliberately matches the contribution
- * heatmap's broader scope (contributionsCollection counts activity across
- * all of those, not just owned repos); restricting this query to OWNER
- * alone meant "latest commit" could come up empty even when the heatmap
- * was full, whenever recent pushes were to org/work repos rather than
- * personally-owned ones. Returns null rather than throwing when there's no
- * matching activity at all (a real, non-error state, not worth failing the
- * whole widget refresh over).
+ * commit. `ownerAffiliations` (note the plural — GitHub's actual GraphQL
+ * argument name; an earlier version of this query used the singular
+ * `ownerAffiliation`, which isn't a real argument and made every call fail
+ * validation, silently failing this half of every GitHub widget refresh)
+ * deliberately matches the contribution heatmap's broader scope
+ * (contributionsCollection counts activity across all of those, not just
+ * owned repos). Returns null rather than throwing when there's no matching
+ * activity at all (a real, non-error state, not worth failing the whole
+ * widget refresh over).
  */
 export async function fetchLatestActivity(accessToken: string): Promise<LatestActivity | null> {
   const response = await fetch("https://api.github.com/graphql", {

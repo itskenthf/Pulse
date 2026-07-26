@@ -44,9 +44,10 @@ export function CoverArt({ appId, name }: { appId: number; name: string }) {
   if (failed) {
     return (
       <div
-        className={`flex aspect-[16/9] w-full items-center justify-center ${RADIUS.chip} border border-[var(--color-divider)] bg-[var(--color-accent-100)] transition-colors group-hover:border-[var(--color-accent)]`}
+        className={`flex aspect-[16/9] w-full flex-col items-center justify-center gap-1.5 ${RADIUS.chip} border border-[var(--color-divider)] bg-[var(--color-accent-100)] transition-colors group-hover:border-[var(--color-accent)]`}
       >
         <Gamepad2 className="h-8 w-8 text-[var(--color-accent-700)]" aria-hidden="true" />
+        <span className="text-xs text-[var(--color-accent-700)]">No cover art</span>
       </div>
     );
   }

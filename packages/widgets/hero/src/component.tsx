@@ -36,7 +36,7 @@ export function HeroComponent({
           )}
           <h1
             id={HEADING_ID}
-            className="font-heading text-4xl font-normal tracking-tight text-[var(--foreground)] sm:text-5xl"
+            className="font-heading text-3xl font-normal tracking-tight text-[var(--foreground)] sm:text-4xl md:text-5xl"
           >
             {data?.greeting ?? "Hello"}
           </h1>

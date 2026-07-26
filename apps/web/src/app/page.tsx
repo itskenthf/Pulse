@@ -5,7 +5,6 @@ import { readWidgetCache, readWidgetSettings } from "@pulse/database";
 import { Skeleton, SPRING_PRESS, WidgetCard, WidgetErrorBoundary } from "@pulse/ui";
 import { auth, signIn } from "@/auth";
 import { refreshWidgetAction, updateWidgetSettingsAction } from "./actions/widgets";
-import { NavMenu } from "./nav-menu";
 import { ProfileMenu } from "./profile-menu";
 import "@/lib/register-widgets";
 
@@ -41,8 +40,6 @@ function Navbar({ session }: { session: { user?: SessionUser } | null }) {
       <h1 className="font-heading text-lg font-semibold tracking-tight text-[var(--foreground)]">
         Pulse
       </h1>
-
-      <NavMenu />
 
       <div className="ml-auto flex items-center gap-3">
         {session?.user ? (

@@ -106,3 +106,47 @@ export async function upsertProviderAccount(
     throw new Error(`Failed to store ${provider} account: ${error.message}`);
   }
 }
+
+/**
+ * Updates a provider account's tokens only if its stored refresh token
+ * still matches `expectedRefreshToken` — a compare-and-swap guard against
+ * two concurrent token refreshes for the same user (e.g. the cron
+ * scheduler and a manual "Refresh all" click landing close together)
+ * both reading the same expired token and racing to write their own
+ * refreshed result. Returns false when the guard fails (someone else's
+ * refresh already landed since the caller read the account), so the
+ * caller can defer to that write instead of overwriting it with its own,
+ * possibly-stale one. Unlike upsertProviderAccount (used for a brand-new
+ * connection, where there's nothing to race against yet), this is an
+ * UPDATE, not an upsert — it only ever applies to an existing row.
+ */
+export async function updateProviderAccountTokenIfCurrent(
+  userId: string,
+  provider: string,
+  expectedRefreshToken: string,
+  update: { accessToken: string; refreshToken?: string | null; expiresAt: number },
+): Promise<boolean> {
+  const supabase = createServiceClient();
+
+  const payload: Record<string, unknown> = {
+    access_token: update.accessToken,
+    expires_at: update.expiresAt,
+  };
+  if (update.refreshToken) {
+    payload.refresh_token = update.refreshToken;
+  }
+
+  const { data, error } = await supabase
+    .schema("next_auth")
+    .from("accounts")
+    .update(payload)
+    .eq("userId", userId)
+    .eq("provider", provider)
+    .eq("refresh_token", expectedRefreshToken)
+    .select("userId");
+
+  if (error) {
+    throw new Error(`Failed to update ${provider} account: ${error.message}`);
+  }
+  return (data?.length ?? 0) > 0;
+}

@@ -1,7 +1,6 @@
 import { Sparkles } from "lucide-react";
 import { RADIUS, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
-import { HeroClock } from "./hero-clock";
 import type { HeroData } from "./types";
 
 const HEADING_ID = "hero-heading";
@@ -47,7 +46,7 @@ export function HeroComponent({
       {data && (
         <div className="flex flex-col gap-3">
           <p className="max-w-2xl text-base leading-relaxed text-[var(--foreground)] sm:text-lg sm:text-justify">
-            It&apos;s <HeroClock />. {data.weatherSummary} in {data.weatherLocation}
+            {data.weatherSummary} in {data.weatherLocation}
             {data.weatherTip ? ` — ${data.weatherTip}` : "."}
           </p>
 
@@ -60,8 +59,6 @@ export function HeroComponent({
           </div>
         </div>
       )}
-
-      <hr className="hr m-0 border-0 border-t border-[var(--color-divider)]" />
     </section>
   );
 }

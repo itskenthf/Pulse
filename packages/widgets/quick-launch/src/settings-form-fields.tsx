@@ -2,7 +2,7 @@ import { MAX_LINKS } from "./constants";
 import type { QuickLaunchSettings } from "./types";
 
 const inputClass =
-  "w-full rounded-md border border-zinc-300 bg-transparent px-2 py-1 text-xs text-zinc-950 dark:border-zinc-700 dark:text-zinc-50";
+  "w-full rounded-[4px] border border-[var(--color-divider)] bg-transparent px-2 py-1 text-xs text-[var(--foreground)]";
 
 export function SettingsFormFields({ settings }: { settings: QuickLaunchSettings }) {
   return (

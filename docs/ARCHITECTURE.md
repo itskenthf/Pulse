@@ -22,7 +22,6 @@ packages/
                       (reuses your GitHub login token)
     steam/            Cover-art + title cards; hours/last-played/achievements
                       live on a per-game detail page (apps/web/src/app/steam/[appId])
-    quick-launch/     Fixed-slot link shortcuts, no external service
     spotify/          Top tracks, custom OAuth connect flow
   adapters/
     weather/          Open-Meteo client (used by widgets/hero)

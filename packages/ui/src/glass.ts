@@ -1,45 +1,44 @@
 export type GlassLevel = "light" | "medium" | "heavy";
 
 /**
- * Three reusable glass materials (design system: light/medium/heavy).
- * Each combines a tinted translucent fill, blur, a thin border, an inset
- * highlight ring, and a layered ambient shadow. Fill opacity is kept low
- * enough that the page's background blobs actually read through — a
- * card at 55%+ white sitting on a near-white page base is indistinguishable
- * from a solid surface, which is what "glass looked white" traced back to.
- * `heavy` stays more opaque since it's used for text-dense overlays
- * (dropdowns) where legibility matters more than translucency.
+ * Three reusable surfaces (design system: light/medium/heavy — see
+ * docs/DESIGN_SYSTEM.md). Classical draws with hairlines and a whisper of
+ * elevation rather than translucency/blur: each level is the same flat
+ * paper-toned card with a 1px divider-colored border and a shadow that
+ * only deepens step to step. `heavy` is used for text-dense overlays
+ * (dropdowns) where a slightly stronger shadow helps them read as "above"
+ * the page.
  */
 const GLASS: Record<GlassLevel, string> = {
   light:
-    "bg-white/30 dark:bg-zinc-900/30 backdrop-blur-2xl border border-white/50 dark:border-white/10 shadow-[0_1px_1px_rgba(255,255,255,0.7),0_20px_40px_-16px_rgba(15,23,42,0.22)] dark:shadow-[0_1px_1px_rgba(255,255,255,0.04),0_20px_40px_-16px_rgba(0,0,0,0.55)] ring-1 ring-inset ring-white/40 dark:ring-white/5",
+    "bg-[var(--background)] border border-[var(--color-divider)] shadow-[0_1px_2px_color-mix(in_srgb,#2d2b2b_14%,transparent)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.4)]",
   medium:
-    "bg-white/38 dark:bg-zinc-900/40 backdrop-blur-2xl border border-white/55 dark:border-white/10 shadow-[0_1px_1px_rgba(255,255,255,0.7),0_24px_48px_-20px_rgba(15,23,42,0.26)] dark:shadow-[0_1px_1px_rgba(255,255,255,0.04),0_24px_48px_-20px_rgba(0,0,0,0.6)] ring-1 ring-inset ring-white/45 dark:ring-white/5",
+    "bg-[var(--background)] border border-[var(--color-divider)] shadow-[0_3px_10px_color-mix(in_srgb,#2d2b2b_16%,transparent)] dark:shadow-[0_3px_10px_rgba(0,0,0,0.45)]",
   heavy:
-    "bg-white/60 dark:bg-zinc-900/70 backdrop-blur-2xl border border-white/70 dark:border-white/10 shadow-[0_1px_1px_rgba(255,255,255,0.7),0_32px_64px_-24px_rgba(15,23,42,0.32)] dark:shadow-[0_1px_1px_rgba(255,255,255,0.04),0_32px_64px_-24px_rgba(0,0,0,0.65)] ring-1 ring-inset ring-white/60 dark:ring-white/10",
+    "bg-[var(--background)] border border-[var(--color-divider)] shadow-[0_12px_32px_color-mix(in_srgb,#2d2b2b_22%,transparent)] dark:shadow-[0_12px_32px_rgba(0,0,0,0.55)]",
 };
 
 export function glassClass(level: GlassLevel = "light"): string {
   return GLASS[level];
 }
 
-/** A static "you're over this" cue — brighter border/ring — with no
- *  movement or scale, for large surfaces (cards) where a lift/scale
+/** A static "you're over this" cue — the border darkens to the accent —
+ *  with no movement or scale, for large surfaces (cards) where a lift/scale
  *  effect reads as distracting rather than helpful. */
 export const GLASS_HOVER =
-  "transition-colors duration-150 ease-out hover:border-white/80 dark:hover:border-white/25 hover:ring-white/60 dark:hover:ring-white/15";
+  "transition-colors duration-150 ease-out hover:border-[var(--color-accent)]";
 export const SPRING_PRESS =
   "transition-transform duration-150 ease-out motion-safe:hover:scale-105 motion-safe:active:scale-95";
 
 /**
- * The small translucent "soft tile" surface used for compact interactive
- * chips — a fill/ring/hover treatment distinct from `glassClass` (which
- * also adds blur + a heavier shadow, meant for a whole card/panel, not a
- * single row or icon tile). Radius is deliberately excluded — callers
- * apply `RADIUS.chip` (or another token) themselves, since a couple of
- * chip-shaped surfaces (e.g. a circular avatar button) need a different
- * radius than the default. Previously copy-pasted verbatim between
- * GitHub's latest-commit row and Quick Launch's link tiles.
+ * The small bordered "chip" surface used for compact interactive rows —
+ * a hairline-and-hover treatment distinct from `glassClass` (which also
+ * adds a heavier shadow, meant for a whole card/panel, not a single row or
+ * icon tile). Radius is deliberately excluded — callers apply `RADIUS.chip`
+ * (or another token) themselves, since a couple of chip-shaped surfaces
+ * (e.g. a circular avatar button) need a different radius than the default.
+ * Previously copy-pasted verbatim between GitHub's latest-commit row and
+ * Quick Launch's link tiles.
  */
 export const GLASS_CHIP =
-  "bg-white/40 shadow-sm ring-1 ring-inset ring-white/50 transition hover:bg-white/60 dark:bg-white/5 dark:ring-white/10 dark:hover:bg-white/10";
+  "bg-transparent border border-[var(--color-divider)] transition hover:border-[var(--color-accent)] hover:bg-[color-mix(in_srgb,var(--color-accent)_8%,transparent)]";

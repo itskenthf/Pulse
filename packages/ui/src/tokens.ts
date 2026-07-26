@@ -11,16 +11,12 @@
  *   like ErrorState/Skeleton).
  * - `hero`: the one full-width chromeless banner.
  *
- * Before this, these were three ad hoc literals repeated across files
- * with no shared name — `rounded-2xl`/`rounded-3xl` typed fresh at each
- * call site, and Hero's radius as a bare `rounded-[32px]` magic value
- * copy-pasted into its own Suspense skeleton. Centralizing them here
- * doesn't change how anything looks; it means a future radius change (or
- * a new primitive that needs to match an existing surface) has one
- * source of truth instead of hoping every call site agrees by hand.
+ * Values match Classical's `--radius-md`/`--radius-lg` (4px/7px) — the
+ * system keeps radii small and editorial rather than the soft, pill-like
+ * curves the previous Liquid Glass system used.
  */
 export const RADIUS = {
-  chip: "rounded-2xl",
-  card: "rounded-3xl",
-  hero: "rounded-[2rem]",
+  chip: "rounded-[4px]",
+  card: "rounded-[7px]",
+  hero: "rounded-[7px]",
 } as const;

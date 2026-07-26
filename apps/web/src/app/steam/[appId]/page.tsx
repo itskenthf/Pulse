@@ -34,7 +34,7 @@ export default async function SteamGamePage({
     : null;
 
   return (
-    <div className="relative flex min-h-screen bg-gradient-to-br from-sky-200 via-cyan-100 to-violet-200 dark:from-slate-950 dark:via-blue-950 dark:to-violet-950">
+    <div className="relative flex min-h-screen bg-[var(--background)]">
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 p-4 sm:p-6">
         <Link
           href="/"

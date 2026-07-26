@@ -17,7 +17,7 @@ export function Skeleton({ variant = "card" }: SkeletonProps) {
     return (
       <div
         aria-hidden="true"
-        className={`flex flex-col gap-5 ${RADIUS.hero} p-6 sm:p-8 ${glassClass("medium")}`}
+        className={`flex flex-col gap-5 border-b border-[var(--color-divider)] pb-6 sm:pb-8 ${RADIUS.hero}`}
       >
         <div className={`h-10 w-2/3 ${PULSE_BLOCK}`} />
         <div className={`h-4 w-full max-w-2xl ${PULSE_BLOCK}`} />

@@ -78,7 +78,7 @@ export function WidgetMenu({ id, actions, settingsFields }: WidgetMenuProps) {
         />
         {actions.updateSettings && settingsFields && (
           <details>
-            <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-950/5 [&::-webkit-details-marker]:hidden dark:text-zinc-300 dark:hover:bg-white/5">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 py-2 text-sm text-[var(--foreground)] hover:bg-[color-mix(in_srgb,var(--color-accent)_8%,transparent)] [&::-webkit-details-marker]:hidden">
               <SettingsIcon className="h-4 w-4" aria-hidden="true" /> Settings
             </summary>
             <ActionForm action={actions.updateSettings} submitLabel="Save" className="px-3 pb-2">

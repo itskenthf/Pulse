@@ -27,7 +27,6 @@ export function SteamComponent({
           settingsFields={<SettingsFormFields settings={settings} />}
         />
       }
-      accent="indigo"
     >
       {data ? (
         data.games.length > 0 ? (

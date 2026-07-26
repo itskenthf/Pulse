@@ -18,7 +18,6 @@ export function GitHubComponent({
       title="GitHub"
       icon={<GitHubIcon />}
       action={<WidgetMenu id="github" actions={actions} />}
-      accent="blue"
     >
       {data ? (
         <div className="flex flex-col gap-6">

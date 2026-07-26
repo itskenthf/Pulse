@@ -22,13 +22,13 @@ export interface MetricProps {
 export function Metric({ label, value, suffix }: MetricProps) {
   return (
     <div className="flex flex-col">
-      <span className="text-3xl font-bold tracking-tight text-zinc-950 dark:text-zinc-50">
+      <span className="font-heading text-3xl font-semibold tracking-tight text-[var(--foreground)] tabular-nums">
         {value}
         {suffix && (
-          <span className="text-lg font-semibold text-zinc-400 dark:text-zinc-600">{suffix}</span>
+          <span className="text-lg font-semibold text-[var(--color-neutral-400)]">{suffix}</span>
         )}
       </span>
-      <span className="text-xs text-zinc-500 dark:text-zinc-500">{label}</span>
+      <span className="text-xs text-[var(--color-neutral-500)]">{label}</span>
     </div>
   );
 }

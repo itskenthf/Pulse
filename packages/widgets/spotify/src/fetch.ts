@@ -7,7 +7,7 @@ import {
 import {
   ensureWidgetRegistered,
   readProviderAccount,
-  upsertProviderAccount,
+  updateProviderAccountTokenIfCurrent,
 } from "@pulse/database";
 import type { WidgetFetchContext } from "@pulse/sdk";
 import {
@@ -67,12 +67,30 @@ export async function fetchSpotifyData(
     }
     accessToken = refreshed.accessToken;
 
-    await upsertProviderAccount(context.userId, PROVIDER, {
-      providerAccountId: account.providerAccountId,
-      accessToken: refreshed.accessToken,
-      refreshToken: refreshed.refreshToken,
-      expiresAt: refreshed.expiresAt,
-    });
+    // Guarded write, not a blind upsert: the cron scheduler and a manual
+    // "Refresh all" can both land here for the same user within moments
+    // of each other, both having read the same expired token. Only the
+    // first write whose expected refresh token still matches applies —
+    // the loser re-reads instead of clobbering the winner's fresher
+    // result (see updateProviderAccountTokenIfCurrent's doc comment).
+    const applied = await updateProviderAccountTokenIfCurrent(
+      context.userId,
+      PROVIDER,
+      account.refreshToken,
+      {
+        accessToken: refreshed.accessToken,
+        refreshToken: refreshed.refreshToken,
+        expiresAt: refreshed.expiresAt,
+      },
+    );
+
+    if (!applied) {
+      const current = await readProviderAccount(context.userId, PROVIDER);
+      const nowAfterRefresh = Math.floor(Date.now() / 1000);
+      if (current?.accessToken && current.expiresAt && current.expiresAt > nowAfterRefresh) {
+        accessToken = current.accessToken;
+      }
+    }
   }
 
   const [tracks, artists] = await Promise.all([

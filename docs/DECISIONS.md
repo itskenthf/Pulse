@@ -1886,6 +1886,23 @@ new API call, so it's deferred and recorded here rather than attempted.
   changes. Real availability risk independent of scopes; needs checking
   against Pulse's actual Spotify app tier before promising this feature.
 
+## 2026-07-26 — Removed Quick Launch widget
+
+Ken asked to remove Quick Launch entirely. It had no external
+API/adapter and no per-widget database tables (settings/cache are
+generic, keyed by `widget_id`), so removal is purely a code/registration
+change:
+
+- Deleted `packages/widgets/quick-launch/` outright.
+- Removed its import/registration from `apps/web/src/lib/register-widgets.ts`
+  and its dependency from `apps/web/package.json`, then regenerated
+  `pnpm-lock.yaml`.
+- Removed its line from `docs/ARCHITECTURE.md`'s widget tree listing.
+
+Any existing `widget_settings`/`widget_cache`/`widget_registry` rows for
+`widget_id = 'quick-launch'` become harmlessly orphaned — no migration
+needed, the generic tables don't reference widget code.
+
 ## 2026-07-26 — Habits/Reading/RSS placeholders: reopening Habits, adding two new backlog items
 
 Ken asked for Habits, Reading, and RSS widgets. This conflicts with two

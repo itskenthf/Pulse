@@ -27,10 +27,25 @@ export async function fetchSteamData(context: WidgetFetchContext): Promise<Steam
 
   // Only 2 games shown now, so a per-game achievements call is cheap;
   // last-played is one call for the whole library, not per game.
+  //
+  // fetchAchievementSummary now throws on real failures (rate-limited,
+  // Steam outage) rather than treating them the same as "no
+  // achievements" — good for not silently mislabeling a transient
+  // problem as permanent, but it means one game's achievement call
+  // failing must not fail the whole widget refresh (which would also
+  // discard the already-successful recently-played/last-played data).
+  // Each call is caught individually so a transient failure only drops
+  // that one game's achievement data, logged so it's distinguishable
+  // from a real "no achievements" case in server logs.
   const [lastPlayedMap, achievementsList] = await Promise.all([
     fetchLastPlayedMap(apiKey, settings.steamId64),
     Promise.all(
-      topGames.map((game) => fetchAchievementSummary(apiKey, settings.steamId64, game.appId)),
+      topGames.map((game) =>
+        fetchAchievementSummary(apiKey, settings.steamId64, game.appId).catch((err) => {
+          console.error(`Steam achievements fetch failed for appId ${game.appId}:`, err);
+          return null;
+        }),
+      ),
     ),
   ]);
 

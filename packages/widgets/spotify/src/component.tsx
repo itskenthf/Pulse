@@ -32,45 +32,82 @@ export function SpotifyComponent({
       tag={{ label: "Top tracks", variant: "accent" }}
       action={<WidgetMenu id="spotify" actions={actions} />}
     >
-      {data.tracks.length > 0 ? (
-        <ul className="flex min-w-0 flex-col gap-4">
-          {data.tracks.map((track) => (
-            <li key={track.id} className="flex min-w-0 items-center gap-3">
-              {track.imageUrl ? (
-                // Plain <img>: external Spotify CDN artwork, tiny fixed
-                // size — not worth routing through next/image's optimizer.
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={track.imageUrl}
-                  alt=""
-                  width={40}
-                  height={40}
-                  className={`h-10 w-10 shrink-0 ${RADIUS.chip} object-cover shadow-sm`}
-                />
-              ) : (
-                <span
-                  className={`h-10 w-10 shrink-0 ${RADIUS.chip} border border-[var(--color-accent-300)] bg-[var(--color-accent-100)]`}
-                />
-              )}
-              <div className="min-w-0 flex-1">
-                <a
-                  href={track.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block truncate text-sm font-medium text-[var(--foreground)] hover:underline"
-                >
-                  {track.name}
-                </a>
+      <div className="flex flex-col gap-4">
+        {data.topArtist && (
+          <div className="flex min-w-0 items-center gap-3 border-b border-[var(--color-divider)] pb-4">
+            {data.topArtist.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={data.topArtist.imageUrl}
+                alt=""
+                width={48}
+                height={48}
+                className="h-12 w-12 shrink-0 rounded-full object-cover shadow-sm"
+              />
+            ) : (
+              <span className="h-12 w-12 shrink-0 rounded-full border border-[var(--color-accent-300)] bg-[var(--color-accent-100)]" />
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="text-xs tracking-wide text-[var(--color-neutral-400)] uppercase">
+                Top artist
+              </p>
+              <a
+                href={data.topArtist.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block truncate text-sm font-medium text-[var(--foreground)] hover:underline"
+              >
+                {data.topArtist.name}
+              </a>
+              {data.topGenre && (
                 <span className="block truncate text-xs text-[var(--color-neutral-500)]">
-                  {track.artist}
+                  {data.topGenre}
                 </span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <EmptyState message="No top tracks yet." />
-      )}
+              )}
+            </div>
+          </div>
+        )}
+
+        {data.tracks.length > 0 ? (
+          <ul className="flex min-w-0 flex-col gap-4">
+            {data.tracks.map((track) => (
+              <li key={track.id} className="flex min-w-0 items-center gap-3">
+                {track.imageUrl ? (
+                  // Plain <img>: external Spotify CDN artwork, tiny fixed
+                  // size — not worth routing through next/image's optimizer.
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={track.imageUrl}
+                    alt=""
+                    width={40}
+                    height={40}
+                    className={`h-10 w-10 shrink-0 ${RADIUS.chip} object-cover shadow-sm`}
+                  />
+                ) : (
+                  <span
+                    className={`h-10 w-10 shrink-0 ${RADIUS.chip} border border-[var(--color-accent-300)] bg-[var(--color-accent-100)]`}
+                  />
+                )}
+                <div className="min-w-0 flex-1">
+                  <a
+                    href={track.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block truncate text-sm font-medium text-[var(--foreground)] hover:underline"
+                  >
+                    {track.name}
+                  </a>
+                  <span className="block truncate text-xs text-[var(--color-neutral-500)]">
+                    {track.artist}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <EmptyState message="No top tracks yet." />
+        )}
+      </div>
     </WidgetCard>
   );
 }

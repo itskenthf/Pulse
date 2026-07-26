@@ -44,9 +44,6 @@ importers:
       '@pulse/widget-hero':
         specifier: workspace:*
         version: link:../../packages/widgets/hero
-      '@pulse/widget-quick-launch':
-        specifier: workspace:*
-        version: link:../../packages/widgets/quick-launch
       '@pulse/widget-spotify':
         specifier: workspace:*
         version: link:../../packages/widgets/spotify
@@ -61,7 +58,7 @@ importers:
         version: 16.2.10(@babel/core@7.29.7)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       next-auth:
         specifier: 5.0.0-beta.31
-        version: 5.0.0-beta.31(next@16.2.10(@babel/core@7.29.7)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+        version: 5.0.0-beta.31(next@16.2.10(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
       react:
         specifier: 19.2.4
         version: 19.2.4
@@ -128,7 +125,7 @@ importers:
         version: 1.11.2(@supabase/supabase-js@2.110.7)
       next-auth:
         specifier: 5.0.0-beta.31
-        version: 5.0.0-beta.31(next@16.2.10(@babel/core@7.29.7)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+        version: 5.0.0-beta.31(next@16.2.10(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
     devDependencies:
       typescript:
         specifier: ^5.7.3
@@ -212,31 +209,6 @@ importers:
       '@pulse/adapter-weather':
         specifier: workspace:*
         version: link:../../adapters/weather
-      '@pulse/database':
-        specifier: workspace:*
-        version: link:../../database
-      '@pulse/sdk':
-        specifier: workspace:*
-        version: link:../../sdk
-      '@pulse/ui':
-        specifier: workspace:*
-        version: link:../../ui
-      lucide-react:
-        specifier: ^1.26.0
-        version: 1.26.0(react@19.2.4)
-      react:
-        specifier: ^19
-        version: 19.2.4
-    devDependencies:
-      '@types/react':
-        specifier: ^19
-        version: 19.2.17
-      typescript:
-        specifier: ^5.7.3
-        version: 5.9.3
-
-  packages/widgets/quick-launch:
-    dependencies:
       '@pulse/database':
         specifier: workspace:*
         version: link:../../database
@@ -4063,7 +4035,7 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  next-auth@5.0.0-beta.31(next@16.2.10(@babel/core@7.29.7)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4):
+  next-auth@5.0.0-beta.31(next@16.2.10(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4):
     dependencies:
       '@auth/core': 0.41.2
       next: 16.2.10(@babel/core@7.29.7)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)

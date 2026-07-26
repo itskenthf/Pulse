@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { getAllWidgets, type Widget } from "@pulse/sdk";
 import { readWidgetCache, readWidgetSettings } from "@pulse/database";
-import { glassClass, RADIUS, Skeleton, SPRING_PRESS, WidgetErrorBoundary } from "@pulse/ui";
+import { Skeleton, SPRING_PRESS, WidgetErrorBoundary } from "@pulse/ui";
 import { auth, signIn } from "@/auth";
 import { refreshWidgetAction, updateWidgetSettingsAction } from "./actions/widgets";
 import { ProfileMenu } from "./profile-menu";
@@ -37,10 +37,8 @@ interface SessionUser {
 
 function Navbar({ session }: { session: { user?: SessionUser } | null }) {
   return (
-    <header
-      className={`sticky top-0 z-20 mx-4 mt-4 flex items-center justify-between gap-3 ${RADIUS.chip} px-4 py-2.5 sm:mx-6 sm:mt-6 ${glassClass("medium")}`}
-    >
-      <h1 className="text-lg font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+    <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-[var(--color-divider)] bg-[var(--background)] px-4 py-3 sm:px-6">
+      <h1 className="font-heading text-lg font-semibold tracking-tight text-[var(--foreground)]">
         Pulse
       </h1>
 
@@ -55,7 +53,7 @@ function Navbar({ session }: { session: { user?: SessionUser } | null }) {
         >
           <button
             type="submit"
-            className={`min-h-11 rounded-xl bg-zinc-950 px-4 py-2 text-sm font-medium text-zinc-50 hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-zinc-200 ${SPRING_PRESS}`}
+            className={`min-h-11 rounded-[4px] border border-[var(--color-accent)] px-4 py-2 font-heading text-sm font-semibold text-[var(--color-accent)] hover:bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)] ${SPRING_PRESS}`}
           >
             Sign in with GitHub
           </button>

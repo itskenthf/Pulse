@@ -145,8 +145,18 @@ export async function fetchAchievementSummary(
 
   const response = await fetch(url, { cache: "no-store" });
   if (!response.ok) {
-    // Steam returns 400 for "this game has no stats" — not a real error.
-    return null;
+    // Steam specifically returns 400 for "this game has no stats" — the
+    // one non-ok status that's a real, expected non-error case. Anything
+    // else (429 rate-limited, 5xx outage, 401/403 auth trouble) is a
+    // genuine failure and must throw rather than silently collapsing
+    // into the same "no achievements" result — that previously made a
+    // transient Steam outage indistinguishable from "this game just
+    // doesn't support achievements," and got cached as such for up to
+    // this widget's full refreshInterval.
+    if (response.status === 400) {
+      return null;
+    }
+    throw new Error(`Steam achievements request failed: ${response.status}`);
   }
 
   const body = (await response.json()) as PlayerAchievementsApiResponse;

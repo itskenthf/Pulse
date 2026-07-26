@@ -38,7 +38,7 @@ export default async function SteamGamePage({
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 p-4 sm:p-6">
         <Link
           href="/"
-          className="flex w-fit items-center gap-1.5 text-sm font-medium text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-zinc-50"
+          className="flex w-fit items-center gap-1.5 text-sm font-medium text-[var(--color-neutral-600)] hover:text-[var(--foreground)]"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Dashboard
         </Link>
@@ -47,7 +47,7 @@ export default async function SteamGamePage({
           <CoverArt appId={game.appId} name={game.name} />
 
           <div className="flex flex-1 flex-col gap-5">
-            <h1 className="text-2xl font-bold tracking-tight text-zinc-950 dark:text-zinc-50">
+            <h1 className="font-heading text-2xl font-semibold tracking-tight text-[var(--foreground)]">
               {game.name}
             </h1>
 
@@ -61,14 +61,14 @@ export default async function SteamGamePage({
 
             {game.achievements && (
               <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <div className="flex items-center gap-2 text-sm font-medium text-[var(--foreground)]">
                   <Trophy className="h-4 w-4" aria-hidden="true" />
                   Achievements — {game.achievements.unlocked}/{game.achievements.total} (
                   {achievementPct}%)
                 </div>
-                <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/40 shadow-[inset_0_1px_2px_rgba(15,23,42,0.08)] ring-1 ring-inset ring-white/50 dark:bg-white/5 dark:ring-white/10">
+                <div className="h-2.5 w-full overflow-hidden rounded-full border border-[var(--color-divider)]">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-sky-400 to-indigo-500 shadow-[0_0_10px_-1px_rgba(56,189,248,0.7)]"
+                    className="h-full rounded-full bg-[var(--color-accent)]"
                     style={{ width: `${achievementPct}%` }}
                   />
                 </div>
@@ -76,7 +76,7 @@ export default async function SteamGamePage({
             )}
 
             {!game.achievements && (
-              <p className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-500">
+              <p className="flex items-center gap-2 text-sm text-[var(--color-neutral-500)]">
                 <Clock className="h-4 w-4" aria-hidden="true" />
                 No achievement data available for this game.
               </p>

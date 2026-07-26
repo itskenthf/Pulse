@@ -200,13 +200,17 @@ function WidgetGrid({ userId }: { userId: string }) {
 
   return (
     <>
-      {heroWidgets.map((widget) => (
-        <WidgetErrorBoundary key={widget.id} name={widget.name}>
-          <Suspense fallback={<Skeleton variant="hero" />}>
-            <WidgetSlot widget={widget} userId={userId} />
-          </Suspense>
-        </WidgetErrorBoundary>
-      ))}
+      {heroWidgets.length > 0 && (
+        <div className="-mx-4 border-b border-[var(--color-divider)] px-4 pb-6 sm:-mx-6 sm:px-6 sm:pb-8">
+          {heroWidgets.map((widget) => (
+            <WidgetErrorBoundary key={widget.id} name={widget.name}>
+              <Suspense fallback={<Skeleton variant="hero" />}>
+                <WidgetSlot widget={widget} userId={userId} />
+              </Suspense>
+            </WidgetErrorBoundary>
+          ))}
+        </div>
+      )}
       <div className="flex min-w-0 flex-col items-start gap-5 sm:flex-row sm:gap-6">
         <div className="flex min-w-0 w-full flex-col gap-5 sm:basis-2/3">{left}</div>
         <div className="flex min-w-0 w-full flex-col gap-5 sm:basis-1/3">{right}</div>

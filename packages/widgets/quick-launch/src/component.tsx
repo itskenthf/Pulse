@@ -1,4 +1,4 @@
-import { SPRING_PRESS, WidgetCard, WidgetMenu } from "@pulse/ui";
+import { EmptyState, GLASS_CHIP, RADIUS, SPRING_PRESS, WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
 import { QuickLaunchIcon } from "./icon";
 import { LinkIcon } from "./link-icon";
@@ -33,14 +33,14 @@ export function QuickLaunchComponent({
               rel="noopener noreferrer"
               title={link.label}
               aria-label={link.label}
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/40 shadow-sm ring-1 ring-inset ring-white/50 transition hover:bg-white/60 dark:bg-white/5 dark:ring-white/10 dark:hover:bg-white/10 ${SPRING_PRESS}`}
+              className={`flex h-11 w-11 shrink-0 items-center justify-center ${RADIUS.chip} ${GLASS_CHIP} ${SPRING_PRESS}`}
             >
               <LinkIcon url={link.url} />
             </a>
           ))}
         </div>
       ) : (
-        <p>No links yet — add some in settings.</p>
+        <EmptyState message="No links yet — add some in settings." />
       )}
     </WidgetCard>
   );

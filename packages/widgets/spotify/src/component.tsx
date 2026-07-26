@@ -29,6 +29,7 @@ export function SpotifyComponent({
     <WidgetCard
       title="Spotify"
       icon={<SpotifyIcon />}
+      tag={{ label: "Top tracks", variant: "accent" }}
       action={<WidgetMenu id="spotify" actions={actions} />}
     >
       {data.tracks.length > 0 ? (

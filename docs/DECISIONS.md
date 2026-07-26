@@ -1741,3 +1741,91 @@ pattern) rendering every widget with mock data — including reproducing
 so the crash-fix verification wasn't just "it looks fine," it exercised
 the actual mechanism that broke in production. Screenshotted and compared
 against the mockup side by side.
+
+## 2026-07-26 — Layout/UX fixes from real-device screenshots
+
+Ken sent real desktop/iPad/mobile screenshots of the live production
+site and listed 9 concrete problems. Two shared one root cause; the rest
+were independent, well-scoped fixes — all verified against real
+screenshots and computed layout metrics, not guessed at.
+
+**1+3. Huge empty space on desktop; iPad looked "broken"** — same root
+cause. `WidgetGrid` (`apps/web/src/app/page.tsx`) split non-hero widgets
+into two independent flex columns via a hard rule: "lg"-sized widgets
+(only GitHub) in the wide column, everything else in the rail. With 5
+items (Steam, Spotify, Quick Launch, plus the two static Tasks/Notes
+cards) stacked against GitHub alone, the wide column ended far shorter
+than the rail — dead space on desktop, and "the left column is empty" at
+iPad width, which was the same imbalance, not a broken breakpoint.
+Replaced the hard split with a greedy weight-balance, reusing the SDK's
+existing `size` field (`sm`/`md`/`lg` → 1/2/3) as a height proxy: walk
+all non-hero widgets in registry order, assign each to whichever column
+has the lower running weight (ties → left, so GitHub still anchors the
+wide column). One override was needed on top of the size-based weights:
+Steam renders far taller than a typical "md" widget (two full 16:9
+cover-art tiles), so its size alone underestimated its real height and
+left a visible gap under its column-mate — confirmed by screenshot, then
+fixed with a small `WIDGET_WEIGHT_OVERRIDE` map (just `steam` → `lg`'s
+weight) rather than restructuring the whole weighting scheme for one
+widget. Verified by rendering the real widget set with realistic mock
+data (Steam's two-cover-art case included) at desktop and iPad widths —
+before: GitHub alone in a short left column against 6 stacked items on
+the right; after: both columns end within ~130px of each other.
+
+**2. Navbar not sticky** — `Navbar` already had `sticky top-0`; the
+outer page wrapper's `overflow-x-hidden` (with no `overflow-y` set,
+which per spec computes `overflow-y: auto`) was the suspect — a
+well-documented class of bug where a non-`visible` overflow ancestor can
+interfere with `position: sticky` descendants. Removed `overflow-x-hidden`
+(the components already use `min-w-0` throughout to prevent flex
+overflow, so it wasn't load-bearing) and collapsed a redundant nested
+wrapper div left over from the original glass-background era. Verified
+with a real Playwright scroll test (not just eyeballing): scrolled to
+1500px, read the header's `getBoundingClientRect()` — `top: 0` on both
+desktop and mobile, confirming it stays pinned.
+
+**4. Mobile nav crowding** — a missed detail from the earlier fidelity
+pass: the mockup's own CSS hides the disabled nav links
+(`.os-nav-soon { display: none }`) below 600px. Our navbar showed
+Dashboard + Tasks + Notes + Settings + the profile control in one
+`flex-wrap` row at every width, which is exactly the crowding that read
+as dropdown overlap on narrow phones. Fixed by hiding Tasks/Notes/
+Settings below `sm:` (640px), leaving just the brand, "Dashboard", and
+the profile control on mobile.
+
+**5. Mobile content appeared shifted right** — checked empirically via
+`document.documentElement.scrollWidth` vs `clientWidth` at a 390px
+viewport: no overflow found (both exactly 390) after the other fixes
+(the overflow-x-hidden removal and wrapper-div collapse above). Recorded
+as resolved pending Ken's confirmation against the real site, since a
+sandbox mock can't rule out something specific to real fetched data.
+
+**6. Steam cover-art fallback looked broken** — the failure-state
+placeholder was just an icon in a large empty box. Added a "No cover
+art" label under the icon so it reads as an intentional empty state.
+
+**7. Mobile card spacing too tight** — bumped the inter-card gap in both
+flex columns from `gap-4` to `gap-5`/`gap-6`, matching Classical's "airy,
+don't crowd the margins" principle.
+
+**8. Hero heading oversized on phones** — was `text-4xl ... sm:text-5xl`
+(36px mobile flat, 48px ≥640px). The mockup drops its `h1` specifically
+below 600px (42px → 34px), a relative downsize the fixed 36px mobile
+size didn't capture for the smallest phones. Added an intermediate step:
+`text-3xl sm:text-4xl md:text-5xl` (30px → 36px → 48px).
+
+**9. Duplicate "Settings" entries** — the navbar's new "Settings" link
+(previous fidelity pass) and `ProfileMenu`'s pre-existing disabled
+"Settings" dropdown item both signaled the same not-yet-built feature.
+Removed `ProfileMenu`'s entry, keeping just Sign out — one placeholder
+per not-yet-built feature, not two.
+
+**Verification**: `pnpm build`/`lint`/`typecheck`, plus a temporary
+preview route (deleted before commit) that temporarily re-exported
+`Navbar`/`balanceColumns` from `page.tsx` so the preview exercised the
+actual production code paths rather than a re-implementation —
+screenshotted at desktop (1280px), iPad (1180×820, matching Ken's own
+devtools test), and mobile (390px), plus the scroll/overflow checks
+above. Screenshots sent to Ken for review before opening a PR, per his
+explicit request this round — not merged sight-unseen like earlier
+passes.

@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Settings } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { glassClass, SPRING_PRESS, useDismissableMenu } from "@pulse/ui";
 import { signOutAction } from "./actions/sign-out";
 
@@ -62,12 +62,6 @@ export function ProfileMenu({
             : "invisible opacity-0 motion-safe:scale-95"
         } ${glassClass("heavy")}`}
       >
-        <span
-          title="Coming soon"
-          className="flex min-h-11 cursor-not-allowed items-center gap-2 px-3 py-2 text-sm text-[var(--color-neutral-500)]"
-        >
-          <Settings className="h-4 w-4" aria-hidden="true" /> Settings
-        </span>
         <form action={signOutAction}>
           <button
             type="submit"

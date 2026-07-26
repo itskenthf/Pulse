@@ -63,7 +63,7 @@ export function ActionForm({
           variant === "icon"
             ? `flex h-11 w-11 items-center justify-center rounded-full border border-current/20 text-current hover:bg-current/10 disabled:opacity-50 ${SPRING_PRESS}`
             : variant === "menu"
-              ? "flex min-h-11 w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-950/5 disabled:opacity-50 dark:text-zinc-300 dark:hover:bg-white/5"
+              ? "flex min-h-11 w-full items-center gap-2 px-3 py-2 text-left text-sm text-[var(--foreground)] hover:bg-[color-mix(in_srgb,var(--color-accent)_8%,transparent)] disabled:opacity-50"
               : `min-h-11 rounded-xl border border-current/20 px-3 py-1.5 text-xs font-medium text-current hover:bg-current/10 disabled:opacity-50 ${SPRING_PRESS}`
         }
       >

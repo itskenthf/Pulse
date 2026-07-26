@@ -1604,3 +1604,62 @@ Firefox/real iOS/Android hardware (this sandbox only has Chromium).
 Both are real gaps worth naming plainly rather than glossing over — if
 Ken wants either pursued, that's a new, explicit scope decision, not
 something this pass silently assumed.
+
+## 2026-07-26 — "Classical" redesign: full visual system replacement
+
+Ken supplied a design-tool export (`Personal_OS_layout_redesign.zip`)
+proposing a full visual replacement of Liquid Glass with "Classical": an
+editorial system on a flat near-white paper ground — Cormorant Garamond
+headings over Lora body, hairline dividers, a single muted-gold accent
+applied only as strokes/borders (never a fill), and outlined buttons/icon
+badges instead of glow/blur.
+
+This directly reverses the 2026-07-25 Hardening-pass entry above, where
+Ken said "do NOT redesign the application" and approved Liquid Glass as
+final. Per CLAUDE.md's ground rule against contradicting recorded
+decisions without flagging it, this was raised explicitly via
+`AskUserQuestion` before any code changed; Ken confirmed proceeding, and
+asked for the docs (this entry, `docs/DESIGN_SYSTEM.md`,
+`docs/PROJECT_REFERENCE.md` §19, `docs/ROADMAP.md`) to be updated so
+Classical becomes the recorded canon rather than a silent drift from what
+was written.
+
+**Approach**: one reviewable commit per surface, each independently
+passing `pnpm build`/`lint`/`typecheck`, per CLAUDE.md's "finish one
+widget completely before starting the next":
+
+1. Foundation — serif fonts via `next/font`, the palette/token set in
+   `apps/web/src/app/globals.css`, and `packages/ui/src/glass.ts` rewritten
+   in place (same exported names — `glassClass`, `GLASS_HOVER`,
+   `GLASS_CHIP`, `SPRING_PRESS` — so every consumer kept compiling without
+   its own change). `RADIUS` in `tokens.ts` moved to Classical's 4px/7px
+   convention. The three duplicated background-gradient literals
+   (`page.tsx`/`error.tsx`/`steam/[appId]/page.tsx`) collapsed to the
+   shared `--background` variable.
+2. Shell — navbar and profile menu restyled to a plain hairline-bottomed
+   bar. Deliberately did **not** add the mockup's Tasks/Notes/Settings nav
+   links: those routes don't exist, and adding non-functional nav chrome
+   for them would be scaffolding ahead of need (see reference doc §10/§16).
+3. Widgets, in ascending order of hardcoded-color surface area: Hero →
+   Quick Launch → Spotify → Steam → GitHub. Each swept its own hardcoded
+   `zinc-*`/brand-color Tailwind classes for the shared tokens, and
+   re-verified its loading/error/empty states still matched (per
+   reference doc §7's definition of done).
+4. `WidgetCard`'s `ACCENT_BADGE` (a per-widget glow color — blue/green/
+   indigo/sky) was replaced with one shared outlined accent badge, since
+   Classical is a mono-accent system where widget identity comes from
+   icon/title, not color. The now-dead `accent` prop and
+   `WidgetCardAccent` type were removed from the SDK-facing `WidgetCard`
+   API rather than kept as unused surface area — call sites in
+   github/spotify/steam updated accordingly.
+5. GitHub's heatmap 5-step sky-blue ramp became a gold accent ramp
+   (`--color-neutral-200` through `--color-accent-800`); its Today/This
+   week/This year/streak metrics were left as-is — trimming which stats
+   display is a content decision, out of scope for a visual redesign.
+6. This doc pass.
+
+**Not changed**: no new env vars were needed (fonts load via
+`next/font`, no external API key), so `turbo.json`'s `build.env` and
+`.env.example` are untouched. Dark mode got a straight tonal inversion of
+the new variables, not Classical's own ramp — consistent with reference
+doc §7 treating dark mode as a fallback, not an actively designed theme.

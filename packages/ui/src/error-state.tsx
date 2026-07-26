@@ -22,9 +22,9 @@ export function ErrorState({ title = "Something went wrong", message }: ErrorSta
       role="alert"
       className={`flex h-full min-h-32 flex-col items-center justify-center gap-2 ${RADIUS.card} p-6 text-center ${glassClass("light")}`}
     >
-      <AlertTriangle className="h-5 w-5 text-amber-500 dark:text-amber-400" aria-hidden="true" />
-      <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{title}</p>
-      {message && <p className="text-xs text-zinc-500 dark:text-zinc-500">{message}</p>}
+      <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" aria-hidden="true" />
+      <p className="font-heading text-sm font-medium text-[var(--foreground)]">{title}</p>
+      {message && <p className="text-xs text-[var(--color-neutral-500)]">{message}</p>}
     </div>
   );
 }

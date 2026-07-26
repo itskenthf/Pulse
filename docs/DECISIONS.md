@@ -1855,3 +1855,20 @@ image assets.
 
 Production is served via Vercel (`my-pulse-os.vercel.app`), which is
 HTTPS by default, satisfying the service-worker HTTPS requirement.
+
+## 2026-07-26 — Removed Quick Launch widget
+
+Ken asked to remove Quick Launch entirely. It had no external
+API/adapter and no per-widget database tables (settings/cache are
+generic, keyed by `widget_id`), so removal is purely a code/registration
+change:
+
+- Deleted `packages/widgets/quick-launch/` outright.
+- Removed its import/registration from `apps/web/src/lib/register-widgets.ts`
+  and its dependency from `apps/web/package.json`, then regenerated
+  `pnpm-lock.yaml`.
+- Removed its line from `docs/ARCHITECTURE.md`'s widget tree listing.
+
+Any existing `widget_settings`/`widget_cache`/`widget_registry` rows for
+`widget_id = 'quick-launch'` become harmlessly orphaned — no migration
+needed, the generic tables don't reference widget code.

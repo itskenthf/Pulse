@@ -44,7 +44,7 @@ export function ProfileMenu({
         aria-haspopup="true"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-full py-1 pr-3 pl-1 text-sm font-medium text-[var(--foreground)] ${SPRING_PRESS}`}
+        className={`flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full ${SPRING_PRESS}`}
       >
         {user.image ? (
           // Plain <img>: external GitHub avatar URL, tiny fixed size — not
@@ -62,7 +62,6 @@ export function ProfileMenu({
             {initial}
           </span>
         )}
-        <span className="hidden sm:inline">{label}</span>
       </button>
 
       <div

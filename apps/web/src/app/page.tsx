@@ -5,15 +5,9 @@ import { readWidgetCache, readWidgetSettings } from "@pulse/database";
 import { Skeleton, SPRING_PRESS, WidgetCard, WidgetErrorBoundary } from "@pulse/ui";
 import { auth, signIn } from "@/auth";
 import { refreshWidgetAction, updateWidgetSettingsAction } from "./actions/widgets";
+import { NavMenu } from "./nav-menu";
 import { ProfileMenu } from "./profile-menu";
 import "@/lib/register-widgets";
-
-const NAV_LINKS = [
-  { label: "Dashboard", active: true },
-  { label: "Tasks", active: false },
-  { label: "Notes", active: false },
-  { label: "Settings", active: false },
-] as const;
 
 export default async function Home() {
   const session = await auth();
@@ -48,22 +42,7 @@ function Navbar({ session }: { session: { user?: SessionUser } | null }) {
         Pulse
       </h1>
 
-      <nav className="flex items-center gap-4 text-sm">
-        {NAV_LINKS.map((link) =>
-          link.active ? (
-            <span key={link.label} aria-current="page" className="text-[var(--color-accent)]">
-              {link.label}
-            </span>
-          ) : (
-            <span
-              key={link.label}
-              className="hidden text-[var(--color-neutral-400)] sm:inline"
-            >
-              {link.label}
-            </span>
-          ),
-        )}
-      </nav>
+      <NavMenu />
 
       <div className="ml-auto flex items-center gap-3">
         {session?.user ? (
@@ -200,13 +179,17 @@ function WidgetGrid({ userId }: { userId: string }) {
 
   return (
     <>
-      {heroWidgets.map((widget) => (
-        <WidgetErrorBoundary key={widget.id} name={widget.name}>
-          <Suspense fallback={<Skeleton variant="hero" />}>
-            <WidgetSlot widget={widget} userId={userId} />
-          </Suspense>
-        </WidgetErrorBoundary>
-      ))}
+      {heroWidgets.length > 0 && (
+        <div className="-mx-4 border-b border-[var(--color-divider)] px-4 pb-6 sm:-mx-6 sm:px-6 sm:pb-8">
+          {heroWidgets.map((widget) => (
+            <WidgetErrorBoundary key={widget.id} name={widget.name}>
+              <Suspense fallback={<Skeleton variant="hero" />}>
+                <WidgetSlot widget={widget} userId={userId} />
+              </Suspense>
+            </WidgetErrorBoundary>
+          ))}
+        </div>
+      )}
       <div className="flex min-w-0 flex-col items-start gap-5 sm:flex-row sm:gap-6">
         <div className="flex min-w-0 w-full flex-col gap-5 sm:basis-2/3">{left}</div>
         <div className="flex min-w-0 w-full flex-col gap-5 sm:basis-1/3">{right}</div>

@@ -1,5 +1,5 @@
 import { Sparkles } from "lucide-react";
-import { RADIUS, WidgetMenu } from "@pulse/ui";
+import { RADIUS } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
 import type { HeroData } from "./types";
 
@@ -19,28 +19,29 @@ const HEADING_ID = "hero-heading";
  * since the dashboard route is dynamic/auth-gated and never prerendered).
  * A static id is safe since Hero is a singleton (`size: "hero"`, at most
  * one instance ever rendered) — see docs/DECISIONS.md.
+ *
+ * Deliberately renders no WidgetMenu: Hero has no settings, so its menu
+ * held only a Refresh action that the global "Pulse" title refresh
+ * (apps/web/src/app/refresh-all-title.tsx) already covers. Every other
+ * widget keeps its own "⋯" menu for refreshing that one card alone.
  */
 export function HeroComponent({
   data,
-  actions,
 }: WidgetRenderProps<HeroData, Record<string, unknown>>) {
   return (
     <section aria-labelledby={HEADING_ID} className={`flex flex-col gap-5 ${RADIUS.hero}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-2">
-          {data?.dateFormatted && (
-            <p className="text-xs tracking-[0.08em] text-[var(--color-accent-700)] uppercase">
-              {data.dateFormatted}
-            </p>
-          )}
-          <h1
-            id={HEADING_ID}
-            className="font-heading text-3xl font-normal tracking-tight text-[var(--foreground)] sm:text-4xl md:text-5xl"
-          >
-            {data?.greeting ?? "Hello"}
-          </h1>
-        </div>
-        <WidgetMenu id="hero" actions={actions} />
+      <div className="flex flex-col gap-2">
+        {data?.dateFormatted && (
+          <p className="text-xs tracking-[0.08em] text-[var(--color-accent-700)] uppercase">
+            {data.dateFormatted}
+          </p>
+        )}
+        <h1
+          id={HEADING_ID}
+          className="font-heading text-3xl font-normal tracking-tight text-[var(--foreground)] sm:text-4xl md:text-5xl"
+        >
+          {data?.greeting ?? "Hello"}
+        </h1>
       </div>
 
       {data && (

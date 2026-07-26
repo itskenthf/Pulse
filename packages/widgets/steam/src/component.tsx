@@ -20,6 +20,11 @@ export function SteamComponent({
     <WidgetCard
       title="Steam"
       icon={<SteamIcon />}
+      tag={
+        data && data.games.length > 0
+          ? { label: `${data.games.length} played`, variant: "neutral" }
+          : undefined
+      }
       action={
         <WidgetMenu
           id="steam"

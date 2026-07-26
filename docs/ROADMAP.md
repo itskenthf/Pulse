@@ -498,6 +498,16 @@ independently passing `pnpm build`/`lint`/`typecheck` per CLAUDE.md's
 DESIGN_SYSTEM.md` now describes Classical as canon (v2.0); `docs/
 PROJECT_REFERENCE.md` §19 points at it. No new env vars were needed.
 
+**Follow-up (2026-07-26)**: the live deployment surfaced a real bug (Hero
+crashed in production — `useId()` called from a widget `render()` invoked
+as a bare function call, not JSX) and several remaining fidelity gaps
+against the mockup (status tag badges, Hero's kicker date line, GitHub's
+metric count, Quick Launch's tile shape, nav links, Tasks/Notes "Coming
+soon" cards). All fixed/closed — see `docs/DECISIONS.md`'s "Fix Hero's
+production crash, close remaining redesign fidelity gaps" entry for the
+full root-cause analysis and the one confirmed-deliberate deviation kept
+(the grid layout).
+
 ## Phase 2 — make it actionable
 
 Not started. Blocked on Phase 1 gate.

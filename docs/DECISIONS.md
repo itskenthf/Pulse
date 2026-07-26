@@ -1855,3 +1855,33 @@ image assets.
 
 Production is served via Vercel (`[redacted-old-domain]`), which is
 HTTPS by default, satisfying the service-worker HTTPS requirement.
+
+## 2026-07-26 — Spotify widget: top artist + genre now, Recently Played/Weekly Minutes/Streak/Mood deferred
+
+Ken asked to swap Spotify's "Top Tracks" widget for a richer set: Recently
+Played, Weekly Minutes, Top Genre, Top Artist, Listening Streak, Today's
+Mood. Built what's directly supported by the already-authorized
+`user-top-read` OAuth scope; the rest needs real follow-up work, not just a
+new API call, so it's deferred and recorded here rather than attempted.
+
+**Built this round:**
+- **Top artist** — `GET /v1/me/top/artists`, same `user-top-read` scope
+  already granted; new `fetchTopArtists` in `packages/adapters/spotify/src/
+  top-artists.ts`, mirroring `fetchTopTracks`'s shape.
+- **Top genre** — Spotify has no genre endpoint; derived as the most
+  frequent genre across the top-artists response's own `genres[]` fields
+  (`deriveTopGenre`, same file). No extra API call.
+
+**Deferred, not attempted:**
+- **Recently Played** needs OAuth scope `user-read-recently-played`, which
+  already-connected users have not granted — this needs a re-consent/
+  reconnect flow (`/api/connect/spotify`), not just a new call.
+- **Weekly Minutes** and **Listening Streak** have no Spotify API field at
+  all — both would require Pulse to build its own listening-history
+  tracking over time (repeatedly polling recently-played and summing), a
+  genuinely new feature.
+- **Today's Mood** (`/v1/audio-features`) doesn't need a new user scope,
+  but Spotify restricted several endpoints — audio-features among them —
+  behind "extended quota mode" app approval as of their Nov 2024 API
+  changes. Real availability risk independent of scopes; needs checking
+  against Pulse's actual Spotify app tier before promising this feature.

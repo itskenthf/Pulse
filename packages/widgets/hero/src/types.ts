@@ -1,13 +1,6 @@
 export type HeroPeriod = "morning" | "afternoon" | "evening" | "night";
 
-export type QuoteCategory =
-  | "coffee"
-  | "dev-humor"
-  | "gaming"
-  | "minimalism"
-  | "relationship"
-  | "programming"
-  | "stoicism";
+export type QuoteCategory = "coffee" | "dev-humor" | "dark-humor" | "humor";
 
 export interface Quote {
   text: string;

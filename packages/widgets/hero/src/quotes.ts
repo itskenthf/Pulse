@@ -16,7 +16,10 @@ export const QUOTES: Quote[] = [
   { text: "Decaf is a conspiracy.", category: "coffee" },
 
   // Developer humor
-  { text: "It's not a bug, it's an undocumented feature.", category: "dev-humor" },
+  {
+    text: "It's not a bug, it's an undocumented feature.",
+    category: "dev-humor",
+  },
   {
     text: "There are only two hard things in Computer Science: cache invalidation and naming things.",
     category: "dev-humor",
@@ -35,77 +38,79 @@ export const QUOTES: Quote[] = [
     category: "dev-humor",
   },
 
-  // Gaming
-  { text: "It's dangerous to go alone, take this.", category: "gaming" },
-  { text: "War... war never changes.", category: "gaming" },
-  { text: "The cake is a lie.", category: "gaming" },
-  { text: "A man chooses, a slave obeys.", category: "gaming" },
-  { text: "Stay awhile and listen.", category: "gaming" },
-  { text: "Praise the sun!", category: "gaming" },
+  // Dark humor
+  {
+    text: "I'm not saying I hate you, but I'd unplug your life support to charge my phone.",
+    category: "dark-humor",
+  },
+  {
+    text: "The good news is dinosaurs are extinct. The bad news is so is my motivation.",
+    category: "dark-humor",
+  },
+  {
+    text: "I plan on living forever. So far, so good.",
+    category: "dark-humor",
+  },
+  {
+    text: "If at first you don't succeed, skydiving is not for you.",
+    category: "dark-humor",
+  },
+  {
+    text: "I'm on a seafood diet — I see food, and I contemplate the futility of existence.",
+    category: "dark-humor",
+  },
+  {
+    text: "Life is like a box of chocolates: mostly disappointing and gone too soon.",
+    category: "dark-humor",
+  },
+  {
+    text: "I'm not lazy, I'm just on energy-saving mode until my inevitable demise.",
+    category: "dark-humor",
+  },
+  {
+    text: "They say laughter is the best medicine. Good thing, because I can't afford therapy.",
+    category: "dark-humor",
+  },
+  {
+    text: "I'm not a hoarder, I just have separation anxiety with my own mortality.",
+    category: "dark-humor",
+  },
+  {
+    text: "My life is a work in progress, mostly the tragic parts.",
+    category: "dark-humor",
+  },
+  {
+    text: "I'm great at multitasking — I can waste time, procrastinate, and feel bad about it, simultaneously.",
+    category: "dark-humor",
+  },
+  {
+    text: "Some people call it dark humor. I call it a coping mechanism with better delivery.",
+    category: "dark-humor",
+  },
 
-  // Minimalism
+  // Humor
   {
-    text: "The ability to simplify means to eliminate the unnecessary so that the necessary may speak.",
-    category: "minimalism",
+    text: "I'm on a whiskey diet. I've lost three days already.",
+    category: "humor",
   },
   {
-    text: "Have nothing in your house that you do not know to be useful, or believe to be beautiful.",
-    category: "minimalism",
-  },
-  { text: "The things you own end up owning you.", category: "minimalism" },
-  {
-    text: "Minimalism is not a lack of something. It's simply the perfect amount of something.",
-    category: "minimalism",
+    text: "I used to think I was indecisive, but now I'm not so sure.",
+    category: "humor",
   },
   {
-    text: "It's not about having less, it's about making room for more of what matters.",
-    category: "minimalism",
-  },
-
-  // Relationship
-  { text: "The best thing to hold onto in life is each other.", category: "relationship" },
-  {
-    text: "A successful relationship requires falling in love many times, always with the same person.",
-    category: "relationship",
+    text: "Common sense is like deodorant — the people who need it most never use it.",
+    category: "humor",
   },
   {
-    text: "We are all a little weird, and life is a little weird, and when we find someone whose weirdness is compatible with ours, we join up.",
-    category: "relationship",
+    text: "I told my wife she was drawing her eyebrows too high. She looked surprised.",
+    category: "humor",
   },
   {
-    text: "Love is composed of a single soul inhabiting two bodies.",
-    category: "relationship",
-  },
-  { text: "In all the world, there is no heart for me like yours.", category: "relationship" },
-
-  // Programming
-  { text: "Talk is cheap. Show me the code.", category: "programming" },
-  { text: "Simplicity is a prerequisite for reliability.", category: "programming" },
-  {
-    text: "Any fool can write code that a computer can understand. Good programmers write code that humans can understand.",
-    category: "programming",
-  },
-  { text: "First, solve the problem. Then, write the code.", category: "programming" },
-  { text: "Code is like humor. When you have to explain it, it's bad.", category: "programming" },
-  { text: "Premature optimization is the root of all evil.", category: "programming" },
-
-  // Stoicism
-  {
-    text: "You have power over your mind, not outside events. Realize this, and you will find strength.",
-    category: "stoicism",
-  },
-  { text: "We suffer more in imagination than in reality.", category: "stoicism" },
-  {
-    text: "It's not what happens to you, but how you react to it that matters.",
-    category: "stoicism",
+    text: "Parallel lines have so much in common. It's a shame they'll never meet.",
+    category: "humor",
   },
   {
-    text: "Waste no more time arguing about what a good man should be. Be one.",
-    category: "stoicism",
-  },
-  { text: "No man is free who is not master of himself.", category: "stoicism" },
-  {
-    text: "The happiness of your life depends upon the quality of your thoughts.",
-    category: "stoicism",
+    text: "I'm reading a book about anti-gravity. It's impossible to put down.",
+    category: "humor",
   },
 ];

@@ -39,9 +39,7 @@ function Navbar({ session }: { session: { user?: SessionUser } | null }) {
   return (
     <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b border-[var(--color-divider)] bg-[var(--background)] px-4 py-3 sm:px-6">
       {session?.user ? (
-        <h1>
-          <RefreshAllTitle />
-        </h1>
+        <RefreshAllTitle />
       ) : (
         <h1 className="font-heading text-lg font-semibold tracking-tight text-[var(--foreground)]">
           Pulse

@@ -1,5 +1,11 @@
-import type { SpotifyTrack } from "@pulse/adapter-spotify";
+import type { SpotifyArtist, SpotifyTrack } from "@pulse/adapter-spotify";
 
 export type SpotifyData =
   | { connected: false }
-  | { connected: true; tracks: SpotifyTrack[]; fetchedAt: string };
+  | {
+      connected: true;
+      tracks: SpotifyTrack[];
+      topArtist: SpotifyArtist | null;
+      topGenre: string | null;
+      fetchedAt: string;
+    };

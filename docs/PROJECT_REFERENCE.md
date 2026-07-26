@@ -434,27 +434,33 @@ Do not proceed to Phase 2 until these conditions are met.
 
 ## 19. UI / design principles
 
-Superseded 2026-07-24 by a full redesign (see docs/DECISIONS.md for the
-critique/proposal/rationale) — Pulse's actual design system is now
-`docs/DESIGN_SYSTEM.md` in full (Liquid Glass: glass materials, layered
-ambient background, spring motion, Lucide icons). This section records
-only the structural/layout decisions that doc doesn't cover:
+Superseded twice — first 2026-07-24 by the Liquid Glass redesign, then
+2026-07-26 by the "Classical" redesign (see docs/DECISIONS.md for both).
+Pulse's actual design system is now `docs/DESIGN_SYSTEM.md` in full
+(Classical: serif type, flat paper background, hairline borders, single
+gold accent, no blur/gradient). This section records only the
+structural/layout decisions that doc doesn't cover — most of the bullets
+below predate the Classical pass and are still accurate structurally
+(grid shape, Hero's content, menu behavior, hover semantics); the
+material/color specifics they mention (glass tint/blur, the gradient
+background) are superseded by `docs/DESIGN_SYSTEM.md` v2.0:
 
-- A real glass system (`packages/ui/src/glass.ts`: light/medium/heavy —
-  tint, blur, inset highlight, layered shadow), not `bg-white/opacity`.
-- **Background is one smooth diagonal gradient** (sky → cyan → violet;
-  `apps/web/src/app/page.tsx`), not the earlier layered-blob approach —
-  changed 2026-07-24 to match a reference image Ken provided. Fill opacity
-  on the glass tokens is deliberately low (30–40% for `light`/`medium`) so
-  the gradient's color genuinely reads through every card — see
-  docs/DECISIONS.md for the investigation that found the original glass
-  was rendering as near-solid white.
+- ~~A real glass system (`packages/ui/src/glass.ts`: light/medium/heavy —
+  tint, blur, inset highlight, layered shadow), not `bg-white/opacity`.~~
+  Superseded 2026-07-26: `glass.ts` keeps the same three exported names
+  for API stability, but each level is now a flat bordered card with no
+  blur or translucency.
+- ~~**Background is one smooth diagonal gradient** (sky → cyan → violet;
+  `apps/web/src/app/page.tsx`)~~ Superseded 2026-07-26: the background is
+  now a flat paper tone (`--background`), not a gradient.
 - **Bento-style grid, not uniform columns**: each widget's existing SDK
   `size` field (`sm`/`md`/`lg`) picks how many grid columns it spans, so
   the richest widget becomes an actual focal point (currently GitHub,
   `"lg"`, spans 2 of 3 desktop columns) instead of every card getting
-  identical width. No left-border accents — widget identity comes from a
-  soft colored glow behind the icon badge instead.
+  identical width. No left-border accents — widget identity comes from
+  the icon and title, not a color; every widget's icon badge shares the
+  same outlined accent treatment (superseded 2026-07-26: previously a
+  per-widget colored glow — blue/green/indigo — see docs/DECISIONS.md).
 - **Hero is one flowing "assistant" panel**, not floating text or stat
   chips (2026-07-25, superseding the "row of today chips" version below):
   a greeting headline, then one sentence combining date/time and weather

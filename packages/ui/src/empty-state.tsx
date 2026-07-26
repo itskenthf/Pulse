@@ -17,7 +17,7 @@ export interface EmptyStateProps {
  */
 export function EmptyState({ message, action }: EmptyStateProps) {
   return (
-    <div className="flex h-full min-h-24 flex-col items-center justify-center gap-3 text-center text-sm text-zinc-500 dark:text-zinc-500">
+    <div className="flex h-full min-h-24 flex-col items-center justify-center gap-3 text-center text-sm text-[var(--color-neutral-500)]">
       <p>{message}</p>
       {action}
     </div>

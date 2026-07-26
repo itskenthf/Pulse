@@ -1,11 +1,11 @@
 import type { ContributionWeek } from "@pulse/adapter-github";
 
 const LEVEL_CLASSES = [
-  "bg-zinc-950/5 dark:bg-white/5",
-  "bg-sky-300/70 dark:bg-sky-900",
-  "bg-sky-400 dark:bg-sky-700",
-  "bg-sky-500 dark:bg-sky-500",
-  "bg-sky-600 dark:bg-sky-300",
+  "bg-[var(--color-neutral-200)]",
+  "bg-[var(--color-accent-200)]",
+  "bg-[var(--color-accent-400)]",
+  "bg-[var(--color-accent-600)]",
+  "bg-[var(--color-accent-800)]",
 ] as const;
 
 export function Heatmap({ weeks }: { weeks: ContributionWeek[] }) {
@@ -17,7 +17,7 @@ export function Heatmap({ weeks }: { weeks: ContributionWeek[] }) {
             <div
               key={day.date}
               title={`${day.date}: ${day.count} contribution${day.count === 1 ? "" : "s"}`}
-              className={`h-3 w-3 rounded-[3px] ${LEVEL_CLASSES[day.level] ?? LEVEL_CLASSES[0]}`}
+              className={`h-3 w-3 rounded-[2px] ${LEVEL_CLASSES[day.level] ?? LEVEL_CLASSES[0]}`}
             />
           ))}
         </div>

@@ -36,7 +36,7 @@ export function LinkIcon({ url }: { url: string }) {
   }, []);
 
   if (failed || !hostname) {
-    return <Link2 className="h-5 w-5 text-zinc-400 dark:text-zinc-500" aria-hidden="true" />;
+    return <Link2 className="h-5 w-5 text-[var(--color-neutral-400)]" aria-hidden="true" />;
   }
 
   return (

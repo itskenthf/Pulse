@@ -22,15 +22,15 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gradient-to-br from-sky-200 via-cyan-100 to-violet-200 p-6 text-center dark:from-slate-950 dark:via-blue-950 dark:to-violet-950">
-      <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[var(--background)] p-6 text-center">
+      <p className="font-heading text-lg font-semibold text-[var(--foreground)]">
         Something went wrong.
       </p>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">Try reloading the page.</p>
+      <p className="text-sm text-[var(--color-neutral-600)]">Try reloading the page.</p>
       <button
         type="button"
         onClick={reset}
-        className={`rounded-xl bg-zinc-950 px-4 py-2 text-sm font-medium text-zinc-50 hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-zinc-200 ${SPRING_PRESS}`}
+        className={`rounded-[4px] border border-[var(--color-accent)] px-4 py-2 font-heading text-sm font-semibold text-[var(--color-accent)] hover:bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)] ${SPRING_PRESS}`}
       >
         Try again
       </button>

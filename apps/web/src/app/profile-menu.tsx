@@ -1,22 +1,34 @@
 "use client";
 
 import { LogOut } from "lucide-react";
-import { glassClass, SPRING_PRESS, useDismissableMenu } from "@pulse/ui";
+import { glassClass, RADIUS, SPRING_PRESS, useDismissableMenu } from "@pulse/ui";
 import { signOutAction } from "./actions/sign-out";
 
+const NAV_LINKS = [
+  { label: "Dashboard", active: true },
+  { label: "Tasks", active: false },
+  { label: "Notes", active: false },
+  { label: "Settings", active: false },
+] as const;
+
 /**
+ * Single account menu — replaces what used to be two separate header
+ * controls (a "•••" nav-links menu next to the "Pulse" title, and this
+ * avatar dropdown with only Sign out). Merging them removes duplicate
+ * navigation surfaces and gives mobile users the same access to
+ * Tasks/Notes/Settings that desktop always had, all from one place.
+ *
  * Open/close state comes from `useDismissableMenu` (`@pulse/ui`) — the
  * same `pointerdown`-based dismissal, Escape-to-close, and focus-return
  * `WidgetMenu` uses, not CSS `:focus-within` (see that hook's doc
- * comment, or docs/DECISIONS.md, for why). Previously hand-rolled
- * identically here and in WidgetMenu.
+ * comment, or docs/DECISIONS.md, for why).
  */
 export function ProfileMenu({
   user,
 }: {
   user: { name?: string | null; email?: string | null; image?: string | null };
 }) {
-  const { open, setOpen, rootRef, triggerRef } = useDismissableMenu<
+  const { open, setOpen, close, rootRef, triggerRef } = useDismissableMenu<
     HTMLDivElement,
     HTMLButtonElement
   >();
@@ -28,6 +40,7 @@ export function ProfileMenu({
       <button
         ref={triggerRef}
         type="button"
+        aria-label="Account menu"
         aria-haspopup="true"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
@@ -56,13 +69,46 @@ export function ProfileMenu({
         // See WidgetMenu for why `inert` (keeps a hidden panel out of tab
         // order) and why the scale transform is `motion-safe:`-gated.
         inert={!open}
-        className={`absolute right-0 z-20 mt-2 w-48 origin-top-right overflow-hidden rounded-[4px] py-1 transition-opacity duration-150 motion-safe:transition-[transform,opacity] ${
+        className={`absolute right-0 z-20 mt-2 w-56 origin-top-right overflow-hidden ${RADIUS.chip} py-1 transition-opacity duration-150 motion-safe:transition-[transform,opacity] ${
           open
             ? "visible opacity-100 motion-safe:scale-100"
             : "invisible opacity-0 motion-safe:scale-95"
         } ${glassClass("heavy")}`}
       >
-        <form action={signOutAction}>
+        <div className="flex flex-col gap-0.5 px-3 py-2">
+          <span className="truncate text-sm font-medium text-[var(--foreground)]">{label}</span>
+          {user.email && (
+            <span className="truncate text-xs text-[var(--color-neutral-500)]">
+              {user.email}
+            </span>
+          )}
+        </div>
+
+        <div className="my-1 border-t border-[var(--color-divider)]" />
+
+        {NAV_LINKS.map((link) =>
+          link.active ? (
+            <span
+              key={link.label}
+              aria-current="page"
+              className="flex min-h-11 items-center px-3 py-2 text-sm font-medium text-[var(--color-accent)]"
+            >
+              {link.label}
+            </span>
+          ) : (
+            <span
+              key={link.label}
+              title="Coming soon"
+              className="flex min-h-11 items-center px-3 py-2 text-sm text-[var(--color-neutral-400)]"
+            >
+              {link.label}
+            </span>
+          ),
+        )}
+
+        <div className="my-1 border-t border-[var(--color-divider)]" />
+
+        <form action={signOutAction} onSubmit={close}>
           <button
             type="submit"
             className="flex min-h-11 w-full items-center gap-2 px-3 py-2 text-left text-sm text-[var(--foreground)] hover:bg-[color-mix(in_srgb,var(--color-accent)_8%,transparent)]"

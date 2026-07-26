@@ -15,7 +15,7 @@ export function SpotifyComponent({
           action={
             <a
               href="/api/connect/spotify"
-              className="inline-flex min-h-11 items-center justify-center rounded-md bg-zinc-950 px-4 text-xs font-medium text-zinc-50 hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-zinc-200"
+              className="inline-flex min-h-11 items-center justify-center rounded-[4px] border border-[var(--color-accent)] px-4 font-heading text-xs font-semibold text-[var(--color-accent)] hover:bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)]"
             >
               Connect Spotify
             </a>
@@ -30,7 +30,6 @@ export function SpotifyComponent({
       title="Spotify"
       icon={<SpotifyIcon />}
       action={<WidgetMenu id="spotify" actions={actions} />}
-     
     >
       {data.tracks.length > 0 ? (
         <ul className="flex min-w-0 flex-col gap-4">
@@ -48,18 +47,20 @@ export function SpotifyComponent({
                   className={`h-10 w-10 shrink-0 ${RADIUS.chip} object-cover shadow-sm`}
                 />
               ) : (
-                <span className={`h-10 w-10 shrink-0 ${RADIUS.chip} bg-gradient-to-br from-emerald-200 to-teal-200 dark:from-emerald-500/20 dark:to-teal-500/20`} />
+                <span
+                  className={`h-10 w-10 shrink-0 ${RADIUS.chip} border border-[var(--color-accent-300)] bg-[var(--color-accent-100)]`}
+                />
               )}
               <div className="min-w-0 flex-1">
                 <a
                   href={track.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block truncate text-sm font-medium text-zinc-900 hover:underline dark:text-zinc-100"
+                  className="block truncate text-sm font-medium text-[var(--foreground)] hover:underline"
                 >
                   {track.name}
                 </a>
-                <span className="block truncate text-xs text-zinc-500 dark:text-zinc-500">
+                <span className="block truncate text-xs text-[var(--color-neutral-500)]">
                   {track.artist}
                 </span>
               </div>

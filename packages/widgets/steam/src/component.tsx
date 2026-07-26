@@ -38,7 +38,7 @@ export function SteamComponent({
                 className={`group flex flex-col gap-2 ${RADIUS.chip}`}
               >
                 <CoverArt appId={game.appId} name={game.name} />
-                <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                <span className="truncate text-sm font-medium text-[var(--foreground)]">
                   {game.name}
                 </span>
               </a>

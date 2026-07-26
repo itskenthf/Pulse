@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Geist, Geist_Mono, Lora } from "next/font/google";
 import "./globals.css";
+import { RegisterServiceWorker } from "./register-service-worker";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,6 +27,20 @@ const lora = Lora({
 export const metadata: Metadata = {
   title: "Pulse",
   description: "Personal command center",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icons/icon-192.png",
+    apple: "/icons/icon-180.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Pulse",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#3d2817",
 };
 
 export default function RootLayout({
@@ -38,7 +53,10 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${cormorantGaramond.variable} ${lora.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <RegisterServiceWorker />
+      </body>
     </html>
   );
 }

@@ -127,9 +127,16 @@ export async function fetchContributions(
     queryCalendar(accessToken, yearStart, now),
   ]);
 
-  const today = now.toISOString().slice(0, 10);
+  // "Today" comes from GitHub's own last returned day, not a UTC date
+  // string computed here — GitHub buckets contribution days by the
+  // viewer's *profile* timezone, not UTC, so matching against
+  // now.toISOString()'s UTC date could miss/misattribute "today" for
+  // several hours around midnight depending on the offset between UTC
+  // and the viewer's timezone. `allDays` is oldest → newest (see
+  // NormalizedContributions's doc comment), so the last entry is
+  // GitHub's own answer to "what day is today for this viewer."
   const allDays = windowResult.weeks.flatMap((week) => week.days);
-  const totalToday = allDays.find((day) => day.date === today)?.count ?? 0;
+  const totalToday = allDays[allDays.length - 1]?.count ?? 0;
 
   const lastWeek = windowResult.weeks[windowResult.weeks.length - 1];
   const totalThisWeek = (lastWeek?.days ?? []).reduce((sum, day) => sum + day.count, 0);

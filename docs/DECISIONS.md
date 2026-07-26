@@ -1855,3 +1855,46 @@ image assets.
 
 Production is served via Vercel (`my-pulse-os.vercel.app`), which is
 HTTPS by default, satisfying the service-worker HTTPS requirement.
+
+## 2026-07-26 — Habits/Reading/RSS placeholders: reopening Habits, adding two new backlog items
+
+Ken asked for Habits, Reading, and RSS widgets. This conflicts with two
+things already on record, so per this repo's CLAUDE.md ("don't contradict
+`docs/PROJECT_REFERENCE.md` without explaining why first and getting
+explicit approval") this was flagged to Ken directly before proceeding:
+
+- **Habits** was explicitly reviewed and dropped from active scope on
+  2026-07-22 ("doesn't fit how Ken actually wants to use Pulse long-term" —
+  see `docs/ROADMAP.md`'s Phase 1 rescoped section).
+- **Finance** is filed under `docs/PROJECT_REFERENCE.md` §10's post-MVP
+  backlog ("don't build until the core widgets are in daily use").
+- **RSS** wasn't on the roadmap or in `docs/PROJECT_REFERENCE.md` at all —
+  a net-new addition, not a resurrection.
+
+**Ken's decision:** reopen Habits, and add Reading and RSS, as placeholder-
+only "Coming soon" cards for now — the same static pattern already used for
+Tasks/Notes in `apps/web/src/app/page.tsx`'s `WidgetGrid` (a `WidgetCard`
+with `tag={{ label: "Coming soon", variant: "neutral" }}`, `opacity-70`
+wrapper, static descriptive text, no refresh/settings menu). These are
+deliberately **not** real `registerWidget()`-based `Widget` objects yet —
+building the actual fetch/cache/registration machinery for something with
+no real data source behind it would itself violate
+`docs/PROJECT_REFERENCE.md` §7 ("fetches real data") and the "don't
+scaffold ahead of need" rule. **Finance stays excluded** — Ken confirmed
+it's "later," with no placeholder added yet either.
+
+When each of these becomes a real widget:
+- **Habits**: Ken asked for it to "feel alive" — proposed direction (not
+  built yet): large circular tap-target checkboxes (44×44px minimum touch
+  target) with `motion-safe:` scale/spring feedback on toggle (reusing
+  `SPRING_PRESS` from `packages/ui/src/glass.ts`), a small streak indicator
+  per habit once >1 day, daily reset at local midnight (mirroring Hero's
+  existing `HERO_TIME_ZONE` handling), and no "you failed" error styling on
+  a missed day — encouragement over guilt, matching the calm "Classical"
+  design philosophy.
+- **Reading**: Ken wants it empty/minimal for now by his own request. The
+  Steam per-game detail page (`apps/web/src/app/steam/[appId]/page.tsx`) is
+  the established template for a "click through to a detail page" pattern
+  once there's a real "current book" concept to build against.
+- **RSS**: sources Ken mentioned as examples — GitHub Blog, OpenAI, Apple,
+  Steam.

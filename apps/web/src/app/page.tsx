@@ -5,15 +5,9 @@ import { readWidgetCache, readWidgetSettings } from "@pulse/database";
 import { Skeleton, SPRING_PRESS, WidgetCard, WidgetErrorBoundary } from "@pulse/ui";
 import { auth, signIn } from "@/auth";
 import { refreshWidgetAction, updateWidgetSettingsAction } from "./actions/widgets";
+import { NavMenu } from "./nav-menu";
 import { ProfileMenu } from "./profile-menu";
 import "@/lib/register-widgets";
-
-const NAV_LINKS = [
-  { label: "Dashboard", active: true },
-  { label: "Tasks", active: false },
-  { label: "Notes", active: false },
-  { label: "Settings", active: false },
-] as const;
 
 export default async function Home() {
   const session = await auth();
@@ -48,22 +42,7 @@ function Navbar({ session }: { session: { user?: SessionUser } | null }) {
         Pulse
       </h1>
 
-      <nav className="flex items-center gap-4 text-sm">
-        {NAV_LINKS.map((link) =>
-          link.active ? (
-            <span key={link.label} aria-current="page" className="text-[var(--color-accent)]">
-              {link.label}
-            </span>
-          ) : (
-            <span
-              key={link.label}
-              className="hidden text-[var(--color-neutral-400)] sm:inline"
-            >
-              {link.label}
-            </span>
-          ),
-        )}
-      </nav>
+      <NavMenu />
 
       <div className="ml-auto flex items-center gap-3">
         {session?.user ? (

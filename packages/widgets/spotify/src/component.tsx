@@ -9,7 +9,7 @@ export function SpotifyComponent({
 }: WidgetRenderProps<SpotifyData, Record<string, unknown>>) {
   if (!data || !data.connected) {
     return (
-      <WidgetCard title="Spotify" icon={<SpotifyIcon />} accent="green">
+      <WidgetCard title="Spotify" icon={<SpotifyIcon />}>
         <EmptyState
           message="Connect your Spotify account to see your top tracks."
           action={
@@ -30,7 +30,7 @@ export function SpotifyComponent({
       title="Spotify"
       icon={<SpotifyIcon />}
       action={<WidgetMenu id="spotify" actions={actions} />}
-      accent="green"
+     
     >
       {data.tracks.length > 0 ? (
         <ul className="flex min-w-0 flex-col gap-4">

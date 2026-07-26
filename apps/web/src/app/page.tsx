@@ -1,11 +1,19 @@
 import { Suspense } from "react";
+import { Book, CheckSquare } from "lucide-react";
 import { getAllWidgets, type Widget } from "@pulse/sdk";
 import { readWidgetCache, readWidgetSettings } from "@pulse/database";
-import { Skeleton, SPRING_PRESS, WidgetErrorBoundary } from "@pulse/ui";
+import { Skeleton, SPRING_PRESS, WidgetCard, WidgetErrorBoundary } from "@pulse/ui";
 import { auth, signIn } from "@/auth";
 import { refreshWidgetAction, updateWidgetSettingsAction } from "./actions/widgets";
 import { ProfileMenu } from "./profile-menu";
 import "@/lib/register-widgets";
+
+const NAV_LINKS = [
+  { label: "Dashboard", active: true },
+  { label: "Tasks", active: false },
+  { label: "Notes", active: false },
+  { label: "Settings", active: false },
+] as const;
 
 export default async function Home() {
   const session = await auth();
@@ -37,29 +45,71 @@ interface SessionUser {
 
 function Navbar({ session }: { session: { user?: SessionUser } | null }) {
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-[var(--color-divider)] bg-[var(--background)] px-4 py-3 sm:px-6">
+    <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b border-[var(--color-divider)] bg-[var(--background)] px-4 py-3 sm:px-6">
       <h1 className="font-heading text-lg font-semibold tracking-tight text-[var(--foreground)]">
         Pulse
       </h1>
 
-      {session?.user ? (
-        <ProfileMenu user={session.user} />
-      ) : (
-        <form
-          action={async () => {
-            "use server";
-            await signIn("github");
-          }}
-        >
-          <button
-            type="submit"
-            className={`min-h-11 rounded-[4px] border border-[var(--color-accent)] px-4 py-2 font-heading text-sm font-semibold text-[var(--color-accent)] hover:bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)] ${SPRING_PRESS}`}
+      <nav className="flex items-center gap-4 text-sm">
+        {NAV_LINKS.map((link) =>
+          link.active ? (
+            <span key={link.label} aria-current="page" className="text-[var(--color-accent)]">
+              {link.label}
+            </span>
+          ) : (
+            <span key={link.label} className="text-[var(--color-neutral-400)]">
+              {link.label}
+            </span>
+          ),
+        )}
+      </nav>
+
+      <div className="ml-auto flex items-center gap-3">
+        {session?.user ? (
+          <ProfileMenu user={session.user} />
+        ) : (
+          <form
+            action={async () => {
+              "use server";
+              await signIn("github");
+            }}
           >
-            Sign in with GitHub
-          </button>
-        </form>
-      )}
+            <button
+              type="submit"
+              className={`min-h-11 rounded-[4px] border border-[var(--color-accent)] px-4 py-2 font-heading text-sm font-semibold text-[var(--color-accent)] hover:bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)] ${SPRING_PRESS}`}
+            >
+              Sign in with GitHub
+            </button>
+          </form>
+        )}
+      </div>
     </header>
+  );
+}
+
+function ComingSoonCards() {
+  return (
+    <>
+      <div className="opacity-70">
+        <WidgetCard
+          title="Tasks"
+          icon={<CheckSquare className="h-4 w-4" aria-hidden="true" />}
+          tag={{ label: "Coming soon", variant: "neutral" }}
+        >
+          A dedicated task list — pulled from Todoist or Notion — is planned
+          for a future release.
+        </WidgetCard>
+      </div>
+      <div className="opacity-70">
+        <WidgetCard
+          title="Notes"
+          icon={<Book className="h-4 w-4" aria-hidden="true" />}
+          tag={{ label: "Coming soon", variant: "neutral" }}
+        >
+          Quick daily notes and reminders — planned for a future release.
+        </WidgetCard>
+      </div>
+    </>
   );
 }
 
@@ -157,6 +207,7 @@ function WidgetGrid({ userId }: { userId: string }) {
           {railWidgets.map((widget) => (
             <WidgetCell key={widget.id} widget={widget} userId={userId} />
           ))}
+          <ComingSoonCards />
         </div>
       </div>
     </>

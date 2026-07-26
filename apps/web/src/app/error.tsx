@@ -22,7 +22,7 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gradient-to-br from-sky-200 via-cyan-100 to-violet-200 p-6 text-center dark:from-slate-950 dark:via-blue-950 dark:to-violet-950">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[var(--background)] p-6 text-center">
       <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
         Something went wrong.
       </p>

@@ -11,7 +11,7 @@ export default async function Home() {
   const session = await auth();
 
   return (
-    <div className="relative flex min-h-screen overflow-x-hidden bg-gradient-to-br from-sky-200 via-cyan-100 to-violet-200 dark:from-slate-950 dark:via-blue-950 dark:to-violet-950">
+    <div className="relative flex min-h-screen overflow-x-hidden bg-[var(--background)]">
       <div className="relative flex min-h-screen flex-1 flex-col">
         <Navbar session={session} />
 

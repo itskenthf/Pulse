@@ -1829,3 +1829,29 @@ devtools test), and mobile (390px), plus the scroll/overflow checks
 above. Screenshots sent to Ken for review before opening a PR, per his
 explicit request this round — not merged sight-unseen like earlier
 passes.
+
+## 2026-07-26 — Installable PWA shell (manifest + minimal service worker)
+
+Ken asked for Pulse to be installable to a phone home screen and to open
+without browser UI. This is dashboard-shell chrome, not a widget, so it
+lives in `apps/web` directly rather than through the widget/adapter layer.
+
+**Decision:** Added `apps/web/public/manifest.json` (name/short_name
+"Pulse", `display: "standalone"`, background/theme color `#3d2817`,
+192/512 icons) and a minimal app-shell service worker at
+`apps/web/public/sw.js` (network-first with cache fallback for the shell
+route and manifest, so the app still opens offline after a first visit).
+Wired both into `apps/web/src/app/layout.tsx` via Next's `Metadata`/
+`Viewport` APIs (`manifest`, `icons`, `appleWebApp`, `viewport.themeColor`)
+rather than hand-written `<link>`/`<meta>` tags, since Next dedupes and
+manages those slots itself — hand-writing them risks duplicate tags.
+Service worker registration lives in a small client component
+(`register-service-worker.tsx`) since `navigator.serviceWorker` only
+exists client-side.
+
+Icon files themselves (`icon-192.png`, `icon-512.png`, `icon-180.png` in
+`apps/web/public/icons/`) are not committed — Ken is providing the actual
+image assets.
+
+Production is served via Vercel (`[redacted-old-domain]`), which is
+HTTPS by default, satisfying the service-worker HTTPS requirement.

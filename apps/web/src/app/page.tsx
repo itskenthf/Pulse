@@ -1,5 +1,5 @@
 import { Suspense, type ReactNode } from "react";
-import { Book, CheckSquare } from "lucide-react";
+import { Book, BookOpen, CheckSquare, ListChecks, Rss } from "lucide-react";
 import { getAllWidgets, type Widget, type WidgetSize } from "@pulse/sdk";
 import { readWidgetCache, readWidgetSettings } from "@pulse/database";
 import { Skeleton, SPRING_PRESS, WidgetCard, WidgetErrorBoundary } from "@pulse/ui";
@@ -170,6 +170,51 @@ function WidgetGrid({ userId }: { userId: string }) {
             tag={{ label: "Coming soon", variant: "neutral" }}
           >
             Quick daily notes and reminders — planned for a future release.
+          </WidgetCard>
+        </div>
+      ),
+    },
+    {
+      weight: WIDGET_WEIGHT.sm,
+      node: (
+        <div key="habits-coming-soon" className="opacity-70">
+          <WidgetCard
+            title="Habits"
+            icon={<ListChecks className="h-4 w-4" aria-hidden="true" />}
+            tag={{ label: "Coming soon", variant: "neutral" }}
+          >
+            A daily checklist — water, exercise, reading, meditation — is
+            planned for a future release.
+          </WidgetCard>
+        </div>
+      ),
+    },
+    {
+      weight: WIDGET_WEIGHT.sm,
+      node: (
+        <div key="reading-coming-soon" className="opacity-70">
+          <WidgetCard
+            title="Reading"
+            icon={<BookOpen className="h-4 w-4" aria-hidden="true" />}
+            tag={{ label: "Coming soon", variant: "neutral" }}
+          >
+            Track your current book and reading streak — planned for a
+            future release.
+          </WidgetCard>
+        </div>
+      ),
+    },
+    {
+      weight: WIDGET_WEIGHT.sm,
+      node: (
+        <div key="rss-coming-soon" className="opacity-70">
+          <WidgetCard
+            title="RSS"
+            icon={<Rss className="h-4 w-4" aria-hidden="true" />}
+            tag={{ label: "Coming soon", variant: "neutral" }}
+          >
+            Latest posts from your favorite blogs — planned for a future
+            release.
           </WidgetCard>
         </div>
       ),

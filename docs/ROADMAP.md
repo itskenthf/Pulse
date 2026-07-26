@@ -115,7 +115,8 @@ on building them in order:
 - [~] Email (Gmail readonly) — blocked behind the same Google Cloud setup
   as Calendar anyway
 - [~] Focus timer — dropped
-- [~] Habits — dropped
+- [~] Habits — dropped (reopened 2026-07-26 as a "Coming soon" placeholder
+  only, not a real widget yet — see `docs/DECISIONS.md`)
 - [~] YouTube — blocked behind Google Cloud setup, dropped
 - [~] Calendar (Google) — stays deferred, revisit if/when there's time for
   the Google Cloud Console setup

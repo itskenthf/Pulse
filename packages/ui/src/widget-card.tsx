@@ -2,9 +2,23 @@ import { useId, type ReactNode } from "react";
 import { GLASS_HOVER, glassClass } from "./glass";
 import { RADIUS } from "./tokens";
 
+export type WidgetCardTagVariant = "outline" | "accent" | "neutral";
+
+export interface WidgetCardTag {
+  label: string;
+  /** Matches Classical's `.tag-outline`/`.tag-accent`/`.tag-neutral` (see
+   *  docs/redesign-reference) — `accent` also stands in for the mockup's
+   *  `.tag-accent-2`, since Classical is a mono-accent system where the
+   *  two read identically (see that system's own readme). */
+  variant?: WidgetCardTagVariant;
+}
+
 export interface WidgetCardProps {
   title: string;
   icon?: ReactNode;
+  /** Small status label next to the title — e.g. "Connected", "Top
+   *  tracks", "2 played". Optional: most widgets don't need one. */
+  tag?: WidgetCardTag;
   action?: ReactNode;
   children: ReactNode;
 }
@@ -18,6 +32,12 @@ export interface WidgetCardProps {
 const ACCENT_BADGE =
   "border border-[var(--color-accent-300)] bg-[var(--color-accent-100)] text-[var(--color-accent-700)]";
 
+const TAG_VARIANT: Record<WidgetCardTagVariant, string> = {
+  outline: "border border-[var(--color-accent)] text-[var(--color-accent)]",
+  accent: "bg-[var(--color-accent-100)] text-[var(--color-accent-800)]",
+  neutral: "bg-[var(--color-neutral-100)] text-[var(--color-neutral-800)]",
+};
+
 /**
  * The one reusable glass card every regular widget renders itself inside
  * of, so every widget shares the same material (docs/DESIGN_SYSTEM.md).
@@ -29,7 +49,7 @@ const ACCENT_BADGE =
  * rotor), announced by its own title instead of reading as undifferentiated
  * page content.
  */
-export function WidgetCard({ title, icon, action, children }: WidgetCardProps) {
+export function WidgetCard({ title, icon, tag, action, children }: WidgetCardProps) {
   const titleId = useId();
 
   return (
@@ -50,7 +70,16 @@ export function WidgetCard({ title, icon, action, children }: WidgetCardProps) {
             {title}
           </h2>
         </div>
-        {action}
+        <div className="flex shrink-0 items-center gap-2">
+          {tag && (
+            <span
+              className={`inline-flex items-center rounded-[3px] px-2.5 py-0.5 text-[11px] tracking-wide ${TAG_VARIANT[tag.variant ?? "neutral"]}`}
+            >
+              {tag.label}
+            </span>
+          )}
+          {action}
+        </div>
       </div>
       <div className="min-w-0 flex-1 text-sm text-[var(--color-neutral-600)]">{children}</div>
     </section>

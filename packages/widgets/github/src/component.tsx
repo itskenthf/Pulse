@@ -17,6 +17,7 @@ export function GitHubComponent({
     <WidgetCard
       title="GitHub"
       icon={<GitHubIcon />}
+      tag={{ label: "Connected", variant: "outline" }}
       action={<WidgetMenu id="github" actions={actions} />}
     >
       {data ? (
@@ -24,13 +25,7 @@ export function GitHubComponent({
           <div className="flex flex-wrap gap-x-8 gap-y-4">
             <Metric label="Today" value={data.totalToday} />
             <Metric label="This week" value={data.totalThisWeek} />
-            <Metric label="This year" value={data.totalThisYear} />
-            {streaks && (
-              <>
-                <Metric label="Current streak" value={streaks.current} suffix="d" />
-                <Metric label="Longest streak" value={streaks.longest} suffix="d" />
-              </>
-            )}
+            {streaks && <Metric label="Streak" value={streaks.current} suffix="d" />}
           </div>
           <Heatmap weeks={data.weeks} />
           {data.latestActivity && (

@@ -1663,3 +1663,81 @@ widget completely before starting the next":
 `.env.example` are untouched. Dark mode got a straight tonal inversion of
 the new variables, not Classical's own ramp — consistent with reference
 doc §7 treating dark mode as a fallback, not an actively designed theme.
+
+## 2026-07-26 — Fix Hero's production crash, close remaining redesign fidelity gaps
+
+Ken reported the live deployment showed "Hero is unavailable" (every other
+widget rendered fine) and that several details still didn't match
+`docs/redesign-reference/Pulse Dashboard - Redesign.dc.html`. Two Explore
+agents investigated read-only before any code changed — root cause and
+fidelity gaps confirmed by direct comparison, not assumption.
+
+**Hero crash — root cause**: `packages/widgets/hero/src/component.tsx`
+called `useId()`, the only widget calling any React hook. Every widget's
+`render()` is invoked from `apps/web/src/app/page.tsx`'s `WidgetSlot` as a
+bare function call (`widget.render(props)`, not JSX) after
+`await Promise.all(...)`. React's hook dispatcher is only reliably active
+during React's own synchronous render of a component; resuming past an
+`await` happens in a microtask outside that window, so the `useId()` call
+throws. This explains every symptom: Hero-only (no other widget uses a
+hook), production-only (the dashboard route is dynamic/auth-gated, so
+`next build` never exercises this path), and invisible to
+`pnpm build`/`lint`/`typecheck`. **Fix**: dropped `useId()` for a static id
+(`"hero-heading"`) — safe since Hero is a singleton (`size: "hero"`, at
+most one instance ever rendered). Verified by reproducing the actual call
+shape (async component, await, then a bare `widget.render()` call) in a
+temporary preview route — Hero rendered without throwing before the fix
+would have; confirmed the fixed code has no hook call left in that path.
+**A real gotcha for future widgets**: don't call `useId`/`useState`/etc.
+directly inside a widget's `render()` — it's never invoked as real JSX by
+the shell.
+
+**Fidelity gaps closed** (each verified against the mockup, not
+eyeballed):
+- `WidgetCard` gained an optional `tag` prop (`packages/ui/src/widget-card.tsx`)
+  — the mockup's status badge next to each widget's title (GitHub
+  "Connected", Spotify "Top tracks", Steam "N played"), which had no slot
+  at all before. Three variants matching Classical's `.tag-outline`/
+  `.tag-accent`/`.tag-neutral` (`.tag-accent-2` folds into `accent` — the
+  reference system's own readme notes accent-2 reads identically to accent
+  in this mono-accent palette).
+- Hero gained the mockup's kicker date line (`SATURDAY, JULY 25`) above the
+  greeting and a literal `<hr>` closing the header, replacing the
+  `border-b` approximation from the original redesign pass. The body
+  sentence no longer repeats the date (kicker already shows it), matching
+  the mockup's wording.
+- GitHub's metrics trimmed from 5 (Today/This week/This year/Current
+  streak/Longest streak) to the mockup's 3 (Today/This week/Streak) —
+  `streaks.ts`'s computation untouched, just fewer `Metric`s rendered.
+  "This year" and "longest streak" data still exist in `GitHubData` if
+  wanted later.
+- Quick Launch's tiles changed from `RADIUS.chip` to fully circular
+  (`rounded-full`), matching the mockup's circular icon buttons.
+- Navbar gained the mockup's Dashboard/Tasks/Notes/Settings links
+  (Dashboard active, the rest dimmed/non-interactive text — no new
+  routes), and the widget grid gained static "Coming soon" cards for
+  Tasks/Notes (built by passing static props straight to `WidgetCard`, no
+  new widget package, no registry entry, no adapter — pure presentational
+  content matching the mockup). This reverses the "leave these out"
+  decision from the original redesign pass, which had explicitly flagged
+  it as needing confirmation before scaffolding UI for features that don't
+  exist — Ken confirmed twice, wanting exact reference fidelity, so this
+  is the confirmed reversal, not a silent one.
+
+**One deviation kept, deliberately**: the mockup uses one uniform 3-column
+CSS grid; the live layout uses two independent flex columns (wide `"lg"`
+column + a rail) instead. This is the Hardening pass Stage 5 fix for a
+real CSS Grid row-stretch bug (a shared grid track sizes to its tallest
+cell regardless of `align-items`, leaving dead gaps under shorter cards).
+Ken confirmed keeping the flex-split fix rather than reverting to a
+literal uniform grid and reintroducing that bug — recorded here per
+CLAUDE.md's design-fidelity section, which requires explaining a
+constraint-driven deviation rather than silently deviating.
+
+**Verification**: `pnpm build`/`lint`/`typecheck` after every change, plus
+a temporary preview route (deleted before commit, per the established
+pattern) rendering every widget with mock data — including reproducing
+`WidgetSlot`'s exact async/bare-function-call shape for Hero specifically,
+so the crash-fix verification wasn't just "it looks fine," it exercised
+the actual mechanism that broke in production. Screenshotted and compared
+against the mockup side by side.

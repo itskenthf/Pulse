@@ -1,4 +1,4 @@
-import { EmptyState, GLASS_CHIP, RADIUS, SPRING_PRESS, WidgetCard, WidgetMenu } from "@pulse/ui";
+import { EmptyState, GLASS_CHIP, SPRING_PRESS, WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
 import { QuickLaunchIcon } from "./icon";
 import { LinkIcon } from "./link-icon";
@@ -33,7 +33,7 @@ export function QuickLaunchComponent({
               rel="noopener noreferrer"
               title={link.label}
               aria-label={link.label}
-              className={`flex h-11 w-11 shrink-0 items-center justify-center ${RADIUS.chip} ${GLASS_CHIP} ${SPRING_PRESS}`}
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${GLASS_CHIP} ${SPRING_PRESS}`}
             >
               <LinkIcon url={link.url} />
             </a>

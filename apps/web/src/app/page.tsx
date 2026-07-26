@@ -1,6 +1,6 @@
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import { Book, CheckSquare } from "lucide-react";
-import { getAllWidgets, type Widget } from "@pulse/sdk";
+import { getAllWidgets, type Widget, type WidgetSize } from "@pulse/sdk";
 import { readWidgetCache, readWidgetSettings } from "@pulse/database";
 import { Skeleton, SPRING_PRESS, WidgetCard, WidgetErrorBoundary } from "@pulse/ui";
 import { auth, signIn } from "@/auth";
@@ -19,20 +19,18 @@ export default async function Home() {
   const session = await auth();
 
   return (
-    <div className="relative flex min-h-screen overflow-x-hidden bg-[var(--background)]">
-      <div className="relative flex min-h-screen flex-1 flex-col">
-        <Navbar session={session} />
+    <div className="relative flex min-h-screen flex-col bg-[var(--background)]">
+      <Navbar session={session} />
 
-        <main className="flex flex-1 flex-col gap-6 p-4 sm:p-6">
-          {session?.user?.id ? (
-            <WidgetGrid userId={session.user.id} />
-          ) : (
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              Sign in to see your dashboard.
-            </p>
-          )}
-        </main>
-      </div>
+      <main className="flex flex-1 flex-col gap-6 p-4 sm:p-6">
+        {session?.user?.id ? (
+          <WidgetGrid userId={session.user.id} />
+        ) : (
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Sign in to see your dashboard.
+          </p>
+        )}
+      </main>
     </div>
   );
 }
@@ -57,7 +55,10 @@ function Navbar({ session }: { session: { user?: SessionUser } | null }) {
               {link.label}
             </span>
           ) : (
-            <span key={link.label} className="text-[var(--color-neutral-400)]">
+            <span
+              key={link.label}
+              className="hidden text-[var(--color-neutral-400)] sm:inline"
+            >
               {link.label}
             </span>
           ),
@@ -84,32 +85,6 @@ function Navbar({ session }: { session: { user?: SessionUser } | null }) {
         )}
       </div>
     </header>
-  );
-}
-
-function ComingSoonCards() {
-  return (
-    <>
-      <div className="opacity-70">
-        <WidgetCard
-          title="Tasks"
-          icon={<CheckSquare className="h-4 w-4" aria-hidden="true" />}
-          tag={{ label: "Coming soon", variant: "neutral" }}
-        >
-          A dedicated task list — pulled from Todoist or Notion — is planned
-          for a future release.
-        </WidgetCard>
-      </div>
-      <div className="opacity-70">
-        <WidgetCard
-          title="Notes"
-          icon={<Book className="h-4 w-4" aria-hidden="true" />}
-          tag={{ label: "Coming soon", variant: "neutral" }}
-        >
-          Quick daily notes and reminders — planned for a future release.
-        </WidgetCard>
-      </div>
-    </>
   );
 }
 
@@ -163,12 +138,10 @@ function WidgetCell({ widget, userId }: { widget: Widget; userId: string }) {
 /**
  * "hero" renders full-width, chromeless, above everything else. Every
  * other widget splits into two independently-stacked flows rather than
- * one shared CSS Grid: "lg" widgets (currently just GitHub) in a wide
- * left column, everything else in a narrower right column. This isn't
- * how it started — a single `grid-cols-3` with GitHub spanning 2 columns
- * left the remaining single-column widgets sharing GitHub's grid row,
- * and CSS Grid sizes a row's height to its tallest cell regardless of
- * `align-items` — so whenever a shorter widget (e.g. Quick Launch) sat
+ * one shared CSS Grid — a single `grid-cols-3` with GitHub spanning 2
+ * columns left the remaining single-column widgets sharing GitHub's grid
+ * row, and CSS Grid sizes a row's height to its tallest cell regardless
+ * of `align-items` — so whenever a shorter widget (e.g. Quick Launch) sat
  * in the same row as a taller one (Steam, once it grew stacked cover
  * art), the shorter cell's card was fine, but the row underneath it sat
  * empty. That's not a hover/hydration bug, it's how CSS Grid tracks
@@ -176,17 +149,54 @@ function WidgetCell({ widget, userId }: { widget: Widget; userId: string }) {
  * iPad portrait) during the responsive sweep, not guessed at. Two
  * independent flex columns don't have shared row tracks, so each one's
  * cards simply stack tight regardless of what's in the other column.
- * Assumes at least one "lg" widget exists to anchor the left column —
- * true today (GitHub) and not worth generalizing further until it isn't.
+ *
+ * Which widget lands in which column is decided by `balanceColumns`
+ * below, not a hard "lg vs. everything else" split — that split left the
+ * wide column (GitHub alone) far shorter than the rail once enough
+ * widgets existed, reading as a large empty gap under GitHub instead of
+ * two comparably-tall columns (see docs/DECISIONS.md).
  */
 function WidgetGrid({ userId }: { userId: string }) {
   const widgets = getAllWidgets();
-
   const heroWidgets = widgets.filter((widget) => widget.size === "hero");
-  const wideWidgets = widgets.filter((widget) => widget.size === "lg");
-  const railWidgets = widgets.filter(
-    (widget) => widget.size !== "hero" && widget.size !== "lg",
-  );
+  const nonHeroWidgets = widgets.filter((widget) => widget.size !== "hero");
+
+  const items: ColumnItem[] = [
+    ...nonHeroWidgets.map((widget) => ({
+      weight: WIDGET_WEIGHT_OVERRIDE[widget.id] ?? WIDGET_WEIGHT[widget.size],
+      node: <WidgetCell key={widget.id} widget={widget} userId={userId} />,
+    })),
+    {
+      weight: WIDGET_WEIGHT.sm,
+      node: (
+        <div key="tasks-coming-soon" className="opacity-70">
+          <WidgetCard
+            title="Tasks"
+            icon={<CheckSquare className="h-4 w-4" aria-hidden="true" />}
+            tag={{ label: "Coming soon", variant: "neutral" }}
+          >
+            A dedicated task list — pulled from Todoist or Notion — is
+            planned for a future release.
+          </WidgetCard>
+        </div>
+      ),
+    },
+    {
+      weight: WIDGET_WEIGHT.sm,
+      node: (
+        <div key="notes-coming-soon" className="opacity-70">
+          <WidgetCard
+            title="Notes"
+            icon={<Book className="h-4 w-4" aria-hidden="true" />}
+            tag={{ label: "Coming soon", variant: "neutral" }}
+          >
+            Quick daily notes and reminders — planned for a future release.
+          </WidgetCard>
+        </div>
+      ),
+    },
+  ];
+  const { left, right } = balanceColumns(items);
 
   return (
     <>
@@ -197,19 +207,49 @@ function WidgetGrid({ userId }: { userId: string }) {
           </Suspense>
         </WidgetErrorBoundary>
       ))}
-      <div className="flex min-w-0 flex-col items-start gap-4 sm:flex-row">
-        <div className="flex min-w-0 w-full flex-col gap-4 sm:basis-2/3">
-          {wideWidgets.map((widget) => (
-            <WidgetCell key={widget.id} widget={widget} userId={userId} />
-          ))}
-        </div>
-        <div className="flex min-w-0 w-full flex-col gap-4 sm:basis-1/3">
-          {railWidgets.map((widget) => (
-            <WidgetCell key={widget.id} widget={widget} userId={userId} />
-          ))}
-          <ComingSoonCards />
-        </div>
+      <div className="flex min-w-0 flex-col items-start gap-5 sm:flex-row sm:gap-6">
+        <div className="flex min-w-0 w-full flex-col gap-5 sm:basis-2/3">{left}</div>
+        <div className="flex min-w-0 w-full flex-col gap-5 sm:basis-1/3">{right}</div>
       </div>
     </>
   );
+}
+
+/** Rough relative height proxy per widget size, reusing the SDK's
+ *  existing `size` field rather than a separate per-widget table. */
+const WIDGET_WEIGHT: Record<WidgetSize, number> = { sm: 1, md: 2, lg: 3, hero: 0 };
+
+/** Steam renders much taller than a typical "md" widget — two full
+ *  16:9 cover-art tiles — so its `size` alone underestimates its real
+ *  height and left a visible gap under its column-mate. Confirmed by
+ *  screenshot, not guessed; see docs/DECISIONS.md. */
+const WIDGET_WEIGHT_OVERRIDE: Record<string, number> = { steam: WIDGET_WEIGHT.lg };
+
+interface ColumnItem {
+  weight: number;
+  node: ReactNode;
+}
+
+/** Greedily assigns each item to whichever column currently has the
+ *  lower running weight, so the two independent flex columns end up
+ *  close in total height instead of one being arbitrarily starved (see
+ *  the WidgetGrid doc comment above). Ties go left, so the heaviest/
+ *  first item (GitHub) anchors the wide column same as before. */
+function balanceColumns(items: ColumnItem[]): { left: ReactNode[]; right: ReactNode[] } {
+  const left: ReactNode[] = [];
+  const right: ReactNode[] = [];
+  let leftWeight = 0;
+  let rightWeight = 0;
+
+  for (const item of items) {
+    if (leftWeight <= rightWeight) {
+      left.push(item.node);
+      leftWeight += item.weight;
+    } else {
+      right.push(item.node);
+      rightWeight += item.weight;
+    }
+  }
+
+  return { left, right };
 }

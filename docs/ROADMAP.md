@@ -481,6 +481,23 @@ committed suite), and cross-browser testing was Chromium-only (this
 sandbox has no Safari/Firefox/real device access). Both are real scope
 decisions for later, not silently assumed done.
 
+### "Classical" redesign (2026-07-26): full visual system replacement
+
+Ken supplied a design-tool export proposing a full visual replacement of
+Liquid Glass — serif type (Cormorant Garamond/Lora), a flat paper
+background, a single gold accent used only as strokes/borders, and
+hairline dividers in place of blur/glow. This reverses the Hardening
+pass's "do NOT redesign" decision above; per CLAUDE.md, that reversal was
+flagged and explicitly confirmed before any code changed — see
+`docs/DECISIONS.md`'s 2026-07-26 entry for the full reasoning.
+
+Landed as one reviewable commit per surface (foundation tokens → shell →
+Hero → Quick Launch → Spotify → Steam → GitHub → this doc pass), each
+independently passing `pnpm build`/`lint`/`typecheck` per CLAUDE.md's
+"finish one widget completely before starting the next." `docs/
+DESIGN_SYSTEM.md` now describes Classical as canon (v2.0); `docs/
+PROJECT_REFERENCE.md` §19 points at it. No new env vars were needed.
+
 ## Phase 2 — make it actionable
 
 Not started. Blocked on Phase 1 gate.

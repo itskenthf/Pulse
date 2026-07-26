@@ -151,6 +151,7 @@ function WidgetGrid({ userId }: { userId: string }) {
     })),
     {
       weight: WIDGET_WEIGHT.sm,
+      placeholder: true,
       node: (
         <div key="tasks-coming-soon" className="opacity-70">
           <WidgetCard
@@ -166,6 +167,7 @@ function WidgetGrid({ userId }: { userId: string }) {
     },
     {
       weight: WIDGET_WEIGHT.sm,
+      placeholder: true,
       node: (
         <div key="notes-coming-soon" className="opacity-70">
           <WidgetCard
@@ -180,6 +182,7 @@ function WidgetGrid({ userId }: { userId: string }) {
     },
     {
       weight: WIDGET_WEIGHT.sm,
+      placeholder: true,
       node: (
         <div key="habits-coming-soon" className="opacity-70">
           <WidgetCard
@@ -195,6 +198,7 @@ function WidgetGrid({ userId }: { userId: string }) {
     },
     {
       weight: WIDGET_WEIGHT.sm,
+      placeholder: true,
       node: (
         <div key="reading-coming-soon" className="opacity-70">
           <WidgetCard
@@ -210,6 +214,7 @@ function WidgetGrid({ userId }: { userId: string }) {
     },
     {
       weight: WIDGET_WEIGHT.sm,
+      placeholder: true,
       node: (
         <div key="rss-coming-soon" className="opacity-70">
           <WidgetCard
@@ -239,9 +244,13 @@ function WidgetGrid({ userId }: { userId: string }) {
           ))}
         </div>
       )}
-      <div className="flex min-w-0 flex-col items-start gap-5 sm:flex-row sm:gap-6">
-        <div className="flex min-w-0 w-full flex-col gap-5 sm:basis-2/3">{left}</div>
-        <div className="flex min-w-0 w-full flex-col gap-5 sm:basis-1/3">{right}</div>
+      <div className="flex min-w-0 flex-col items-stretch gap-5 sm:flex-row sm:items-start sm:gap-6">
+        <div className="contents sm:flex sm:min-w-0 sm:w-full sm:flex-col sm:gap-5 sm:basis-2/3">
+          {left}
+        </div>
+        <div className="contents sm:flex sm:min-w-0 sm:w-full sm:flex-col sm:gap-5 sm:basis-1/3">
+          {right}
+        </div>
       </div>
     </>
   );
@@ -260,28 +269,47 @@ const WIDGET_WEIGHT_OVERRIDE: Record<string, number> = { steam: WIDGET_WEIGHT.lg
 interface ColumnItem {
   weight: number;
   node: ReactNode;
+  /** "Coming soon" cards with no real data yet — sorted below every
+   *  data-bearing widget in the single-column mobile stack. */
+  placeholder?: boolean;
 }
 
 /** Greedily assigns each item to whichever column currently has the
  *  lower running weight, so the two independent flex columns end up
  *  close in total height instead of one being arbitrarily starved (see
  *  the WidgetGrid doc comment above). Ties go left, so the heaviest/
- *  first item (GitHub) anchors the wide column same as before. */
+ *  first item (GitHub) anchors the wide column same as before.
+ *
+ *  Each node is wrapped with a mobile-only `order` class: the columns
+ *  collapse to one stack below `sm:`, and because they stack
+ *  left-column-then-right-column, a placeholder assigned to the left
+ *  column would otherwise appear above a real widget sitting in the
+ *  right one (Habits/RSS landed between Spotify and Steam). The wrapper
+ *  divs use `display: contents` on mobile so every card is a direct
+ *  flex child of the shared container, letting `order` sort across both
+ *  columns; at `sm:` and up the wrappers become real flex columns again
+ *  and `order` is reset. */
 function balanceColumns(items: ColumnItem[]): { left: ReactNode[]; right: ReactNode[] } {
   const left: ReactNode[] = [];
   const right: ReactNode[] = [];
   let leftWeight = 0;
   let rightWeight = 0;
 
-  for (const item of items) {
+  items.forEach((item, index) => {
+    const ordered = (
+      <div key={index} className={item.placeholder ? "order-2 sm:order-none" : "order-1 sm:order-none"}>
+        {item.node}
+      </div>
+    );
+
     if (leftWeight <= rightWeight) {
-      left.push(item.node);
+      left.push(ordered);
       leftWeight += item.weight;
     } else {
-      right.push(item.node);
+      right.push(ordered);
       rightWeight += item.weight;
     }
-  }
+  });
 
   return { left, right };
 }

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/classical-f37df895-d34a-41a4-94ef-d7ce22b765c6/styles.css">
+  <script src="_ds/classical-f37df895-d34a-41a4-94ef-d7ce22b765c6/_ds_bundle.js"></script>
+  <script src="./image-slot.js"></script>
+  <style>
+    body { margin: 0; }
+    a { color: var(--color-accent-700); }
+    a:hover { color: var(--color-accent); }
+    .os-badge { display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background: var(--color-accent-100); border:1px solid var(--color-accent-300); color: var(--color-accent-700); flex-shrink:0; }
+    .os-card { display:flex; flex-direction:column; gap: var(--space-3); min-width:0; }
+    .os-card-head { display:flex; align-items:center; justify-content:space-between; gap: var(--space-2); min-width:0; }
+    .os-card-id { display:flex; align-items:center; gap: var(--space-2); min-width:0; }
+    .os-metric { display:flex; flex-direction:column; gap:2px; }
+    .os-metric-val { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 26px; letter-spacing:-0.02em; font-variant-numeric: tabular-nums; }
+    .os-metric-label { font-size: 11px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+    .os-row { display:flex; align-items:center; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-divider); }
+    .os-row:first-of-type { border-top: none; }
+    .os-nav-link { opacity: 1; }
+    .os-nav-soon { opacity: 0.4; pointer-events: none; }
+    .os-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap: var(--space-4); }
+    @media (max-width: 900px) {
+      .os-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+      main { padding-left: var(--space-4) !important; padding-right: var(--space-4) !important; }
+    }
+    @media (max-width: 600px) {
+      .os-grid { grid-template-columns: minmax(0, 1fr); }
+      .nav { flex-wrap: wrap; row-gap: var(--space-2); }
+      .os-nav-soon { display: none; }
+      h1 { font-size: 34px !important; }
+    }
+  </style>
+</helmet>
+
+<div style="min-height:100vh; background: var(--color-bg); color: var(--color-text);">
+
+  <nav class="nav">
+    <span class="nav-brand">Pulse</span>
+    <a href="#" aria-current="page" class="os-nav-link">Dashboard</a>
+    <a href="#" class="os-nav-soon">Tasks</a>
+    <a href="#" class="os-nav-soon">Notes</a>
+    <a href="#" class="os-nav-soon">Settings</a>
+    <div style="display:flex; align-items:center; gap: var(--space-2); margin-left: var(--space-4);">
+      <span style="display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; border:1px solid var(--color-divider); font-size:12px; font-family: var(--font-heading); font-weight:600;">K</span>
+      <span style="font-size:14px;">Ken</span>
+    </div>
+  </nav>
+
+  <main style="max-width:1180px; margin:0 auto; padding: var(--space-8) var(--space-6) var(--space-8);">
+
+    <header style="margin-bottom: var(--space-6);">
+      <p class="card-kicker" style="margin-bottom: var(--space-2);">Saturday, July 25</p>
+      <h1 style="font-weight:400; font-size:48px;">Good morning, Ken</h1>
+      <p style="max-width:680px; font-size:18px; text-align:justify;">It's <span style="font-variant-numeric: tabular-nums;">8:42:10&nbsp;AM</span> in Kuching — partly cloudy and 27°C, a good day to be outside.</p>
+      <p style="max-width:680px; font-style:italic; color: color-mix(in srgb, var(--color-text) 65%, transparent); margin-bottom:0;">"Small steps every day compound into remarkable progress."</p>
+      <hr class="hr">
+    </header>
+
+    <section class="os-grid">
+
+      <article class="card elev-sm os-card">
+        <div class="os-card-head">
+          <div class="os-card-id">
+            <span class="os-badge">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.09.68-.22.68-.49 0-.24-.01-.89-.01-1.74-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.63.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.35 1.12 2.92.85.09-.66.35-1.12.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.7 0 0 .84-.28 2.75 1.05a9.36 9.36 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.44.1 2.7.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.8-4.57 5.06.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.59.69.49A10.25 10.25 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z"/></svg>
+            </span>
+            <span class="card-title">GitHub</span>
+          </div>
+          <span class="tag tag-outline">Connected</span>
+        </div>
+
+        <div style="display:flex; gap: var(--space-4); flex-wrap:wrap;">
+          <div class="os-metric"><div class="os-metric-val">4</div><div class="os-metric-label">Today</div></div>
+          <div class="os-metric"><div class="os-metric-val">21</div><div class="os-metric-label">This week</div></div>
+          <div class="os-metric"><div class="os-metric-val">12<span style="font-size:14px; color: color-mix(in srgb, var(--color-text) 45%, transparent);">d</span></div><div class="os-metric-label">Streak</div></div>
+        </div>
+
+        <div style="display:flex; gap:3px; overflow-x:auto;" id="heatmap" aria-label="Contribution heatmap"></div>
+
+        <a href="#" style="display:flex; flex-direction:column; gap:2px; border-top:1px solid var(--color-divider); padding-top: var(--space-2); text-decoration:none;">
+          <span style="font-size:13px; font-weight:600; color: var(--color-text);">itskenthf/Pulse</span>
+          <span class="card-body" style="margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Add latest-repository section to GitHub widget</span>
+          <span class="os-metric-label">2 hours ago</span>
+        </a>
+      </article>
+
+      <article class="card elev-sm os-card">
+        <div class="os-card-head">
+          <div class="os-card-id">
+            <span class="os-badge">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M7.5 10c3-1 6.5-1 9 .5"/><path d="M8 13c2.5-.8 5.5-.6 7.5.6"/><path d="M8.5 16c2-.6 4.3-.4 6 .5"/></svg>
+            </span>
+            <span class="card-title">Spotify</span>
+          </div>
+          <span class="tag tag-accent-2">Top tracks</span>
+        </div>
+
+        <div>
+          <div class="os-row">
+            <span class="os-metric-label" style="width:14px; flex-shrink:0;">1</span>
+            <image-slot id="track-1" shape="rounded" radius="4" style="width:72px;height:72px; flex-shrink:0;" class="plate" placeholder="Art"></image-slot>
+            <div style="min-width:0; flex:1;"><div style="font-size:14px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Midnight City</div><div class="os-metric-label">M83</div></div>
+          </div>
+          <div class="os-row">
+            <span class="os-metric-label" style="width:14px; flex-shrink:0;">2</span>
+            <image-slot id="track-2" shape="rounded" radius="4" style="width:72px;height:72px; flex-shrink:0;" class="plate" placeholder="Art"></image-slot>
+            <div style="min-width:0; flex:1;"><div style="font-size:14px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Instant Crush</div><div class="os-metric-label">Daft Punk</div></div>
+          </div>
+          <div class="os-row">
+            <span class="os-metric-label" style="width:14px; flex-shrink:0;">3</span>
+            <image-slot id="track-3" shape="rounded" radius="4" style="width:72px;height:72px; flex-shrink:0;" class="plate" placeholder="Art"></image-slot>
+            <div style="min-width:0; flex:1;"><div style="font-size:14px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Time to Dance</div><div class="os-metric-label">The Sounds</div></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card elev-sm os-card">
+        <div class="os-card-head">
+          <div class="os-card-id">
+            <span class="os-badge">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="15.5" cy="8.5" r="2.5"/><circle cx="8" cy="16" r="2"/><path d="M13.3 10.6 9.7 14.4"/></svg>
+            </span>
+            <span class="card-title">Steam</span>
+          </div>
+          <span class="tag tag-neutral">2 played</span>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap: var(--space-3);">
+          <a href="#" style="text-decoration:none; display:flex; flex-direction:column; gap: 6px;">
+            <image-slot id="steam-1" shape="rect" class="plate" style="width:100%; aspect-ratio:16/9;" placeholder="Cover art"></image-slot>
+            <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px;">
+              <span style="font-size:14px; font-weight:600;">Hades II</span>
+              <span class="os-metric-label">6.1h</span>
+            </div>
+          </a>
+          <a href="#" style="text-decoration:none; display:flex; flex-direction:column; gap: 6px;">
+            <image-slot id="steam-2" shape="rect" class="plate" style="width:100%; aspect-ratio:16/9;" placeholder="Cover art"></image-slot>
+            <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px;">
+              <span style="font-size:14px; font-weight:600;">Balatro</span>
+              <span class="os-metric-label">2 days ago</span>
+            </div>
+          </a>
+        </div>
+      </article>
+
+      <article class="card elev-sm os-card">
+        <div class="os-card-head">
+          <div class="os-card-id">
+            <span class="os-badge">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            </span>
+            <span class="card-title">Quick Launch</span>
+          </div>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap: var(--space-2);">
+          <a href="#" title="Mail" class="btn btn-secondary btn-icon" style="border-radius:50%;">✉</a>
+          <a href="#" title="Drive" class="btn btn-secondary btn-icon" style="border-radius:50%;">⌘</a>
+          <a href="#" title="Calendar" class="btn btn-secondary btn-icon" style="border-radius:50%;">▤</a>
+          <a href="#" title="Chat" class="btn btn-secondary btn-icon" style="border-radius:50%;">✎</a>
+          <a href="#" title="Docs" class="btn btn-secondary btn-icon" style="border-radius:50%;">▦</a>
+        </div>
+      </article>
+
+      <article class="card elev-sm os-card" style="opacity:0.7;">
+        <div class="os-card-head">
+          <div class="os-card-id">
+            <span class="os-badge" style="background:var(--color-neutral-100); border-color:var(--color-neutral-300); color:var(--color-neutral-700);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </span>
+            <span class="card-title">Tasks</span>
+          </div>
+          <span class="tag tag-neutral">Coming soon</span>
+        </div>
+        <p class="card-body">A dedicated task list — pulled from Todoist or Notion — is planned for a future release.</p>
+      </article>
+
+      <article class="card elev-sm os-card" style="opacity:0.7;">
+        <div class="os-card-head">
+          <div class="os-card-id">
+            <span class="os-badge" style="background:var(--color-neutral-100); border-color:var(--color-neutral-300); color:var(--color-neutral-700);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>
+            </span>
+            <span class="card-title">Notes</span>
+          </div>
+          <span class="tag tag-neutral">Coming soon</span>
+        </div>
+        <p class="card-body">Quick daily notes and reminders — planned for a future release.</p>
+      </article>
+
+    </section>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() {
+    const el = document.getElementById('heatmap');
+    if (!el) return;
+    const ramp = ['var(--color-neutral-200)', 'var(--color-accent-200)', 'var(--color-accent-400)', 'var(--color-accent-600)', 'var(--color-accent-800)'];
+    let html = '';
+    for (let w = 0; w < 20; w++) {
+      html += '<div style="display:flex;flex-direction:column;gap:3px;">';
+      for (let d = 0; d < 7; d++) {
+        const level = Math.floor(Math.random() * 5);
+        html += `<div style="height:9px;width:9px;border-radius:2px;background:${ramp[level]};"></div>`;
+      }
+      html += '</div>';
+    }
+    el.innerHTML = html;
+  }
+  renderVals() { return {}; }
+}
+
+</script>
+</body>
+</html>

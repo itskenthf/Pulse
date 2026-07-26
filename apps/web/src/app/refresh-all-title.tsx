@@ -1,0 +1,38 @@
+"use client";
+
+import { useActionState } from "react";
+import type { WidgetActionState } from "@pulse/sdk";
+import { refreshAllWidgetsAction } from "./actions/widgets";
+
+const initialState: WidgetActionState = {};
+
+/**
+ * The "Pulse" wordmark itself is the global refresh control — single-user
+ * app, per Ken's explicit request not to add a separate icon button. Pending
+ * state is a subtle opacity dip on the text rather than a spinner, keeping
+ * this a plain heading visually until it's actually doing something.
+ */
+export function RefreshAllTitle() {
+  const [state, formAction, isPending] = useActionState(refreshAllWidgetsAction, initialState);
+
+  return (
+    <form action={formAction} className="relative">
+      <button
+        type="submit"
+        disabled={isPending}
+        aria-label="Refresh all widgets"
+        title="Refresh all widgets"
+        className={`font-heading text-lg font-semibold tracking-tight text-[var(--foreground)] transition-opacity ${
+          isPending ? "opacity-60" : "opacity-100 hover:opacity-80"
+        }`}
+      >
+        Pulse
+      </button>
+      {state?.error && (
+        <p className="absolute top-full left-0 mt-1 w-max max-w-64 text-xs text-red-600 dark:text-red-400">
+          {state.error}
+        </p>
+      )}
+    </form>
+  );
+}

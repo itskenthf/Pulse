@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getWidget } from "@pulse/sdk";
+import { getAllWidgets, getWidget } from "@pulse/sdk";
 import type { WidgetActionState } from "@pulse/sdk";
 import { ensureWidgetRegistered, writeWidgetSettings } from "@pulse/database";
 import { auth } from "@/auth";
@@ -23,6 +23,37 @@ export async function refreshWidgetAction(
   }
 
   revalidatePath("/");
+  return {};
+}
+
+/**
+ * Refreshes every registered widget for the signed-in user in parallel,
+ * mirroring the cron route's Promise.allSettled pattern (apps/web/src/app/
+ * api/cron/route.ts) — one slow/failing widget shouldn't block the rest
+ * from refreshing. Triggered from the "Pulse" title itself (single-user
+ * app, per Ken's request — no separate icon needed) rather than requiring
+ * a per-widget click for every card.
+ */
+export async function refreshAllWidgetsAction(
+  _prevState: WidgetActionState,
+  _formData: FormData,
+): Promise<WidgetActionState> {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Not signed in" };
+  const userId = session.user.id;
+
+  const widgets = getAllWidgets();
+  const results = await Promise.allSettled(
+    widgets.map((widget) => refreshWidget(widget.id, userId)),
+  );
+  const failures = results.filter(
+    (result): result is PromiseRejectedResult => result.status === "rejected",
+  );
+
+  revalidatePath("/");
+  if (failures.length > 0) {
+    return { error: `${failures.length} of ${widgets.length} widgets failed to refresh` };
+  }
   return {};
 }
 

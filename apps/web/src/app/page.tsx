@@ -7,6 +7,7 @@ import { auth, signIn } from "@/auth";
 import { refreshWidgetAction, updateWidgetSettingsAction } from "./actions/widgets";
 import { NavMenu } from "./nav-menu";
 import { ProfileMenu } from "./profile-menu";
+import { RefreshAllTitle } from "./refresh-all-title";
 import "@/lib/register-widgets";
 
 export default async function Home() {
@@ -38,9 +39,15 @@ interface SessionUser {
 function Navbar({ session }: { session: { user?: SessionUser } | null }) {
   return (
     <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b border-[var(--color-divider)] bg-[var(--background)] px-4 py-3 sm:px-6">
-      <h1 className="font-heading text-lg font-semibold tracking-tight text-[var(--foreground)]">
-        Pulse
-      </h1>
+      {session?.user ? (
+        <h1>
+          <RefreshAllTitle />
+        </h1>
+      ) : (
+        <h1 className="font-heading text-lg font-semibold tracking-tight text-[var(--foreground)]">
+          Pulse
+        </h1>
+      )}
 
       <NavMenu />
 

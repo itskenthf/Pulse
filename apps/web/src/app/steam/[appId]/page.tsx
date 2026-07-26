@@ -72,6 +72,11 @@ export default async function SteamGamePage({
                     style={{ width: `${achievementPct}%` }}
                   />
                 </div>
+                {game.achievements.nextAchievementName && (
+                  <p className="text-sm text-[var(--color-neutral-600)]">
+                    Next: {game.achievements.nextAchievementName}
+                  </p>
+                )}
               </div>
             )}
 

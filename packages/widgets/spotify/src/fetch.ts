@@ -1,12 +1,30 @@
-import { fetchTopTracks, refreshAccessToken } from "@pulse/adapter-spotify";
-import { ensureWidgetRegistered, readProviderAccount, upsertProviderAccount } from "@pulse/database";
+import {
+  deriveTopGenre,
+  fetchTopArtists,
+  fetchTopTracks,
+  refreshAccessToken,
+} from "@pulse/adapter-spotify";
+import {
+  ensureWidgetRegistered,
+  readProviderAccount,
+  upsertProviderAccount,
+} from "@pulse/database";
 import type { WidgetFetchContext } from "@pulse/sdk";
-import { PROVIDER, TRACK_LIMIT, WIDGET_DESCRIPTION, WIDGET_ID, WIDGET_NAME } from "./constants";
+import {
+  ARTIST_LIMIT,
+  PROVIDER,
+  TRACK_LIMIT,
+  WIDGET_DESCRIPTION,
+  WIDGET_ID,
+  WIDGET_NAME,
+} from "./constants";
 import type { SpotifyData } from "./types";
 
 const EXPIRY_SAFETY_MARGIN_SECONDS = 60;
 
-export async function fetchSpotifyData(context: WidgetFetchContext): Promise<SpotifyData> {
+export async function fetchSpotifyData(
+  context: WidgetFetchContext,
+): Promise<SpotifyData> {
   await ensureWidgetRegistered(WIDGET_ID, WIDGET_NAME, WIDGET_DESCRIPTION);
 
   const account = await readProviderAccount(context.userId, PROVIDER);
@@ -17,7 +35,8 @@ export async function fetchSpotifyData(context: WidgetFetchContext): Promise<Spo
   let accessToken = account.accessToken;
   const nowSeconds = Math.floor(Date.now() / 1000);
   const isExpired =
-    account.expiresAt === null || account.expiresAt <= nowSeconds + EXPIRY_SAFETY_MARGIN_SECONDS;
+    account.expiresAt === null ||
+    account.expiresAt <= nowSeconds + EXPIRY_SAFETY_MARGIN_SECONDS;
 
   if (isExpired) {
     if (!account.refreshToken) {
@@ -56,7 +75,16 @@ export async function fetchSpotifyData(context: WidgetFetchContext): Promise<Spo
     });
   }
 
-  const tracks = await fetchTopTracks(accessToken, TRACK_LIMIT);
+  const [tracks, artists] = await Promise.all([
+    fetchTopTracks(accessToken, TRACK_LIMIT),
+    fetchTopArtists(accessToken, ARTIST_LIMIT),
+  ]);
 
-  return { connected: true, tracks, fetchedAt: new Date().toISOString() };
+  return {
+    connected: true,
+    tracks,
+    topArtist: artists[0] ?? null,
+    topGenre: deriveTopGenre(artists),
+    fetchedAt: new Date().toISOString(),
+  };
 }

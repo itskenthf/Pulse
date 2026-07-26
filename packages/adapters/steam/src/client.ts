@@ -9,6 +9,10 @@ export interface RecentlyPlayedGame {
 export interface AchievementSummary {
   unlocked: number;
   total: number;
+  /** Display name of the first locked achievement, in the order Steam
+   *  returns them (schema-declared order) — undefined once everything is
+   *  unlocked, or if Steam didn't return a display name for it. */
+  nextAchievementName?: string;
 }
 
 interface SteamApiGame {
@@ -110,7 +114,7 @@ export async function fetchLastPlayedMap(
 interface PlayerAchievementsApiResponse {
   playerstats?: {
     success?: boolean;
-    achievements?: { achieved?: number }[];
+    achievements?: { achieved?: number; name?: string }[];
   };
 }
 
@@ -119,6 +123,13 @@ interface PlayerAchievementsApiResponse {
  * the game has no achievements or the data isn't available — a common,
  * expected case (most games don't support Steam achievements at all),
  * not a failure the widget should surface as an error.
+ *
+ * `l10n_lang=english` makes Steam include each achievement's display
+ * `name` in the response — otherwise only `apiname`/`achieved` come
+ * back. Steam has no canonical "recommended next" ordering, so
+ * "next achievement" here is simply the first locked one in the order
+ * Steam returns them (schema-declared order), not a separate call to
+ * GetSchemaForGame.
  */
 export async function fetchAchievementSummary(
   apiKey: string,
@@ -129,6 +140,7 @@ export async function fetchAchievementSummary(
   url.searchParams.set("key", apiKey);
   url.searchParams.set("steamid", steamId64);
   url.searchParams.set("appid", String(appId));
+  url.searchParams.set("l10n_lang", "english");
   url.searchParams.set("format", "json");
 
   const response = await fetch(url, { cache: "no-store" });
@@ -143,8 +155,11 @@ export async function fetchAchievementSummary(
     return null;
   }
 
+  const nextLocked = achievements.find((a) => a.achieved !== 1);
+
   return {
     unlocked: achievements.filter((a) => a.achieved === 1).length,
     total: achievements.length,
+    nextAchievementName: nextLocked?.name,
   };
 }

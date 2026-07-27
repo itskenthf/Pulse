@@ -13,7 +13,8 @@
     "@pulse/database": "workspace:*",
     "@pulse/sdk": "workspace:*",
     "@pulse/ui": "workspace:*",
-    "lucide-react": "^1.26.0"
+    "lucide-react": "^1.26.0",
+    "zod": "^3.24.1"
   },
   "peerDependencies": {
     "react": "^19"

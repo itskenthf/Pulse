@@ -29,6 +29,7 @@ interface OpenMeteoResponse {
  */
 export async function fetchCurrentWeather(
   location: WeatherLocation,
+  signal?: AbortSignal,
 ): Promise<NormalizedWeather> {
   const url = new URL("https://api.open-meteo.com/v1/forecast");
   url.searchParams.set("latitude", String(location.latitude));
@@ -38,7 +39,7 @@ export async function fetchCurrentWeather(
   url.searchParams.set("wind_speed_unit", "kmh");
   url.searchParams.set("timezone", "auto");
 
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetch(url, { cache: "no-store", signal });
   if (!response.ok) {
     throw new Error(`Open-Meteo request failed: ${response.status}`);
   }

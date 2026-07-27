@@ -21,7 +21,7 @@ export async function fetchSteamData(context: WidgetFetchContext): Promise<Steam
     throw new Error("Set your SteamID64 in the widget settings first");
   }
 
-  const recentGames = await fetchRecentlyPlayed(apiKey, settings.steamId64);
+  const recentGames = await fetchRecentlyPlayed(apiKey, settings.steamId64, context.signal);
   recentGames.sort((a, b) => b.playtime2WeeksMinutes - a.playtime2WeeksMinutes);
   const topGames = recentGames.slice(0, MAX_GAMES);
 
@@ -42,16 +42,18 @@ export async function fetchSteamData(context: WidgetFetchContext): Promise<Steam
   // one propagate as a real widget-level error is the honest behavior,
   // not something to paper over with a fake empty result.
   const [lastPlayedMap, achievementsList] = await Promise.all([
-    fetchLastPlayedMap(apiKey, settings.steamId64).catch((err) => {
+    fetchLastPlayedMap(apiKey, settings.steamId64, context.signal).catch((err) => {
       console.error("Steam last-played fetch failed:", err);
       return {} as Record<number, number>;
     }),
     Promise.all(
       topGames.map((game) =>
-        fetchAchievementSummary(apiKey, settings.steamId64, game.appId).catch((err) => {
-          console.error(`Steam achievements fetch failed for appId ${game.appId}:`, err);
-          return null;
-        }),
+        fetchAchievementSummary(apiKey, settings.steamId64, game.appId, context.signal).catch(
+          (err) => {
+            console.error(`Steam achievements fetch failed for appId ${game.appId}:`, err);
+            return null;
+          },
+        ),
       ),
     ),
   ]);

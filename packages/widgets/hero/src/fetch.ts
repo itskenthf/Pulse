@@ -62,11 +62,15 @@ export async function fetchHeroData(context: WidgetFetchContext): Promise<HeroDa
   }).format(now);
   const dateFormatted = `${weekday} · ${day} ${month}`;
 
-  const weather = await fetchCurrentWeather({
-    latitude: WEATHER_LATITUDE,
-    longitude: WEATHER_LONGITUDE,
-  });
+  const weather = await fetchCurrentWeather(
+    { latitude: WEATHER_LATITUDE, longitude: WEATHER_LONGITUDE },
+    context.signal,
+  );
 
+  // Unvalidated on purpose: this is a soft best-effort read (avoid
+  // repeating the last quote), not data reaching render() — worst case on
+  // a shape mismatch is a repeated quote, not worth failing this whole
+  // fetch over the way a validated read legitimately should elsewhere.
   const previous = await readWidgetCache<HeroData>(context.userId, WIDGET_ID);
   const previousQuote = previous?.data.quote;
   const candidates =

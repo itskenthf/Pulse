@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { ZodType } from "zod";
 
 /**
  * "hero" widgets render full-width above the card grid, chromeless (no
@@ -9,6 +10,14 @@ export type WidgetSize = "sm" | "md" | "lg" | "hero";
 
 export interface WidgetFetchContext {
   userId: string;
+  /**
+   * Aborts once the scheduler's per-widget timeout elapses (see
+   * `refreshWidget` in apps/web/src/lib/refresh-widget.ts). Adapters should
+   * pass this to every `fetch()` call so one hung upstream API can't stall
+   * an entire cron batch — a widget whose fetchData ignores it just won't
+   * time out, it isn't a contract violation.
+   */
+  signal?: AbortSignal;
 }
 
 export interface WidgetActionState {
@@ -52,6 +61,18 @@ export interface Widget<TData = unknown, TSettings = Record<string, unknown>> {
   /** Suggested refresh interval, in seconds. */
   refreshInterval: number;
   fetchData(context: WidgetFetchContext): Promise<TData>;
+  /**
+   * Optional runtime shape check for rows read back out of `widget_cache`.
+   * Without this, a cache row written under an older TData shape (e.g.
+   * after this widget's data contract changes across a deploy) gets
+   * returned typed as the *current* shape with nothing checking that at
+   * runtime — every widget today happens to guard defensively enough that
+   * nothing has broken, but nothing enforces that going forward. When
+   * provided, `readWidgetCache` parses the row through it before handing
+   * data to render() and throws on a mismatch (surfacing through the
+   * widget's normal ErrorState) rather than silently trusting a stale shape.
+   */
+  dataSchema?: ZodType<TData>;
   render(props: WidgetRenderProps<TData, TSettings>): ReactNode;
   settings?(): TSettings;
   /** Parses a settings `<form>` submission. Throw to reject invalid input. */

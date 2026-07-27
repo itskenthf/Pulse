@@ -301,34 +301,31 @@ interface ColumnItem {
  *  the WidgetGrid doc comment above). Ties go left, so the heaviest/
  *  first item (GitHub) anchors the wide column same as before.
  *
- *  Each node is wrapped with a mobile-only `order` class: the columns
- *  collapse to one stack below `sm:`, and because they stack
- *  left-column-then-right-column, a placeholder assigned to the left
- *  column would otherwise appear above a real widget sitting in the
- *  right one (Habits/RSS landed between Spotify and Steam). The wrapper
- *  divs use `display: contents` on mobile so every card is a direct
- *  flex child of the shared container, letting `order` sort across both
- *  columns; at `sm:` and up the wrappers become real flex columns again
- *  and `order` is reset. */
+ *  `items` arrives priority-sorted (real widgets first, "coming soon"
+ *  placeholders last). Rather than greedily assigning each item to
+ *  whichever column is currently lighter — which can freely interleave
+ *  items across columns and scramble that priority order — this walks
+ *  the list in order, filling `left` until its running weight crosses
+ *  half the total, then sending everything else to `right`. Mobile
+ *  collapses the two columns to one stack by rendering `left` fully
+ *  before `right`, so this ordering is exactly what appears there: no
+ *  CSS `order` trick needed, and the DOM order a keyboard/screen-reader
+ *  user tabs through matches what's on screen at every breakpoint. */
 function balanceColumns(items: ColumnItem[]): { left: ReactNode[]; right: ReactNode[] } {
   const left: ReactNode[] = [];
   const right: ReactNode[] = [];
+  const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
+  const half = totalWeight / 2;
   let leftWeight = 0;
-  let rightWeight = 0;
 
   items.forEach((item, index) => {
-    const ordered = (
-      <div key={index} className={item.placeholder ? "order-2 sm:order-none" : "order-1 sm:order-none"}>
-        {item.node}
-      </div>
-    );
+    const node = <div key={index}>{item.node}</div>;
 
-    if (leftWeight <= rightWeight) {
-      left.push(ordered);
+    if (leftWeight < half) {
+      left.push(node);
       leftWeight += item.weight;
     } else {
-      right.push(ordered);
-      rightWeight += item.weight;
+      right.push(node);
     }
   });
 

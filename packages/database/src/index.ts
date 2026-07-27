@@ -4,6 +4,8 @@ export type { CachedWidgetData } from "./widget-cache";
 export { readWidgetSettings, writeWidgetSettings } from "./widget-settings";
 export { ensureWidgetRegistered } from "./widget-registry";
 export { listUserIds, readUserName } from "./users";
+export { writeMemories, listMemories } from "./memories";
+export type { Memory } from "./memories";
 export {
   readProviderAccessToken,
   readProviderAccount,

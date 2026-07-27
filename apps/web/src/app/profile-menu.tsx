@@ -1,7 +1,6 @@
 "use client";
 
-import { ChevronRight, LogOut } from "lucide-react";
-import Link from "next/link";
+import { LogOut, User } from "lucide-react";
 import { glassClass, RADIUS, SPRING_PRESS, useDismissableMenu } from "@pulse/ui";
 import { signOutAction } from "./actions/sign-out";
 
@@ -75,28 +74,43 @@ export function ProfileMenu({
             : "invisible opacity-0 motion-safe:scale-95"
         } ${glassClass("heavy")}`}
       >
-        {/* The whole identity block is the entry point to the profile page
-         *  — kept showing name/email at a glance (not replaced by a bare
-         *  "View Profile" label) so nothing that was visible before this
-         *  became clickable is now hidden behind an extra click. */}
-        <Link
-          href="/profile"
-          onClick={close}
-          className="flex min-h-11 items-center gap-2 px-3 py-2 hover:bg-[color-mix(in_srgb,var(--color-accent)_8%,transparent)]"
-        >
-          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <span className="truncate text-sm font-medium text-[var(--foreground)]">{label}</span>
-            {user.email && (
-              <span className="truncate text-xs text-[var(--color-neutral-500)]">
-                {user.email}
+        {/* Expands in place rather than linking to a separate page — a
+         *  standalone /profile route rendered nothing beyond this same
+         *  name/email, so showing it twice (once collapsed as "View
+         *  Profile," once again on its own page) was pure duplication.
+         *  Same <details>/<summary> disclosure WidgetMenu's own "Settings"
+         *  row uses. */}
+        <details>
+          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 py-2 text-sm text-[var(--foreground)] hover:bg-[color-mix(in_srgb,var(--color-accent)_8%,transparent)] [&::-webkit-details-marker]:hidden">
+            <User className="h-4 w-4" aria-hidden="true" /> View Profile
+          </summary>
+          <div className="flex flex-col items-center gap-2 px-3 pt-1 pb-3 text-center">
+            {user.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={user.image}
+                alt=""
+                width={48}
+                height={48}
+                className="rounded-full border border-[var(--color-divider)]"
+              />
+            ) : (
+              <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[var(--color-accent-300)] bg-[var(--color-accent-100)] font-heading text-lg font-semibold text-[var(--color-accent-700)]">
+                {initial}
               </span>
             )}
-          </span>
-          <ChevronRight
-            className="h-4 w-4 shrink-0 text-[var(--color-neutral-400)]"
-            aria-hidden="true"
-          />
-        </Link>
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <span className="truncate text-sm font-medium text-[var(--foreground)]">
+                {label}
+              </span>
+              {user.email && (
+                <span className="truncate text-xs text-[var(--color-neutral-500)]">
+                  {user.email}
+                </span>
+              )}
+            </div>
+          </div>
+        </details>
 
         <div className="my-1 border-t border-[var(--color-divider)]" />
 

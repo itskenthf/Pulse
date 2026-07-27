@@ -14,6 +14,13 @@ const validData = {
     commitUrl: "https://github.com/itskenthf/Pulse/commit/abc",
     committedAt: "2026-07-27T00:00:00Z",
   },
+  activitySummary: {
+    commitCount: 85,
+    repositoriesWithCommits: 4,
+    pullRequestsOpened: 12,
+    repositoriesCreated: 2,
+    periodStart: "2026-07-01T00:00:00.000Z",
+  },
 };
 
 describe("githubDataSchema", () => {
@@ -23,6 +30,11 @@ describe("githubDataSchema", () => {
 
   it("accepts a null latestActivity (no matching repo found)", () => {
     const result = githubDataSchema.safeParse({ ...validData, latestActivity: null });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a null activitySummary", () => {
+    const result = githubDataSchema.safeParse({ ...validData, activitySummary: null });
     expect(result.success).toBe(true);
   });
 

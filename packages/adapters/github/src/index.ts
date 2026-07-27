@@ -1,5 +1,6 @@
-export { fetchContributions } from "./contributions";
+export { fetchActivitySummary, fetchContributions } from "./contributions";
 export type {
+  ActivitySummary,
   ContributionDay,
   ContributionWeek,
   NormalizedContributions,

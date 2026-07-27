@@ -1,4 +1,8 @@
-import { fetchContributions, fetchLatestActivity } from "@pulse/adapter-github";
+import {
+  fetchActivitySummary,
+  fetchContributions,
+  fetchLatestActivity,
+} from "@pulse/adapter-github";
 import { ensureWidgetRegistered, readProviderAccessToken } from "@pulse/database";
 import type { WidgetFetchContext } from "@pulse/sdk";
 import { HEATMAP_WEEKS, WIDGET_DESCRIPTION, WIDGET_ID, WIDGET_NAME } from "./constants";
@@ -12,10 +16,11 @@ export async function fetchGitHubData(context: WidgetFetchContext): Promise<GitH
     throw new Error("No GitHub account linked — sign in with GitHub first");
   }
 
-  const [contributions, latestActivity] = await Promise.all([
+  const [contributions, latestActivity, activitySummary] = await Promise.all([
     fetchContributions(accessToken, HEATMAP_WEEKS, context.signal),
     fetchLatestActivity(accessToken, context.signal),
+    fetchActivitySummary(accessToken, context.signal),
   ]);
 
-  return { ...contributions, latestActivity };
+  return { ...contributions, latestActivity, activitySummary };
 }

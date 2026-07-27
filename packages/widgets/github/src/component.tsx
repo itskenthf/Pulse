@@ -7,6 +7,43 @@ import { GitHubIcon } from "./icon";
 import { computeStreaks } from "./streaks";
 import type { GitHubData } from "./types";
 
+function ActivitySummaryBlock({ summary }: { summary: GitHubData["activitySummary"] }) {
+  if (!summary) return null;
+
+  const rows: string[] = [];
+  if (summary.commitCount > 0) {
+    rows.push(
+      `${summary.commitCount} commit${summary.commitCount === 1 ? "" : "s"} across ${
+        summary.repositoriesWithCommits
+      } repositor${summary.repositoriesWithCommits === 1 ? "y" : "ies"}`,
+    );
+  }
+  if (summary.pullRequestsOpened > 0) {
+    rows.push(
+      `${summary.pullRequestsOpened} pull request${summary.pullRequestsOpened === 1 ? "" : "s"} opened`,
+    );
+  }
+  if (summary.repositoriesCreated > 0) {
+    rows.push(
+      `${summary.repositoriesCreated} repositor${summary.repositoriesCreated === 1 ? "y" : "ies"} created`,
+    );
+  }
+  if (rows.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-1.5 lg:max-w-56">
+      <span className="text-xs tracking-[0.08em] text-[var(--color-neutral-400)] uppercase">
+        This month
+      </span>
+      {rows.map((row) => (
+        <span key={row} className="text-sm text-[var(--color-neutral-600)]">
+          {row}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export function GitHubComponent({
   data,
   actions,
@@ -27,7 +64,10 @@ export function GitHubComponent({
             <Metric label="This week" value={data.totalThisWeek} />
             {streaks && <Metric label="Streak" value={streaks.current} suffix="d" />}
           </div>
-          <Heatmap weeks={data.weeks} />
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <Heatmap weeks={data.weeks} />
+            <ActivitySummaryBlock summary={data.activitySummary} />
+          </div>
           {data.latestActivity && (
             <a
               href={data.latestActivity.commitUrl}

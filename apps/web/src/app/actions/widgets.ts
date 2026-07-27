@@ -47,16 +47,23 @@ export async function refreshAllWidgetsAction(
     widgets.map((widget) => refreshWidget(widget.id, userId)),
   );
 
-  // Name the widgets that actually failed — "1 of 4 failed" alone gives
-  // nothing to act on, which is what made a silently-broken GitHub query
-  // hard to place when this first shipped.
+  // Name the widgets that actually failed, and why — "1 of 4 failed" alone
+  // gives nothing to act on, which is what made a silently-broken GitHub
+  // query hard to place when this first shipped.
   const failed = widgets
-    .filter((_, index) => results[index]?.status === "rejected")
-    .map((widget) => widget.name);
+    .map((widget, index) => ({ widget, result: results[index] }))
+    .filter(
+      (entry): entry is { widget: (typeof widgets)[number]; result: PromiseRejectedResult } =>
+        entry.result?.status === "rejected",
+    )
+    .map(({ widget, result }) => {
+      const reason = result.reason instanceof Error ? result.reason.message : "Unknown error";
+      return `${widget.name}: ${reason}`;
+    });
 
   revalidatePath("/");
   if (failed.length > 0) {
-    return { error: `Couldn't refresh ${failed.join(", ")}` };
+    return { error: failed.join("\n") };
   }
   return {};
 }

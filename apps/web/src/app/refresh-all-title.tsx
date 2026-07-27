@@ -20,12 +20,12 @@ export function RefreshAllTitle() {
   const [state, formAction, isPending] = useActionState(refreshAllWidgetsAction, initialState);
 
   return (
-    <form action={formAction} className="relative">
+    <form action={formAction}>
       <h1>
         <button
           type="submit"
           disabled={isPending}
-          aria-label="Refresh all widgets"
+          aria-label="Pulse, refresh all widgets"
           title="Refresh all widgets"
           className={`font-heading text-lg font-semibold tracking-tight text-[var(--foreground)] transition-opacity ${
             isPending ? "opacity-60" : "opacity-100 hover:opacity-80"
@@ -35,7 +35,7 @@ export function RefreshAllTitle() {
         </button>
       </h1>
       {state?.error && (
-        <p className="absolute top-full left-0 mt-1 w-max max-w-64 text-xs text-red-600 dark:text-red-400">
+        <p className="mt-1 max-w-64 text-xs whitespace-pre-line text-red-600 dark:text-red-400">
           {state.error}
         </p>
       )}

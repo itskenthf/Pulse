@@ -29,9 +29,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Version intentionally omitted — pnpm/action-setup reads it from
+      # package.json's own "packageManager" field (pnpm@10.33.0), and
+      # specifying a version here too conflicts with that field instead
+      # of confirming it.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - uses: actions/setup-node@v4
         with:

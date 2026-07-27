@@ -1,15 +1,41 @@
 import { Suspense, type ReactNode } from "react";
-import { Book, BookOpen, CheckSquare, ListChecks, Rss } from "lucide-react";
-import { getAllWidgets, type Widget, type WidgetSize } from "@pulse/sdk";
+import { BookOpen, ListChecks, Rss } from "lucide-react";
+import { getAllWidgets, type Widget, type WidgetAction, type WidgetSize } from "@pulse/sdk";
 import { readWidgetCache, readWidgetSettings } from "@pulse/database";
 import { Skeleton, SPRING_PRESS, WidgetCard, WidgetErrorBoundary } from "@pulse/ui";
 import { HERO_WIDGET_ID } from "@pulse/widget-hero";
+import { NOTES_WIDGET_ID } from "@pulse/widget-notes";
+import { TASKS_WIDGET_ID } from "@pulse/widget-tasks";
 import { auth, signIn } from "@/auth";
 import { cycleHeroQuoteAction } from "./actions/hero";
+import { addNoteAction, deleteNoteAction, updateNoteAction } from "./actions/notes";
+import { addTaskAction, deleteTaskAction, toggleTaskAction } from "./actions/tasks";
 import { refreshWidgetAction, updateWidgetSettingsAction } from "./actions/widgets";
 import { ProfileMenu } from "./profile-menu";
 import { RefreshAllTitle } from "./refresh-all-title";
 import "@/lib/register-widgets";
+
+/**
+ * Per-widget custom actions (beyond the generic refresh/updateSettings
+ * every widget gets) — Hero's quote cycling, Tasks' add/toggle/delete,
+ * Notes' add/update/delete. See `Widget`/`WidgetRenderProps`'s `TActions`
+ * generic in packages/sdk/src/widget.ts for why this is spread into the
+ * base actions object rather than each widget growing the shared
+ * `WidgetActions` interface directly.
+ */
+const CUSTOM_ACTIONS: Record<string, Record<string, WidgetAction>> = {
+  [HERO_WIDGET_ID]: { cycleQuote: cycleHeroQuoteAction },
+  [TASKS_WIDGET_ID]: {
+    addTask: addTaskAction,
+    toggleTask: toggleTaskAction,
+    deleteTask: deleteTaskAction,
+  },
+  [NOTES_WIDGET_ID]: {
+    addNote: addNoteAction,
+    updateNote: updateNoteAction,
+    deleteNote: deleteNoteAction,
+  },
+};
 
 export default async function Home() {
   const session = await auth();
@@ -22,7 +48,7 @@ export default async function Home() {
         {session?.user?.id ? (
           <WidgetGrid userId={session.user.id} />
         ) : (
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-zinc-600">
             Sign in to see your dashboard.
           </p>
         )}
@@ -50,7 +76,7 @@ function Navbar({ session }: { session: { user?: SessionUser } | null }) {
           <img
             src="/logo-pulse.png"
             alt="Pulse"
-            className="h-6 w-auto dark:invert sm:h-7"
+            className="h-6 w-auto sm:h-7"
           />
         </h1>
       )}
@@ -109,7 +135,7 @@ async function WidgetSlot({ widget, userId }: { widget: Widget; userId: string }
       updateSettings: widget.parseSettingsForm
         ? updateWidgetSettingsAction.bind(null, widget.id)
         : undefined,
-      cycleQuote: widget.id === HERO_WIDGET_ID ? cycleHeroQuoteAction : undefined,
+      ...CUSTOM_ACTIONS[widget.id],
     },
   } as Parameters<typeof widget.render>[0];
 
@@ -180,37 +206,6 @@ function WidgetGrid({ userId }: { userId: string }) {
         <WidgetCell key={widget.id} widget={widget} userId={userId} resetKey={resetKey} />
       ),
     })),
-    {
-      weight: WIDGET_WEIGHT.sm,
-      placeholder: true,
-      node: (
-        <div key="tasks-coming-soon" className="opacity-70">
-          <WidgetCard
-            title="Tasks"
-            icon={<CheckSquare className="h-4 w-4" aria-hidden="true" />}
-            tag={{ label: "Coming soon", variant: "neutral" }}
-          >
-            A dedicated task list — pulled from Todoist or Notion — is
-            planned for a future release.
-          </WidgetCard>
-        </div>
-      ),
-    },
-    {
-      weight: WIDGET_WEIGHT.sm,
-      placeholder: true,
-      node: (
-        <div key="notes-coming-soon" className="opacity-70">
-          <WidgetCard
-            title="Notes"
-            icon={<Book className="h-4 w-4" aria-hidden="true" />}
-            tag={{ label: "Coming soon", variant: "neutral" }}
-          >
-            Quick daily notes and reminders — planned for a future release.
-          </WidgetCard>
-        </div>
-      ),
-    },
     {
       weight: WIDGET_WEIGHT.sm,
       placeholder: true,

@@ -48,10 +48,10 @@ export interface WidgetActions {
   cycleQuote?: WidgetAction;
 }
 
-export interface WidgetRenderProps<TData, TSettings> {
+export interface WidgetRenderProps<TData, TSettings, TActions extends WidgetActions = WidgetActions> {
   data: TData | null;
   settings: TSettings;
-  actions: WidgetActions;
+  actions: TActions;
 }
 
 /**
@@ -74,7 +74,11 @@ export interface MemoryEvent {
  * never fetch their own data at render time. render() only ever receives
  * data already read from the widget_cache table.
  */
-export interface Widget<TData = unknown, TSettings = Record<string, unknown>> {
+export interface Widget<
+  TData = unknown,
+  TSettings = Record<string, unknown>,
+  TActions extends WidgetActions = WidgetActions,
+> {
   id: string;
   name: string;
   size: WidgetSize;
@@ -93,7 +97,7 @@ export interface Widget<TData = unknown, TSettings = Record<string, unknown>> {
    * widget's normal ErrorState) rather than silently trusting a stale shape.
    */
   dataSchema?: ZodType<TData>;
-  render(props: WidgetRenderProps<TData, TSettings>): ReactNode;
+  render(props: WidgetRenderProps<TData, TSettings, TActions>): ReactNode;
   settings?(): TSettings;
   /** Parses a settings `<form>` submission. Throw to reject invalid input. */
   parseSettingsForm?(formData: FormData): TSettings;

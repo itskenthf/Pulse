@@ -1977,3 +1977,54 @@ same mark to become the mobile home-screen icon.
   (`hover:drop-shadow-[0_0_6px_color-mix(in_srgb,var(--color-accent)_55%,transparent)]`),
   gated on `motion-reduce`, applied only to this one control — not a
   precedent for glow/blur elsewhere in the system.
+
+## 2026-07-27 — Fetch timeouts and runtime widget-cache validation
+
+Ken asked to close out two structural gaps flagged in a status review
+before moving on to anything else: no timeout on widget `fetchData()`
+calls, and no runtime validation on data read back out of `widget_cache`.
+
+**Fetch timeouts.** `WidgetFetchContext` (`packages/sdk/src/widget.ts`)
+gained an optional `signal?: AbortSignal`. `refreshWidget`
+(`apps/web/src/lib/refresh-widget.ts`) — the single call site used by both
+the cron route and the manual "Refresh"/"Refresh all" actions — now
+creates one `AbortSignal.timeout(10_000)` per `fetchData()` call and
+passes it down. Every adapter function that calls `fetch()` (GitHub's
+GraphQL calls, both Spotify token/top-tracks/top-artists calls, all three
+Steam endpoints, Open-Meteo) now accepts an optional `signal` parameter
+and forwards it to its own `fetch()` call; each widget's `fetch.ts` passes
+`context.signal` through. A hung upstream call now fails just that one
+widget after 10s instead of being able to stall an entire cron batch
+until the platform's own function timeout kills it. Left deliberately
+untouched: `exchangeCodeForTokens`/`fetchSpotifyProfileId`'s caller (the
+Spotify OAuth callback route) — that's a one-time interactive redirect
+flow, not part of the cron fan-out the bug was actually about, so it
+keeps its existing (untimed) behavior rather than forcing an unrelated
+change through this pass.
+
+**Runtime cache validation.** `Widget<TData, TSettings>` gained an
+optional `dataSchema?: ZodType<TData>` field. `readWidgetCache` accepts an
+optional third `schema` parameter — when given, it `safeParse`s the row
+and throws a descriptive error on a mismatch instead of silently trusting
+a stale shape; omitted, it falls back to the previous cast-only behavior,
+so adoption is per-widget, not a forced repo-wide migration in one commit.
+All four live widgets (Hero, GitHub, Steam, Spotify) now define their
+`TData` type as `z.infer<typeof theirSchema>` — the schema is the single
+source of truth instead of a hand-maintained interface that could drift
+from a hand-maintained schema — and wire `dataSchema` into their `Widget`
+object. `zod` added as a dependency of `@pulse/sdk`, `@pulse/database`,
+and the four widget packages (not the adapter packages — the validated
+shape is each widget's persisted `TData`, not an adapter's raw API
+response type).
+
+One deliberate exception: Hero's own internal self-read of its previous
+cache (`packages/widgets/hero/src/fetch.ts`, used only to avoid repeating
+the immediately-previous quote) stays unvalidated — it's a soft, best-
+effort read that never reaches `render()`, and making it throw on a shape
+mismatch would turn a cosmetic "might repeat one quote" edge case into a
+hard failure for the entire Hero fetch, which is a worse outcome than the
+gap it would be closing.
+
+Steam settings (`SteamSettings`, stored in `widget_settings`, not
+`widget_cache`) were out of scope — the flagged gap was specifically about
+cached widget *data*.

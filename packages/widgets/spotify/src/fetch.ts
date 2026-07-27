@@ -57,6 +57,7 @@ export async function fetchSpotifyData(
         refreshToken: account.refreshToken,
         clientId,
         clientSecret,
+        signal: context.signal,
       });
     } catch {
       // Most commonly a revoked/invalid refresh token (e.g. the user
@@ -94,8 +95,8 @@ export async function fetchSpotifyData(
   }
 
   const [tracks, artists] = await Promise.all([
-    fetchTopTracks(accessToken, TRACK_LIMIT),
-    fetchTopArtists(accessToken, ARTIST_LIMIT),
+    fetchTopTracks(accessToken, TRACK_LIMIT, context.signal),
+    fetchTopArtists(accessToken, ARTIST_LIMIT, context.signal),
   ]);
 
   return {

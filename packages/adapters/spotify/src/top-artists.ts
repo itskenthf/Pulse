@@ -19,6 +19,7 @@ interface SpotifyTopArtistsResponse {
 export async function fetchTopArtists(
   accessToken: string,
   limit: number,
+  signal?: AbortSignal,
 ): Promise<SpotifyArtist[]> {
   const url = new URL("https://api.spotify.com/v1/me/top/artists");
   url.searchParams.set("time_range", "medium_term");
@@ -27,6 +28,7 @@ export async function fetchTopArtists(
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
     cache: "no-store",
+    signal,
   });
 
   if (!response.ok) {

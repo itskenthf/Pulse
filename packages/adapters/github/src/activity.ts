@@ -62,7 +62,10 @@ const LATEST_ACTIVITY_QUERY = `
  * activity at all (a real, non-error state, not worth failing the whole
  * widget refresh over).
  */
-export async function fetchLatestActivity(accessToken: string): Promise<LatestActivity | null> {
+export async function fetchLatestActivity(
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<LatestActivity | null> {
   const response = await fetch("https://api.github.com/graphql", {
     method: "POST",
     headers: {
@@ -71,6 +74,7 @@ export async function fetchLatestActivity(accessToken: string): Promise<LatestAc
     },
     body: JSON.stringify({ query: LATEST_ACTIVITY_QUERY }),
     cache: "no-store",
+    signal,
   });
 
   if (!response.ok) {

@@ -2290,3 +2290,47 @@ screenshots. Each root-caused before fixing:
   `useActionState` — no page-wide re-render needed. The cache write still
   happens (so cron/full refreshes stay in sync), it's just no longer
   gating what the click shows.
+
+## 2026-07-27 — Memory/Timeline feature, Milestone 1
+
+Ken pitched a "memory" system: widgets log meaningful changes as small
+events, powering a Timeline now and, much later, retrieval for an "Ask
+Pulse" AI assistant — memory built first, assistant built last. Full
+milestone breakdown lives in the new `docs/MEMORY_ROADMAP.md` (its own
+M1-M4 track, deliberately not reusing `docs/ROADMAP.md`'s Phase 0-4
+numbering to avoid colliding with that unrelated roadmap). This entry
+just records the two decisions made before building M1:
+
+- **New `memories` table, not the reserved `widget_events`.** The schema
+  already has a `widget_events` table (`supabase/migrations/
+  0001_core_schema.sql`), but it's earmarked for a different, still-
+  undesigned feature: a pub/sub event bus letting widgets react to each
+  other in real time (`docs/PROJECT_REFERENCE.md` §5/§20 — e.g. starting
+  a focus session pausing Spotify), deferred until 2-3 widgets actually
+  need it. Writing memory events into that table now would conflate two
+  different concepts under one schema and pre-commit the event bus's
+  eventual (unspecified) shape to whatever the memory log happens to
+  need today. `memories` (`supabase/migrations/0003_memories_table.sql`)
+  is separate on purpose. This doesn't conflict with §16's "AI assistant"
+  Phase-1 non-goal — only the assistant itself (M4) is excluded, not the
+  underlying event log.
+- **Diffing, not logging every fetch.** Ken's original write-up implied
+  writing an event on every widget fetch. GitHub refreshes every 30
+  minutes, Spotify/Steam every 3 hours (cron-driven, `docs/DECISIONS.md`'s
+  2026-07-20 entry) — logging unconditionally would flood the table with
+  near-duplicate rows saying nothing changed. `Widget.deriveMemories`
+  (`packages/sdk/src/widget.ts`) is a pure diff against the previous
+  cached snapshot, called from `refreshWidget`
+  (`apps/web/src/lib/refresh-widget.ts`) — the single choke point already
+  shared by cron, manual refresh, and settings-save, so every refresh
+  path gets memory generation for free without a separate pipeline. This
+  also makes generation naturally idempotent: once a change is reflected
+  in the cache, the next cycle's diff against it won't re-fire the same
+  event.
+
+M1 ships with `deriveMemories` implemented for GitHub (new commits, new
+repos), Spotify (top artist changes), and Steam (new games, playtime
+sessions ≥15 min) — plus a Timeline page (`apps/web/src/app/timeline/
+page.tsx`) grouping events into Today/Yesterday/Last Week/by-month,
+linked from the profile menu. Hero deliberately has no `deriveMemories`;
+greeting/weather/quote aren't memory-worthy content.

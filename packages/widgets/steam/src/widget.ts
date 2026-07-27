@@ -1,6 +1,7 @@
 import type { Widget } from "@pulse/sdk";
 import { WIDGET_ID, WIDGET_NAME } from "./constants";
 import { SteamComponent } from "./component";
+import { deriveSteamMemories } from "./derive-memories";
 import { fetchSteamData } from "./fetch";
 import { defaultSteamSettings, parseSteamSettingsForm } from "./settings";
 import { steamDataSchema, type SteamData, type SteamSettings } from "./types";
@@ -16,4 +17,5 @@ export const steamWidget: Widget<SteamData, SteamSettings> = {
   settings: () => defaultSteamSettings,
   parseSettingsForm: parseSteamSettingsForm,
   permissions: () => [],
+  deriveMemories: deriveSteamMemories,
 };

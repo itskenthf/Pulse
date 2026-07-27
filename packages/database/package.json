@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@pulse/sdk": "workspace:*",
     "@supabase/supabase-js": "^2.110.7",
     "zod": "^3.24.1"
   },

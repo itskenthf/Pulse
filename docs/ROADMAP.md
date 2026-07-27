@@ -475,12 +475,24 @@ the complete staged roadmap.
   summary of all six stages.
 
 **Hardening pass complete** (Stages 1–6, all on `dev`). Honest gaps,
-named rather than glossed over: no permanent automated test suite
-exists in the repo (verification used the project's established ad hoc
-Playwright-against-a-temporary-route pattern throughout, not a
+named rather than glossed over at the time: no permanent automated test
+suite existed in the repo (verification used the project's established ad
+hoc Playwright-against-a-temporary-route pattern throughout, not a
 committed suite), and cross-browser testing was Chromium-only (this
-sandbox has no Safari/Firefox/real device access). Both are real scope
-decisions for later, not silently assumed done.
+sandbox has no Safari/Firefox/real device access).
+
+**Update (2026-07-27)**: the first gap is closed — see the "Automated
+test suite" entry below. The second is unchanged and can't be closed from
+this sandbox; it stays a real, named limitation (see `docs/DECISIONS.md`).
+
+### Automated test suite (2026-07-27)
+
+A committed Vitest + Playwright suite now runs in CI
+(`.github/workflows/test.yml`) on every push/PR, alongside lint/typecheck/
+build — see `docs/DECISIONS.md` for scope and reasoning. Unit/component
+tests live next to the code they cover in each package (`pnpm test`);
+end-to-end tests live in `apps/web/e2e` (`pnpm --filter @pulse/web
+test:e2e`).
 
 ### "Classical" redesign (2026-07-26): full visual system replacement
 

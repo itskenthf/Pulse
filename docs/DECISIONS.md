@@ -2028,3 +2028,60 @@ gap it would be closing.
 Steam settings (`SteamSettings`, stored in `widget_settings`, not
 `widget_cache`) were out of scope — the flagged gap was specifically about
 cached widget *data*.
+
+## 2026-07-27 — Automated test suite (Vitest + Playwright, wired into CI)
+
+The Hardening pass (2026-07-25) named "no committed automated test suite"
+as an honest gap — every verification pass up to that point was ad hoc
+Playwright against a temporary route, never saved, never re-run. Ken asked
+to close this before adding more widgets, with two decisions confirmed
+first: cover both unit-level logic and real browser interaction (not just
+one), and wire it into GitHub Actions so it runs on every push/PR — not
+just something runnable locally that nothing forces anyone to run.
+
+**Unit/component tests (Vitest)**, one `vitest.config.ts` + `test` script
+per package that has something worth testing, run via `pnpm test` (added
+to `turbo.json` as a `test` task alongside `lint`/`typecheck`):
+
+- `packages/database`: `readWidgetCache`'s validation behavior (the
+  Zod-schema fix from the previous entry) — null/no-schema/valid/invalid
+  cases, with the Supabase client mocked.
+- Each live widget package (`hero`, `github`, `steam`, `spotify`): its
+  `dataSchema` parses valid data and rejects drifted/invalid shapes, plus
+  whatever pure logic already existed — `computeStreaks` (GitHub),
+  `formatHours`/`formatRelativeDay` (Steam), `weatherTip` (Hero).
+- `packages/adapters/spotify`: `deriveTopGenre`'s tie-breaking behavior.
+- `packages/ui`: two component tests using React Testing Library +
+  jsdom — `useDismissableMenu` (open/close/outside-tap/Escape, the exact
+  contract behind the real mobile tap-to-open bug from the 2026-07-25
+  polish pass) and `WidgetErrorBoundary` (renders normally, isolates a
+  thrown error, recovers on `resetKey` change) — the two shared primitives
+  behind Pulse's actual resilience/accessibility guarantees, not
+  incidental UI.
+
+**End-to-end tests (Playwright)**, `apps/web/e2e/homepage.spec.ts` +
+`apps/web/playwright.config.ts`, run via `pnpm --filter @pulse/web
+test:e2e`. Deliberately scoped to the **signed-out** shell only: a
+real authenticated run would need live Supabase/GitHub OAuth credentials
+this CI environment (and this sandbox) doesn't have, and building a mock
+auth/database layer just to unblock CI was judged out of scope for a
+first pass — a real limitation, named here rather than silently
+worked around with a fake backend. Covers: page loads with no console
+errors, the new logo mark and "Sign in with GitHub" render correctly, and
+no horizontal overflow at desktop/tablet/mobile widths — the last one is
+the automated form of the exact manual sweep the Hardening pass's Stage 5
+did by hand.
+
+**CI**: `.github/workflows/test.yml` runs on every push to `main` and
+every PR — install, lint, typecheck, `pnpm test`, build, then Playwright's
+browser install + `test:e2e`, uploading the HTML report as an artifact on
+failure. Uses the same placeholder Supabase/Auth env vars as local manual
+verification (never real secrets) — `next build`'s static analysis touches
+the auth route bundle even for pages that don't need a session, so some
+non-empty values have to be present, but nothing in this suite ever
+actually reaches Supabase or GitHub with them.
+
+**Still open, unchanged by this pass**: cross-browser testing remains
+Chromium-only (this sandbox and GitHub's standard runners both lack
+Safari/real iOS Safari access) — genuinely not closable from here, stays
+a named gap rather than a false "done."

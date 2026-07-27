@@ -16,7 +16,11 @@ interface SpotifyTopTracksResponse {
   }[];
 }
 
-export async function fetchTopTracks(accessToken: string, limit: number): Promise<SpotifyTrack[]> {
+export async function fetchTopTracks(
+  accessToken: string,
+  limit: number,
+  signal?: AbortSignal,
+): Promise<SpotifyTrack[]> {
   const url = new URL("https://api.spotify.com/v1/me/top/tracks");
   url.searchParams.set("time_range", "medium_term");
   url.searchParams.set("limit", String(limit));
@@ -24,6 +28,7 @@ export async function fetchTopTracks(accessToken: string, limit: number): Promis
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
     cache: "no-store",
+    signal,
   });
 
   if (!response.ok) {

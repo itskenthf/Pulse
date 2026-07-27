@@ -12,7 +12,8 @@
     "@pulse/adapter-spotify": "workspace:*",
     "@pulse/database": "workspace:*",
     "@pulse/sdk": "workspace:*",
-    "@pulse/ui": "workspace:*"
+    "@pulse/ui": "workspace:*",
+    "zod": "^3.24.1"
   },
   "peerDependencies": {
     "react": "^19"

@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export type HeroPeriod = "morning" | "afternoon" | "evening" | "night";
 
 export type QuoteCategory = "coffee" | "dev-humor" | "dark-humor" | "humor";
@@ -7,14 +9,21 @@ export interface Quote {
   category: QuoteCategory;
 }
 
-export interface HeroData {
-  greeting: string;
-  dateFormatted: string;
-  weatherSummary: string;
-  weatherLocation: string;
+/**
+ * The widget's TData contract, and also its own runtime validator (see
+ * `Widget.dataSchema` in @pulse/sdk) — one definition instead of a
+ * hand-maintained type that could drift from a hand-maintained schema.
+ */
+export const heroDataSchema = z.object({
+  greeting: z.string(),
+  dateFormatted: z.string(),
+  weatherSummary: z.string(),
+  weatherLocation: z.string(),
   /** Deterministic suggestion derived from the weather code — null when
    *  conditions don't warrant one (see weather-tip.ts). */
-  weatherTip: string | null;
-  quote: string;
-  generatedAt: string;
-}
+  weatherTip: z.string().nullable(),
+  quote: z.string(),
+  generatedAt: z.string(),
+});
+
+export type HeroData = z.infer<typeof heroDataSchema>;

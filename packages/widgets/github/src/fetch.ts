@@ -13,8 +13,8 @@ export async function fetchGitHubData(context: WidgetFetchContext): Promise<GitH
   }
 
   const [contributions, latestActivity] = await Promise.all([
-    fetchContributions(accessToken, HEATMAP_WEEKS),
-    fetchLatestActivity(accessToken),
+    fetchContributions(accessToken, HEATMAP_WEEKS, context.signal),
+    fetchLatestActivity(accessToken, context.signal),
   ]);
 
   return { ...contributions, latestActivity };

@@ -69,6 +69,7 @@ async function queryCalendar(
   accessToken: string,
   from: Date,
   to: Date,
+  signal?: AbortSignal,
 ): Promise<{ total: number; weeks: ContributionWeek[] }> {
   const response = await fetch("https://api.github.com/graphql", {
     method: "POST",
@@ -81,6 +82,7 @@ async function queryCalendar(
       variables: { from: from.toISOString(), to: to.toISOString() },
     }),
     cache: "no-store",
+    signal,
   });
 
   if (!response.ok) {
@@ -116,6 +118,7 @@ async function queryCalendar(
 export async function fetchContributions(
   accessToken: string,
   heatmapWeeks: number,
+  signal?: AbortSignal,
 ): Promise<NormalizedContributions> {
   const now = new Date();
   const windowStart = new Date(now);
@@ -123,8 +126,8 @@ export async function fetchContributions(
   const yearStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
 
   const [windowResult, yearResult] = await Promise.all([
-    queryCalendar(accessToken, windowStart, now),
-    queryCalendar(accessToken, yearStart, now),
+    queryCalendar(accessToken, windowStart, now, signal),
+    queryCalendar(accessToken, yearStart, now, signal),
   ]);
 
   // "Today" comes from GitHub's own last returned day, not a UTC date

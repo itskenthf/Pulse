@@ -85,7 +85,7 @@ function Navbar({ session }: { session: { user?: SessionUser } | null }) {
  */
 async function WidgetSlot({ widget, userId }: { widget: Widget; userId: string }) {
   const [cached, settings] = await Promise.all([
-    readWidgetCache(userId, widget.id),
+    readWidgetCache(userId, widget.id, widget.dataSchema),
     readWidgetSettings(userId, widget.id),
   ]);
 

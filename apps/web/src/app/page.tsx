@@ -3,7 +3,9 @@ import { Book, BookOpen, CheckSquare, ListChecks, Rss } from "lucide-react";
 import { getAllWidgets, type Widget, type WidgetSize } from "@pulse/sdk";
 import { readWidgetCache, readWidgetSettings } from "@pulse/database";
 import { Skeleton, SPRING_PRESS, WidgetCard, WidgetErrorBoundary } from "@pulse/ui";
+import { HERO_WIDGET_ID } from "@pulse/widget-hero";
 import { auth, signIn } from "@/auth";
+import { cycleHeroQuoteAction } from "./actions/hero";
 import { refreshWidgetAction, updateWidgetSettingsAction } from "./actions/widgets";
 import { ProfileMenu } from "./profile-menu";
 import { RefreshAllTitle } from "./refresh-all-title";
@@ -37,7 +39,7 @@ interface SessionUser {
 
 function Navbar({ session }: { session: { user?: SessionUser } | null }) {
   return (
-    <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b border-[var(--color-divider)] bg-[var(--background)] px-4 py-3 sm:px-6">
+    <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b border-[var(--color-divider)] bg-[var(--background)] px-4 py-2 sm:px-6">
       {session?.user ? (
         <RefreshAllTitle />
       ) : (
@@ -48,7 +50,7 @@ function Navbar({ session }: { session: { user?: SessionUser } | null }) {
           <img
             src="/logo-pulse.png"
             alt="Pulse"
-            className="h-10 w-auto dark:invert sm:h-12 lg:h-16"
+            className="h-6 w-auto dark:invert sm:h-7"
           />
         </h1>
       )}
@@ -107,6 +109,7 @@ async function WidgetSlot({ widget, userId }: { widget: Widget; userId: string }
       updateSettings: widget.parseSettingsForm
         ? updateWidgetSettingsAction.bind(null, widget.id)
         : undefined,
+      cycleQuote: widget.id === HERO_WIDGET_ID ? cycleHeroQuoteAction : undefined,
     },
   } as Parameters<typeof widget.render>[0];
 

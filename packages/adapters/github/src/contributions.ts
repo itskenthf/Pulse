@@ -38,6 +38,42 @@ interface GraphQLResponse {
   errors?: { message?: string }[];
 }
 
+export interface ActivitySummary {
+  commitCount: number;
+  repositoriesWithCommits: number;
+  pullRequestsOpened: number;
+  repositoriesCreated: number;
+  /** ISO, start of the month this summary covers. */
+  periodStart: string;
+}
+
+interface ActivitySummaryGraphQLResponse {
+  data?: {
+    viewer?: {
+      contributionsCollection?: {
+        totalCommitContributions?: number;
+        totalRepositoriesWithContributedCommits?: number;
+        totalPullRequestContributions?: number;
+        totalRepositoryContributions?: number;
+      };
+    };
+  };
+  errors?: { message?: string }[];
+}
+
+const ACTIVITY_SUMMARY_QUERY = `
+  query($from: DateTime!, $to: DateTime!) {
+    viewer {
+      contributionsCollection(from: $from, to: $to) {
+        totalCommitContributions
+        totalRepositoriesWithContributedCommits
+        totalPullRequestContributions
+        totalRepositoryContributions
+      }
+    }
+  }
+`;
+
 const LEVELS: Record<string, number> = {
   NONE: 0,
   FIRST_QUARTILE: 1,
@@ -150,5 +186,51 @@ export async function fetchContributions(
     totalThisYear: yearResult.total,
     weeks: windowResult.weeks,
     fetchedAt: now.toISOString(),
+  };
+}
+
+/**
+ * Month-to-date activity counts (commits, PRs opened, repos created) from
+ * the same `contributionsCollection` field the heatmap already queries —
+ * its aggregate totals cover this without a separate REST /events call or
+ * any new OAuth scope.
+ */
+export async function fetchActivitySummary(
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<ActivitySummary> {
+  const now = new Date();
+  const periodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+
+  const response = await fetch("https://api.github.com/graphql", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      query: ACTIVITY_SUMMARY_QUERY,
+      variables: { from: periodStart.toISOString(), to: now.toISOString() },
+    }),
+    cache: "no-store",
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new Error(`GitHub GraphQL request failed: ${response.status}`);
+  }
+
+  const body = (await response.json()) as ActivitySummaryGraphQLResponse;
+  if (body.errors?.length) {
+    throw new Error(`GitHub GraphQL error: ${body.errors[0]?.message ?? "unknown"}`);
+  }
+
+  const collection = body.data?.viewer?.contributionsCollection;
+  return {
+    commitCount: collection?.totalCommitContributions ?? 0,
+    repositoriesWithCommits: collection?.totalRepositoriesWithContributedCommits ?? 0,
+    pullRequestsOpened: collection?.totalPullRequestContributions ?? 0,
+    repositoriesCreated: collection?.totalRepositoryContributions ?? 0,
+    periodStart: periodStart.toISOString(),
   };
 }

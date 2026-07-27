@@ -38,6 +38,9 @@ export type WidgetAction = (
 export interface WidgetActions {
   refresh: WidgetAction;
   updateSettings?: WidgetAction;
+  /** Hero-only: swaps just the quote, without a full refresh. Optional
+   *  since every other widget's render() ignores it. */
+  cycleQuote?: WidgetAction;
 }
 
 export interface WidgetRenderProps<TData, TSettings> {

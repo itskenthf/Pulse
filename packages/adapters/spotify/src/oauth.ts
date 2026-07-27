@@ -34,7 +34,12 @@ export function buildAuthorizeUrl(params: {
   return url.toString();
 }
 
-async function requestTokens(body: URLSearchParams, clientId: string, clientSecret: string) {
+async function requestTokens(
+  body: URLSearchParams,
+  clientId: string,
+  clientSecret: string,
+  signal?: AbortSignal,
+) {
   const response = await fetch(TOKEN_URL, {
     method: "POST",
     headers: {
@@ -42,6 +47,7 @@ async function requestTokens(body: URLSearchParams, clientId: string, clientSecr
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body,
+    signal,
   });
 
   if (!response.ok) {
@@ -61,6 +67,7 @@ export async function exchangeCodeForTokens(params: {
   redirectUri: string;
   clientId: string;
   clientSecret: string;
+  signal?: AbortSignal;
 }): Promise<SpotifyTokens> {
   return requestTokens(
     new URLSearchParams({
@@ -70,6 +77,7 @@ export async function exchangeCodeForTokens(params: {
     }),
     params.clientId,
     params.clientSecret,
+    params.signal,
   );
 }
 
@@ -77,6 +85,7 @@ export async function refreshAccessToken(params: {
   refreshToken: string;
   clientId: string;
   clientSecret: string;
+  signal?: AbortSignal;
 }): Promise<SpotifyTokens> {
   return requestTokens(
     new URLSearchParams({
@@ -85,12 +94,14 @@ export async function refreshAccessToken(params: {
     }),
     params.clientId,
     params.clientSecret,
+    params.signal,
   );
 }
 
-export async function fetchSpotifyProfileId(accessToken: string): Promise<string> {
+export async function fetchSpotifyProfileId(accessToken: string, signal?: AbortSignal): Promise<string> {
   const response = await fetch("https://api.spotify.com/v1/me", {
     headers: { Authorization: `Bearer ${accessToken}` },
+    signal,
   });
   if (!response.ok) {
     throw new Error(`Spotify profile request failed: ${response.status}`);

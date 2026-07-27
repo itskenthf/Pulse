@@ -44,13 +44,14 @@ function iconUrl(appId: number, iconHash: string): string {
 export async function fetchRecentlyPlayed(
   apiKey: string,
   steamId64: string,
+  signal?: AbortSignal,
 ): Promise<RecentlyPlayedGame[]> {
   const url = new URL("https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v1/");
   url.searchParams.set("key", apiKey);
   url.searchParams.set("steamid", steamId64);
   url.searchParams.set("format", "json");
 
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetch(url, { cache: "no-store", signal });
   if (!response.ok) {
     throw new Error(`Steam API request failed: ${response.status}`);
   }
@@ -87,6 +88,7 @@ interface OwnedGamesApiResponse {
 export async function fetchLastPlayedMap(
   apiKey: string,
   steamId64: string,
+  signal?: AbortSignal,
 ): Promise<Record<number, number>> {
   const url = new URL("https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/");
   url.searchParams.set("key", apiKey);
@@ -94,7 +96,7 @@ export async function fetchLastPlayedMap(
   url.searchParams.set("include_appinfo", "0");
   url.searchParams.set("format", "json");
 
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetch(url, { cache: "no-store", signal });
   if (!response.ok) {
     throw new Error(`Steam API request failed: ${response.status}`);
   }
@@ -135,6 +137,7 @@ export async function fetchAchievementSummary(
   apiKey: string,
   steamId64: string,
   appId: number,
+  signal?: AbortSignal,
 ): Promise<AchievementSummary | null> {
   const url = new URL("https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v1/");
   url.searchParams.set("key", apiKey);
@@ -143,7 +146,7 @@ export async function fetchAchievementSummary(
   url.searchParams.set("l10n_lang", "english");
   url.searchParams.set("format", "json");
 
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetch(url, { cache: "no-store", signal });
   if (!response.ok) {
     // Steam specifically returns 400 for "this game has no stats" — the
     // one non-ok status that's a real, expected non-error case. Anything

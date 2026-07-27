@@ -1,3 +1,4 @@
+import type { ZodType } from "zod";
 import { createServiceClient } from "./client";
 
 export interface CachedWidgetData<T> {
@@ -5,9 +6,18 @@ export interface CachedWidgetData<T> {
   updatedAt: string;
 }
 
+/**
+ * `schema` is optional so callers can adopt it incrementally per widget
+ * (see `Widget.dataSchema` in @pulse/sdk). Without it, this falls back to
+ * the previous behavior — a compile-time-only cast, no runtime check.
+ * With it, a cache row that no longer matches the widget's current data
+ * contract throws here instead of silently reaching render() typed as a
+ * shape it doesn't actually have.
+ */
 export async function readWidgetCache<T>(
   userId: string,
   widgetId: string,
+  schema?: ZodType<T>,
 ): Promise<CachedWidgetData<T> | null> {
   const supabase = createServiceClient();
   const { data, error } = await supabase
@@ -20,7 +30,18 @@ export async function readWidgetCache<T>(
   if (error) throw new Error(`Failed to read widget cache: ${error.message}`);
   if (!data) return null;
 
-  return { data: data.data as T, updatedAt: data.updated_at as string };
+  if (!schema) {
+    return { data: data.data as T, updatedAt: data.updated_at as string };
+  }
+
+  const parsed = schema.safeParse(data.data);
+  if (!parsed.success) {
+    throw new Error(
+      `Cached data for widget "${widgetId}" no longer matches its expected shape: ${parsed.error.message}`,
+    );
+  }
+
+  return { data: parsed.data, updatedAt: data.updated_at as string };
 }
 
 export async function writeWidgetCache(

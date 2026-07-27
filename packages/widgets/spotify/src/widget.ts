@@ -2,7 +2,7 @@ import type { Widget } from "@pulse/sdk";
 import { WIDGET_ID, WIDGET_NAME } from "./constants";
 import { SpotifyComponent } from "./component";
 import { fetchSpotifyData } from "./fetch";
-import type { SpotifyData } from "./types";
+import { spotifyDataSchema, type SpotifyData } from "./types";
 
 export const spotifyWidget: Widget<SpotifyData> = {
   id: WIDGET_ID,
@@ -10,6 +10,7 @@ export const spotifyWidget: Widget<SpotifyData> = {
   size: "md",
   refreshInterval: 10800, // 3h — matches Steam's "entertainment data" cadence
   fetchData: fetchSpotifyData,
+  dataSchema: spotifyDataSchema,
   render: SpotifyComponent,
   permissions: () => ["user-top-read"],
 };

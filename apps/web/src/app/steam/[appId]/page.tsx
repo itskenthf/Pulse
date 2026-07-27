@@ -7,6 +7,7 @@ import {
   CoverArt,
   formatHours,
   formatRelativeDay,
+  steamDataSchema,
   WIDGET_ID,
   type SteamData,
 } from "@pulse/widget-steam";
@@ -23,7 +24,7 @@ export default async function SteamGamePage({
     redirect("/");
   }
 
-  const cached = await readWidgetCache<SteamData>(session.user.id, WIDGET_ID);
+  const cached = await readWidgetCache<SteamData>(session.user.id, WIDGET_ID, steamDataSchema);
   const game = cached?.data.games.find((g) => String(g.appId) === appId);
   if (!game) {
     notFound();

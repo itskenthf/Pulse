@@ -11,10 +11,12 @@ export interface ErrorStateProps {
  * Rendered in place of a single widget that failed to load — each widget
  * is wrapped in its own WidgetErrorBoundary (see apps/web's WidgetGrid),
  * so one widget throwing shows this instead of taking down the rest of
- * the dashboard. No retry button: a widget that failed before rendering
- * has no WidgetMenu to offer one from — reloading the page is the
- * recovery path, same as any other widget's built-in refresh already
- * provides once it's rendering successfully.
+ * the dashboard. No retry button here: a widget that failed before
+ * rendering has no WidgetMenu to offer one from. WidgetErrorBoundary
+ * itself resets on the next server-driven re-render though (e.g. the
+ * global "Pulse" refresh, or any other widget's refresh, since all of
+ * them revalidate the whole page) — so this state clears on its own once
+ * fresh data renders successfully, not only on a full page reload.
  */
 export function ErrorState({ title = "Something went wrong", message }: ErrorStateProps) {
   return (

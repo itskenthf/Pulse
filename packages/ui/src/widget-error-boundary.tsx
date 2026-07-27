@@ -6,6 +6,17 @@ import { ErrorState } from "./error-state";
 export interface WidgetErrorBoundaryProps {
   name: string;
   children: ReactNode;
+  /** Any value that changes on the next server-driven re-render of this
+   *  boundary's children — callers pass a fresh value computed at the
+   *  wrapping Server Component's own render (e.g. `Date.now()`), since
+   *  `revalidatePath` re-executes Server Components but doesn't remount
+   *  this Client Component (it's keyed by the widget's static id, which
+   *  never changes). Without this, a boundary that ever caught an error
+   *  stayed in that state forever — even after a later refresh
+   *  successfully re-fetched the widget's data — because nothing told
+   *  the class instance to give the new children a fresh render attempt.
+   */
+  resetKey?: unknown;
 }
 
 interface WidgetErrorBoundaryState {
@@ -38,12 +49,18 @@ export class WidgetErrorBoundary extends Component<
     console.error(`Widget "${this.props.name}" failed to render`, error);
   }
 
+  componentDidUpdate(prevProps: WidgetErrorBoundaryProps): void {
+    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
+      this.setState({ hasError: false });
+    }
+  }
+
   render(): ReactNode {
     if (this.state.hasError) {
       return (
         <ErrorState
           title={`${this.props.name} is unavailable`}
-          message="Other widgets are unaffected — try refreshing the page."
+          message="Other widgets are unaffected — it'll retry on the next refresh."
         />
       );
     }

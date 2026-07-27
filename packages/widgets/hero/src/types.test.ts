@@ -8,6 +8,7 @@ const validData = {
   weatherLocation: "Kuching",
   weatherTip: "Stay hydrated out there.",
   quote: "Espresso yourself.",
+  recentQuotes: ["Espresso yourself.", "My blood type is coffee."],
   generatedAt: "2026-07-27T00:00:00Z",
 };
 

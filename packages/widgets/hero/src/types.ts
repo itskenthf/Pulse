@@ -23,6 +23,10 @@ export const heroDataSchema = z.object({
    *  conditions don't warrant one (see weather-tip.ts). */
   weatherTip: z.string().nullable(),
   quote: z.string(),
+  /** Last few quote texts shown, most recent first — widens the
+   *  click-to-cycle/refresh anti-repeat window past just the previous
+   *  quote. See pick-quote.ts. */
+  recentQuotes: z.array(z.string()),
   generatedAt: z.string(),
 });
 

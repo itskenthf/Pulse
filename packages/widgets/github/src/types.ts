@@ -18,12 +18,20 @@ const latestActivitySchema = z.object({
   committedAt: z.string(),
 });
 
+const activitySummarySchema = z.object({
+  commitCount: z.number(),
+  repositoriesWithCommits: z.number(),
+  pullRequestsOpened: z.number(),
+  repositoriesCreated: z.number(),
+  periodStart: z.string(),
+});
+
 /**
  * The widget's TData contract, and also its own runtime validator (see
  * `Widget.dataSchema` in @pulse/sdk) — kept in sync with
- * @pulse/adapter-github's `NormalizedContributions`/`LatestActivity` by
- * hand, since a plain TS interface can't be turned into a schema
- * automatically.
+ * @pulse/adapter-github's `NormalizedContributions`/`LatestActivity`/
+ * `ActivitySummary` by hand, since a plain TS interface can't be turned
+ * into a schema automatically.
  */
 export const githubDataSchema = z.object({
   totalToday: z.number(),
@@ -32,6 +40,7 @@ export const githubDataSchema = z.object({
   weeks: z.array(contributionWeekSchema),
   fetchedAt: z.string(),
   latestActivity: latestActivitySchema.nullable(),
+  activitySummary: activitySummarySchema.nullable(),
 });
 
 export type GitHubData = z.infer<typeof githubDataSchema>;

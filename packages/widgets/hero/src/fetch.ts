@@ -10,7 +10,7 @@ import {
   WIDGET_ID,
   WIDGET_NAME,
 } from "./constants";
-import { QUOTES } from "./quotes";
+import { pickQuote } from "./pick-quote";
 import type { HeroData, HeroPeriod } from "./types";
 import { weatherTip } from "./weather-tip";
 
@@ -68,14 +68,11 @@ export async function fetchHeroData(context: WidgetFetchContext): Promise<HeroDa
   );
 
   // Unvalidated on purpose: this is a soft best-effort read (avoid
-  // repeating the last quote), not data reaching render() — worst case on
+  // repeating recent quotes), not data reaching render() — worst case on
   // a shape mismatch is a repeated quote, not worth failing this whole
   // fetch over the way a validated read legitimately should elsewhere.
   const previous = await readWidgetCache<HeroData>(context.userId, WIDGET_ID);
-  const previousQuote = previous?.data.quote;
-  const candidates =
-    QUOTES.length > 1 ? QUOTES.filter((quote) => quote.text !== previousQuote) : QUOTES;
-  const quotePick = candidates[Math.floor(Math.random() * candidates.length)];
+  const quotePick = pickQuote(previous?.data.recentQuotes ?? []);
 
   return {
     greeting,
@@ -83,7 +80,8 @@ export async function fetchHeroData(context: WidgetFetchContext): Promise<HeroDa
     weatherSummary: `${Math.round(weather.temperatureC)}°C, ${weather.description}`,
     weatherLocation: WEATHER_LOCATION_LABEL,
     weatherTip: weatherTip(weather.weatherCode, weather.temperatureC),
-    quote: quotePick?.text ?? QUOTES[0]!.text,
+    quote: quotePick.text,
+    recentQuotes: quotePick.recentQuotes,
     generatedAt: now.toISOString(),
   };
 }

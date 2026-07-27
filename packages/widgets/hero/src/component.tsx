@@ -1,6 +1,7 @@
 import { Sparkles } from "lucide-react";
 import { RADIUS } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
+import { QuoteButton } from "./quote-button";
 import type { HeroData } from "./types";
 
 const HEADING_ID = "hero-heading";
@@ -23,10 +24,13 @@ const HEADING_ID = "hero-heading";
  * Deliberately renders no WidgetMenu: Hero has no settings, so its menu
  * held only a Refresh action that the global "Pulse" title refresh
  * (apps/web/src/app/refresh-all-title.tsx) already covers. Every other
- * widget keeps its own "⋯" menu for refreshing that one card alone.
+ * widget keeps its own "⋯" menu for refreshing that one card alone. The
+ * quote itself is a click target instead, via `actions.cycleQuote` (see
+ * quote-button.tsx and cycle-quote.ts).
  */
 export function HeroComponent({
   data,
+  actions,
 }: WidgetRenderProps<HeroData, Record<string, unknown>>) {
   return (
     <section aria-labelledby={HEADING_ID} className={`flex flex-col gap-5 ${RADIUS.hero}`}>
@@ -51,13 +55,17 @@ export function HeroComponent({
             {data.weatherTip ? ` — ${data.weatherTip}` : "."}
           </p>
 
-          <div className="flex items-start gap-2 text-sm text-[var(--color-neutral-600)] italic">
-            <Sparkles
-              className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-accent)]"
-              aria-hidden="true"
-            />
-            <p>&ldquo;{data.quote}&rdquo;</p>
-          </div>
+          {actions.cycleQuote ? (
+            <QuoteButton quote={data.quote} cycleAction={actions.cycleQuote} />
+          ) : (
+            <div className="flex items-start gap-2 text-sm text-[var(--color-neutral-600)] italic">
+              <Sparkles
+                className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-accent)]"
+                aria-hidden="true"
+              />
+              <p>&ldquo;{data.quote}&rdquo;</p>
+            </div>
+          )}
         </div>
       )}
     </section>

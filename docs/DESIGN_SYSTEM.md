@@ -339,10 +339,6 @@ Always maintain:
 - Keyboard navigation (unchanged from the Hardening pass)
 - Reduced-motion support (unchanged)
 
-Dark mode is a functional fallback, not an actively designed theme (see
-`docs/PROJECT_REFERENCE.md` §7) — it's a straight tonal inversion of the
-background/foreground/divider variables, not Classical's own dark ramp.
-
 ---
 
 # Performance

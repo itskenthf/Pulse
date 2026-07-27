@@ -211,10 +211,6 @@ A widget is only considered complete when it has:
   docs/DECISIONS.md; currently just Hero: name comes from the login
   profile, time zone/location are fixed constants)
 - Responsive layout
-- Dark mode support, kept functional as a fallback for OS/device dark mode
-  but not the actively designed theme as of the 2026-07-24 light-blue
-  redesign (see docs/DECISIONS.md) — light mode gets the design/polish
-  pass, dark mode just needs to not break
 - No TypeScript errors
 - No ESLint warnings
 

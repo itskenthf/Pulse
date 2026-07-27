@@ -1,0 +1,68 @@
+name: Test
+
+# Closes the "no automated tests" gap: this is what actually makes past
+# fixes stay fixed — a regression in a pushed change fails here instead of
+# only being caught by a human happening to re-check the same thing.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  # Placeholder values, never real secrets. next build's static analysis
+  # touches the auth route bundle even for pages that don't need a
+  # session, and next-auth's own config check needs *something* present —
+  # neither the build nor the E2E suite (signed-out pages only) ever
+  # actually reaches Supabase or GitHub with these.
+  SUPABASE_URL: http://localhost:54321
+  SUPABASE_SERVICE_ROLE_KEY: ci-placeholder-not-a-real-secret
+  NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-not-a-real-secret
+  AUTH_SECRET: ci-placeholder-not-a-real-secret
+  AUTH_GITHUB_ID: ci-placeholder
+  AUTH_GITHUB_SECRET: ci-placeholder-not-a-real-secret
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit & component tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Install Playwright's browser
+        run: pnpm --filter @pulse/web exec playwright install --with-deps chromium
+
+      - name: End-to-end tests
+        run: pnpm --filter @pulse/web test:e2e
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7

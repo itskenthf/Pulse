@@ -218,8 +218,10 @@ Before implementing any request:
 7. Verify visual consistency against the shared primitives.
 8. Run `pnpm lint`.
 9. Run `pnpm typecheck`.
-10. Run `pnpm build`.
-11. Summarize what changed.
+10. Run `pnpm test` (unit/component suite) and, for anything touching
+    `apps/web`'s pages/components, `pnpm --filter @pulse/web test:e2e`.
+11. Run `pnpm build`.
+12. Summarize what changed.
 
 ## Commands
 
@@ -228,6 +230,10 @@ Before implementing any request:
 - `pnpm build` — build all packages (Turborepo, respects the dependency graph)
 - `pnpm lint` — lint
 - `pnpm typecheck` — typecheck all packages
+- `pnpm test` — unit/component tests (Vitest) across every package that has them
+- `pnpm --filter @pulse/web test:e2e` — Playwright end-to-end tests against
+  a real running dev server (signed-out pages only — see
+  `apps/web/playwright.config.ts`'s comment for why)
 
 ## Definition of done
 
@@ -236,6 +242,9 @@ A widget or UI change is complete only when:
 - `pnpm build` passes
 - `pnpm lint` passes
 - `pnpm typecheck` passes
+- `pnpm test` passes (add/update unit tests for any new pure logic or
+  Zod schema; add/update a component test for any new shared `packages/ui`
+  primitive with real interaction behavior)
 - It's responsive at every supported breakpoint
 - It matches the design reference (no unexplained visual regressions)
 - No console errors, no hydration mismatches

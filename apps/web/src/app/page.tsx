@@ -41,8 +41,11 @@ function Navbar({ session }: { session: { user?: SessionUser } | null }) {
       {session?.user ? (
         <RefreshAllTitle />
       ) : (
-        <h1 className="font-heading text-lg font-semibold tracking-tight text-[var(--foreground)]">
-          Pulse
+        <h1>
+          {/* Local static asset at a small fixed size — next/image's
+              overhead isn't warranted, same call as profile-menu.tsx's avatar. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-pulse.png" alt="Pulse" className="h-8 w-auto dark:invert" />
         </h1>
       )}
 

@@ -1945,3 +1945,35 @@ When each of these becomes a real widget:
   once there's a real "current book" concept to build against.
 - **RSS**: sources Ken mentioned as examples — GitHub Blog, OpenAI, Apple,
   Steam.
+
+## 2026-07-27 — Replaced the "Pulse" wordmark with a logo mark; scoped hover-glow exception
+
+Ken provided his own artwork (a hand-drawn swash "P" signature mark, two
+crops: a full "Pulse" lockup on a cream backdrop, and the mark alone) and
+asked for the header text to be replaced by it everywhere, and for the
+same mark to become the mobile home-screen icon.
+
+- The cream backdrop was chroma-keyed out of the full lockup crop (uniform
+  `rgb(250,235,219)` background, so a straightforward distance-based alpha
+  key with a soft threshold band avoided a hard-edged cutout) and
+  tight-cropped to its ink bounding box, producing
+  `apps/web/public/logo-pulse.png` — used in place of the "Pulse" text in
+  both `RefreshAllTitle` (the signed-in, clickable refresh-all control) and
+  the signed-out header fallback in `apps/web/src/app/page.tsx`.
+- This is a flattened raster, not a themeable vector, so it can't follow
+  `--foreground` the way the text it replaces did. Applied `dark:invert` as
+  the pragmatic fix — the ink flips to light-on-dark instead of vanishing
+  against Pulse's dark background, satisfying "dark mode still functions
+  as a fallback" without needing a second hand-authored asset.
+- The mark-alone crop was used as-is (cream backdrop kept, since it's
+  Ken's own reference art and a fixed exported asset rather than a live
+  themed surface) to regenerate `apps/web/public/icons/icon-{192,512,180}.png`
+  and `apps/web/src/app/favicon.ico`.
+- **Hover/focus glow exception**: `docs/DESIGN_SYSTEM.md` bans blurred/
+  colored shadows and backdrop blur as a general rule. Ken explicitly asked
+  for a subtle glow on this mark since it doubles as the global-refresh
+  button and needed its own "this is clickable" cue beyond the existing
+  opacity dip. Implemented as a small, low-opacity gold `drop-shadow`
+  (`hover:drop-shadow-[0_0_6px_color-mix(in_srgb,var(--color-accent)_55%,transparent)]`),
+  gated on `motion-reduce`, applied only to this one control — not a
+  precedent for glow/blur elsewhere in the system.

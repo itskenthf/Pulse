@@ -45,7 +45,7 @@ function Navbar({ session }: { session: { user?: SessionUser } | null }) {
           {/* Local static asset at a small fixed size — next/image's
               overhead isn't warranted, same call as profile-menu.tsx's avatar. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-pulse.png" alt="Pulse" className="h-8 w-auto dark:invert" />
+          <img src="/logo-pulse.png" alt="Pulse" className="h-9 w-auto dark:invert" />
         </h1>
       )}
 
@@ -258,7 +258,7 @@ function WidgetGrid({ userId }: { userId: string }) {
   return (
     <>
       {heroWidgets.length > 0 && (
-        <div className="-mx-4 border-b border-[var(--color-divider)] px-4 pb-6 sm:-mx-6 sm:px-6 sm:pb-8">
+        <div className="-mx-4 -mt-4 border-b border-[var(--color-divider)] px-4 pt-2 pb-6 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-3 sm:pb-8">
           {heroWidgets.map((widget) => (
             <WidgetErrorBoundary key={widget.id} name={widget.name} resetKey={resetKey}>
               <Suspense fallback={<Skeleton variant="hero" />}>

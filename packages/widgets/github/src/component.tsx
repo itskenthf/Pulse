@@ -64,7 +64,9 @@ export function GitHubComponent({
             <Metric label="This week" value={data.totalThisWeek} />
             {streaks && <Metric label="Streak" value={streaks.current} suffix="d" />}
           </div>
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div
+            className={`flex flex-col gap-4 px-4 py-3 lg:flex-row lg:items-center lg:justify-between ${RADIUS.chip} ${GLASS_CHIP}`}
+          >
             <Heatmap weeks={data.weeks} />
             <ActivitySummaryBlock summary={data.activitySummary} />
           </div>

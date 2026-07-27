@@ -22,6 +22,11 @@ export interface WidgetFetchContext {
 
 export interface WidgetActionState {
   error?: string;
+  /** Hero-only: the new quote text after a `cycleQuote` action, returned
+   *  directly instead of via a page-wide `revalidatePath` so the click
+   *  updates instantly without forcing every other widget to re-read its
+   *  cache too. */
+  quote?: string;
 }
 
 /** A server action bindable to a `<form action>`, used with `useActionState`. */

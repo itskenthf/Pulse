@@ -35,7 +35,7 @@ export function SteamComponent({
     >
       {data ? (
         data.games.length > 0 ? (
-          <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {data.games.map((game) => (
               <a
                 key={game.appId}

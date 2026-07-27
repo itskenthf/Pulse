@@ -2085,3 +2085,43 @@ actually reaches Supabase or GitHub with them.
 Chromium-only (this sandbox and GitHub's standard runners both lack
 Safari/real iOS Safari access) — genuinely not closable from here, stays
 a named gap rather than a false "done."
+
+## 2026-07-27 — Logo size, sparkle hover, header/hero gap, clickable profile menu
+
+Four small polish requests from Ken, each with a real fork resolved via
+`AskUserQuestion` before writing code:
+
+- **Logo size**: `h-8` (32px) → `h-9` (36px), +12.5%, uniformly across
+  breakpoints rather than tiering it larger on desktop — "large on all
+  devices" read as "don't let it shrink relatively on mobile," not "grow
+  it further on desktop only."
+- **Sparkle hover/tap effect** (`refresh-all-title.tsx`): the existing
+  gold `drop-shadow` glow (already a documented one-off exception to
+  DESIGN_SYSTEM's no-blur rule) gets three small four-point sparkle SVGs
+  around the mark, fading in/out with a staggered delay. Driven by one
+  `active` boolean (hover *or* keyboard focus — kept unified for parity)
+  plus a separate `tapPulse` boolean that fires on click and clears itself
+  after 900ms, since touch devices never get a real hover state to key
+  off. `sparkling = active || tapPulse` so a real hover never gets cut
+  short by the tap timer.
+- **Header → hero gap**: `<main>`'s own `p-4 sm:p-6` was creating a
+  16–24px gap between the header's bottom border and the hero banner, on
+  top of the header's own padding, making the two feel disconnected. Gave
+  the hero wrapper `-mt-4 sm:-mt-6` (canceling main's top padding, the
+  same trick it already used horizontally via `-mx-4 sm:-mx-6`) plus a
+  smaller `pt-2 sm:pt-3` — roughly half the previous gap, not fully flush.
+  Only affects the hero; the widget grid below keeps its normal spacing.
+- **Clickable profile menu** (`profile-menu.tsx`): the name/email block is
+  now a `<Link href="/profile">` with a trailing chevron, instead of
+  inert text — kept the name/email visible rather than replacing it with
+  a generic "View Profile" label, so nothing previously visible at a
+  glance became hidden behind a click. Needed a real destination, so
+  added `apps/web/src/app/profile/page.tsx` — deliberately minimal (just
+  the same name/email/avatar the menu already showed, on their own page),
+  matching the Steam detail page's back-link + card pattern. The
+  Preferences/Appearance/Connected Services/API Keys sections Ken
+  mentioned are an explicit "later" — building them now would be
+  scaffolding ahead of need, not what was asked for this round. The
+  existing disabled "Settings" nav item in the menu was left untouched;
+  its relationship to the new profile page is a call for whenever it
+  actually gets built out, not this pass.

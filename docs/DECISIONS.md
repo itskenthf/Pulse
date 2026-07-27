@@ -2222,3 +2222,71 @@ Four independent, Ken-requested changes made in the same pass.
   or reads it (wired in `apps/web/src/app/page.tsx`'s `WidgetSlot`,
   matching `widget.id === HERO_WIDGET_ID`); every other widget's `actions`
   object leaves it `undefined`.
+
+## 2026-07-27 — Hero gap fix, GitHub layout/accuracy, Steam grid, profile card, instant quote
+
+Ken reviewed the previous round live and flagged five more issues from
+screenshots. Each root-caused before fixing:
+
+- **Hero whitespace**: the huge gap before the widget grid wasn't one
+  oversized value — the hero wrapper's own `pb-6 sm:pb-8` bottom padding
+  (`apps/web/src/app/page.tsx`) was *additionally* stacking with `<main>`'s
+  `gap-6`, since both are direct flex children of the same `<main>`.
+  Reduced to `pb-2 sm:pb-3`, mirroring the top-side fix from the prior
+  header→hero gap entry (roughly halved, not flush). Ken explicitly chose
+  this over adding calendar/focus/AI-summary/"continue where you left
+  off" content — none of that data exists in Pulse yet (no tasks/notes/AI
+  adapter), and building one now would be scaffolding ahead of need.
+- **Quote/icon misalignment**: `quote-button.tsx`'s `min-h-11` touch
+  target triggered native `<button>` vertical-centering behavior, pushing
+  the quote text below the Sparkles icon (which stayed top-aligned via
+  `items-start`/`mt-0.5`, tuned for the old plain `<p>` before the button
+  existed). Fixed by switching the row to `items-center` (letting the
+  icon center against the button's own centered text) and adding
+  `appearance-none` to the button to remove native rendering quirks.
+- **GitHub summary read as floating text**: the heatmap+summary row had
+  no shared surface — `justify-between` alone was pushing them apart with
+  nothing visually connecting them. Wrapped the row in the same chip
+  surface (`RADIUS.chip` + `GLASS_CHIP`) already used for the latest-
+  activity row two lines below, so heatmap and summary now read as one
+  bordered panel.
+- **GitHub "latest activity" showing a stale repo**: `activity.ts`'s
+  query took `first: 1` sorted by `PUSHED_AT`, then showed that repo's
+  default-branch commit. `pushedAt` tracks pushes to *any* branch, not
+  just the default one, so a repo with an old push to some other branch
+  could outrank a repo with a genuinely newer default-branch commit —
+  showing e.g. "Moodzic" instead of "Pulse". Fixed by widening the query
+  to `first: 10` and re-ranking the candidates by their actual
+  `defaultBranchRef.target.committedDate` instead of trusting GraphQL's
+  `pushedAt` ordering directly.
+- **Steam widget outweighing GitHub**: Steam's cover art rendered as a
+  tall single-column stack, which `page.tsx`'s `WIDGET_WEIGHT_OVERRIDE`
+  compensated for by weighting it equal to GitHub's `lg` — meaning Steam
+  visually dominated the flagship widget despite being a `size: "md"`
+  card. Changed the games list from `flex flex-col` to a `grid
+  grid-cols-1 sm:grid-cols-2` so two banners sit side-by-side on
+  desktop/tablet, then removed the `steam` entry from
+  `WIDGET_WEIGHT_OVERRIDE` entirely now that Steam's real height is back
+  in line with its declared `md` size.
+- **Profile menu/page showing the same identity twice**: the dropdown's
+  name/email block linked to a `/profile` page that rendered nothing
+  beyond that same name/email, just bigger. Replaced the `<Link
+  href="/profile">` with a `<details><summary>View Profile</summary>`
+  disclosure — the exact same in-place-expansion pattern `WidgetMenu`
+  already uses for its "Settings" row — showing a compact avatar/name/
+  email card inline in the dropdown instead of navigating anywhere.
+  Deleted `apps/web/src/app/profile/page.tsx` entirely; nothing else
+  referenced the route.
+- **Quote click felt slow, not instant**: `cycleHeroQuoteAction` was
+  calling `revalidatePath("/")` after cycling the quote — appropriate for
+  `refreshWidgetAction`/`refreshAllWidgetsAction` (which legitimately
+  change data other widgets reflect), but overkill for a quote-only swap,
+  since it forced every widget on the dashboard to re-render and re-read
+  its cache from Supabase just to show one new sentence. Removed the
+  `revalidatePath` call entirely; the action now returns the new quote
+  text directly in `WidgetActionState` (`quote?: string`, a Hero-only
+  field alongside the existing Hero-only `cycleQuote` action), and
+  `QuoteButton` renders `state.quote ?? quote` straight from
+  `useActionState` — no page-wide re-render needed. The cache write still
+  happens (so cron/full refreshes stay in sync), it's just no longer
+  gating what the click shows.

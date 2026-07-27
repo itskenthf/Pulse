@@ -22,12 +22,13 @@ export interface QuoteButtonProps {
  */
 export function QuoteButton({ quote, cycleAction }: QuoteButtonProps) {
   const [state, formAction, isPending] = useActionState(cycleAction, initialState);
+  const displayedQuote = state?.quote ?? quote;
 
   return (
     <form action={formAction}>
-      <div className="flex items-start gap-2 text-sm text-[var(--color-neutral-600)] italic">
+      <div className="flex items-center gap-2 text-sm text-[var(--color-neutral-600)] italic">
         <Sparkles
-          className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-accent)]"
+          className="h-4 w-4 shrink-0 text-[var(--color-accent)]"
           aria-hidden="true"
         />
         <button
@@ -35,11 +36,11 @@ export function QuoteButton({ quote, cycleAction }: QuoteButtonProps) {
           disabled={isPending}
           aria-label="Next quote"
           title="Click for another quote"
-          className={`min-h-11 cursor-pointer py-1 text-left underline decoration-transparent underline-offset-4 transition-[opacity,decoration-color] duration-200 ease-out hover:decoration-current disabled:cursor-default ${
+          className={`min-h-11 flex items-center appearance-none cursor-pointer py-1 text-left underline decoration-transparent underline-offset-4 transition-[opacity,decoration-color] duration-200 ease-out hover:decoration-current disabled:cursor-default ${
             isPending ? "opacity-60" : "opacity-100"
           }`}
         >
-          &ldquo;{quote}&rdquo;
+          &ldquo;{displayedQuote}&rdquo;
         </button>
       </div>
       {state?.error && (

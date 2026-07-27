@@ -106,9 +106,20 @@ async function WidgetSlot({ widget, userId }: { widget: Widget; userId: string }
   return <>{widget.render(props)}</>;
 }
 
-function WidgetCell({ widget, userId }: { widget: Widget; userId: string }) {
+function WidgetCell({
+  widget,
+  userId,
+  resetKey,
+}: {
+  widget: Widget;
+  userId: string;
+  /** See WidgetErrorBoundary's own doc comment — a value that changes on
+   *  every server-driven re-render, letting a previously-errored boundary
+   *  give the widget's new data an actual fresh render attempt. */
+  resetKey: unknown;
+}) {
   return (
-    <WidgetErrorBoundary name={widget.name}>
+    <WidgetErrorBoundary name={widget.name} resetKey={resetKey}>
       <Suspense fallback={<Skeleton />}>
         <WidgetSlot widget={widget} userId={userId} />
       </Suspense>
@@ -138,6 +149,16 @@ function WidgetCell({ widget, userId }: { widget: Widget; userId: string }) {
  * two comparably-tall columns (see docs/DECISIONS.md).
  */
 function WidgetGrid({ userId }: { userId: string }) {
+  // See WidgetCell's own resetKey comment for why this is called here —
+  // one value shared by every WidgetErrorBoundary in this render, hero
+  // included. Deliberate impure call: this is a Server Component,
+  // rendered exactly once per request/revalidation, not a Client
+  // Component subject to React's concurrent multi-render re-invocation
+  // (the actual risk the purity rule below guards against) — a value that
+  // legitimately differs between separate server renders is the entire
+  // point here, not an accidental side effect.
+  // eslint-disable-next-line react-hooks/purity
+  const resetKey = Date.now();
   const widgets = getAllWidgets();
   const heroWidgets = widgets.filter((widget) => widget.size === "hero");
   const nonHeroWidgets = widgets.filter((widget) => widget.size !== "hero");
@@ -145,7 +166,9 @@ function WidgetGrid({ userId }: { userId: string }) {
   const items: ColumnItem[] = [
     ...nonHeroWidgets.map((widget) => ({
       weight: WIDGET_WEIGHT_OVERRIDE[widget.id] ?? WIDGET_WEIGHT[widget.size],
-      node: <WidgetCell key={widget.id} widget={widget} userId={userId} />,
+      node: (
+        <WidgetCell key={widget.id} widget={widget} userId={userId} resetKey={resetKey} />
+      ),
     })),
     {
       weight: WIDGET_WEIGHT.sm,
@@ -234,7 +257,7 @@ function WidgetGrid({ userId }: { userId: string }) {
       {heroWidgets.length > 0 && (
         <div className="-mx-4 border-b border-[var(--color-divider)] px-4 pb-6 sm:-mx-6 sm:px-6 sm:pb-8">
           {heroWidgets.map((widget) => (
-            <WidgetErrorBoundary key={widget.id} name={widget.name}>
+            <WidgetErrorBoundary key={widget.id} name={widget.name} resetKey={resetKey}>
               <Suspense fallback={<Skeleton variant="hero" />}>
                 <WidgetSlot widget={widget} userId={userId} />
               </Suspense>

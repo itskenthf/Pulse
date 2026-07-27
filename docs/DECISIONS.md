@@ -2125,3 +2125,31 @@ Four small polish requests from Ken, each with a real fork resolved via
   existing disabled "Settings" nav item in the menu was left untouched;
   its relationship to the new profile page is a call for whenever it
   actually gets built out, not this pass.
+
+## 2026-07-27 — Logo hover redone (mask-recolor, no glow/sparkle), bigger at every breakpoint
+
+Ken tried the sparkle/glow treatment live and asked for something simpler:
+the wordmark itself should light up gold on hover, not glow behind it —
+and the logo still read as too small on desktop even after the previous
++12.5% bump, so it needed to grow further at every breakpoint, most of all
+on desktop.
+
+- **Removed** the three sparkle SVGs and the gold `drop-shadow` entirely
+  from `refresh-all-title.tsx`.
+- **New hover treatment**: the logo is no longer a plain `<img>` — it's a
+  `<span>` with a CSS `mask-image`/`-webkit-mask-image` pointing at the
+  same `/logo-pulse.png` (the mask only reads the source's alpha channel,
+  discarding its own baked-in ink color) and a `background-color` that
+  the mask paints with. Default `bg-[var(--foreground)]`, transitioning to
+  `bg-[var(--color-accent)]` (gold) on the same `active`/`tapPulse` state
+  the sparkle version used — hover/keyboard-focus sustains it, a tap gives
+  touch devices the same effect as a brief pulse. This is a genuine
+  improvement over the old `<img>` + `dark:invert` approach too: since
+  `--foreground` already flips per theme, the mask adapts to light/dark
+  automatically without the invert hack, and "light up" is now a literal
+  color change on the mark itself rather than an aura around it.
+- **Size**: `h-9` (36px, uniform) → responsive `h-10 sm:h-12 lg:h-16`
+  (40px → 48px → 64px), applied to both the clickable signed-in mark and
+  the static signed-out one. Confirmed via Playwright at 390px/1000px/
+  1280px widths that this doesn't reintroduce horizontal overflow or clip
+  against the header at any size.

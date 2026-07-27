@@ -45,7 +45,11 @@ function Navbar({ session }: { session: { user?: SessionUser } | null }) {
           {/* Local static asset at a small fixed size — next/image's
               overhead isn't warranted, same call as profile-menu.tsx's avatar. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-pulse.png" alt="Pulse" className="h-9 w-auto dark:invert" />
+          <img
+            src="/logo-pulse.png"
+            alt="Pulse"
+            className="h-10 w-auto dark:invert sm:h-12 lg:h-16"
+          />
         </h1>
       )}
 

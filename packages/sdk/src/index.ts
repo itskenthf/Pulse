@@ -6,5 +6,6 @@ export type {
   WidgetAction,
   WidgetActionState,
   WidgetActions,
+  MemoryEvent,
 } from "./widget";
 export { registerWidget, getWidget, getAllWidgets } from "./registry";

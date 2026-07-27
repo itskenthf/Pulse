@@ -1,6 +1,7 @@
 import type { Widget } from "@pulse/sdk";
 import { WIDGET_ID, WIDGET_NAME } from "./constants";
 import { SpotifyComponent } from "./component";
+import { deriveSpotifyMemories } from "./derive-memories";
 import { fetchSpotifyData } from "./fetch";
 import { spotifyDataSchema, type SpotifyData } from "./types";
 
@@ -13,4 +14,5 @@ export const spotifyWidget: Widget<SpotifyData> = {
   dataSchema: spotifyDataSchema,
   render: SpotifyComponent,
   permissions: () => ["user-top-read"],
+  deriveMemories: deriveSpotifyMemories,
 };

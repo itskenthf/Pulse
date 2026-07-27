@@ -1,14 +1,16 @@
 "use client";
 
 import { LogOut, User } from "lucide-react";
+import Link from "next/link";
 import { glassClass, RADIUS, SPRING_PRESS, useDismissableMenu } from "@pulse/ui";
 import { signOutAction } from "./actions/sign-out";
 
 const NAV_LINKS = [
-  { label: "Dashboard", active: true },
-  { label: "Tasks", active: false },
-  { label: "Notes", active: false },
-  { label: "Settings", active: false },
+  { label: "Dashboard", active: true, href: undefined },
+  { label: "Timeline", active: false, href: "/timeline" },
+  { label: "Tasks", active: false, href: undefined },
+  { label: "Notes", active: false, href: undefined },
+  { label: "Settings", active: false, href: undefined },
 ] as const;
 
 /**
@@ -114,16 +116,33 @@ export function ProfileMenu({
 
         <div className="my-1 border-t border-[var(--color-divider)]" />
 
-        {NAV_LINKS.map((link) =>
-          link.active ? (
-            <span
-              key={link.label}
-              aria-current="page"
-              className="flex min-h-11 items-center px-3 py-2 text-sm font-medium text-[var(--color-accent)]"
-            >
-              {link.label}
-            </span>
-          ) : (
+        {NAV_LINKS.map((link) => {
+          if (link.active) {
+            return (
+              <span
+                key={link.label}
+                aria-current="page"
+                className="flex min-h-11 items-center px-3 py-2 text-sm font-medium text-[var(--color-accent)]"
+              >
+                {link.label}
+              </span>
+            );
+          }
+
+          if (link.href) {
+            return (
+              <Link
+                key={link.label}
+                href={link.href}
+                onClick={close}
+                className="flex min-h-11 items-center px-3 py-2 text-sm text-[var(--foreground)] hover:bg-[color-mix(in_srgb,var(--color-accent)_8%,transparent)]"
+              >
+                {link.label}
+              </Link>
+            );
+          }
+
+          return (
             <span
               key={link.label}
               title="Coming soon"
@@ -131,8 +150,8 @@ export function ProfileMenu({
             >
               {link.label}
             </span>
-          ),
-        )}
+          );
+        })}
 
         <div className="my-1 border-t border-[var(--color-divider)]" />
 

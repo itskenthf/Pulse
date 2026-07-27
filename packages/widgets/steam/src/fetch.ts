@@ -28,17 +28,24 @@ export async function fetchSteamData(context: WidgetFetchContext): Promise<Steam
   // Only 2 games shown now, so a per-game achievements call is cheap;
   // last-played is one call for the whole library, not per game.
   //
-  // fetchAchievementSummary now throws on real failures (rate-limited,
-  // Steam outage) rather than treating them the same as "no
-  // achievements" — good for not silently mislabeling a transient
-  // problem as permanent, but it means one game's achievement call
-  // failing must not fail the whole widget refresh (which would also
-  // discard the already-successful recently-played/last-played data).
-  // Each call is caught individually so a transient failure only drops
-  // that one game's achievement data, logged so it's distinguishable
-  // from a real "no achievements" case in server logs.
+  // Both fetchLastPlayedMap and fetchAchievementSummary can throw on a
+  // real failure (rate-limited, Steam outage) — good for not silently
+  // mislabeling a transient problem as permanent data, but it means
+  // neither one's failure should fail the whole widget refresh, since
+  // that would also discard the already-successful recently-played
+  // games list fetched above. Both are caught individually so a
+  // transient failure only drops that one piece (last-played dates, or
+  // one game's achievements), logged so it's distinguishable from a
+  // real "no data" case in server logs. fetchRecentlyPlayed itself
+  // (above) is deliberately NOT caught the same way — without a base
+  // games list there's nothing left to show regardless, so letting that
+  // one propagate as a real widget-level error is the honest behavior,
+  // not something to paper over with a fake empty result.
   const [lastPlayedMap, achievementsList] = await Promise.all([
-    fetchLastPlayedMap(apiKey, settings.steamId64),
+    fetchLastPlayedMap(apiKey, settings.steamId64).catch((err) => {
+      console.error("Steam last-played fetch failed:", err);
+      return {} as Record<number, number>;
+    }),
     Promise.all(
       topGames.map((game) =>
         fetchAchievementSummary(apiKey, settings.steamId64, game.appId).catch((err) => {

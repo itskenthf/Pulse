@@ -3,6 +3,11 @@
 Full phase definitions and gates live in `docs/PROJECT_REFERENCE.md` §12
 and §18 — this doc tracks live status against them.
 
+The Memory/Timeline feature (event log → Timeline page → daily summaries
+→ semantic search → "Ask Pulse" assistant) has its own milestone track,
+independent of the Phase 0-4 numbering below — see
+`docs/MEMORY_ROADMAP.md`.
+
 ## Phase 0 — setup
 
 - [x] GitHub repo, monorepo tool decided (Turborepo — see `docs/DECISIONS.md`)

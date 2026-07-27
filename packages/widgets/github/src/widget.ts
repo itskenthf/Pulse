@@ -1,6 +1,7 @@
 import type { Widget } from "@pulse/sdk";
 import { WIDGET_ID, WIDGET_NAME } from "./constants";
 import { GitHubComponent } from "./component";
+import { deriveGitHubMemories } from "./derive-memories";
 import { fetchGitHubData } from "./fetch";
 import { githubDataSchema, type GitHubData } from "./types";
 
@@ -13,4 +14,5 @@ export const githubWidget: Widget<GitHubData> = {
   dataSchema: githubDataSchema,
   render: GitHubComponent,
   permissions: () => ["read:user"],
+  deriveMemories: deriveGitHubMemories,
 };

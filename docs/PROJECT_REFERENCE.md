@@ -229,6 +229,9 @@ user_widgets        (which widgets a user has enabled, layout/order/size)
 widget_settings     (per-user, per-widget config)
 widget_cache        (id, widget_id, user_id, json, updated_at)
 widget_events       (for the future event bus — not used in v1)
+memories            (id, user_id, source, title, description, metadata,
+                     created_at — Memory/Timeline feature, see
+                     docs/MEMORY_ROADMAP.md; distinct from widget_events)
 focus_sessions
 habits
 tasks

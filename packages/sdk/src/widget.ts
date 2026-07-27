@@ -55,6 +55,18 @@ export interface WidgetRenderProps<TData, TSettings> {
 }
 
 /**
+ * A memory-worthy change a widget's `deriveMemories` detected — the raw
+ * material for the Timeline page (docs/MEMORY_ROADMAP.md). `source`/
+ * `userId`/`id`/`createdAt` are filled in by the DB layer, not the
+ * widget — a widget only describes *what* happened.
+ */
+export interface MemoryEvent {
+  title: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+}
+
+/**
  * Contract every widget implements. The dashboard shell only ever depends
  * on this interface — never on a specific widget's internals.
  *
@@ -87,4 +99,18 @@ export interface Widget<TData = unknown, TSettings = Record<string, unknown>> {
   parseSettingsForm?(formData: FormData): TSettings;
   /** OAuth scopes or other permissions this widget requires. */
   permissions?(): string[];
+  /**
+   * Pure diff: given the previous cached data (null on first fetch) and
+   * the newly fetched data, return any memory-worthy events. No API
+   * calls, no side effects — same "pure function per widget package"
+   * pattern as pick-quote.ts/streaks.ts. Optional; widgets with nothing
+   * memory-worthy (e.g. Hero) simply don't implement it. Called by
+   * `refreshWidget` (apps/web/src/lib/refresh-widget.ts) on every
+   * refresh — diffing against the previous snapshot, rather than
+   * unconditionally logging on every fetch, is what keeps this from
+   * flooding the memories table with near-duplicate rows on every cron
+   * tick, and makes it naturally idempotent (a change already reflected
+   * in the cache won't re-fire next cycle).
+   */
+  deriveMemories?(previous: TData | null, next: TData): MemoryEvent[];
 }

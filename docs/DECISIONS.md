@@ -2153,3 +2153,72 @@ on desktop.
   the static signed-out one. Confirmed via Playwright at 390px/1000px/
   1280px widths that this doesn't reintroduce horizontal overflow or clip
   against the header at any size.
+
+## 2026-07-27 — Header/logo shrunk back to icon size, GitHub monthly summary, auto-refresh on return, quote variety
+
+Four independent, Ken-requested changes made in the same pass.
+
+- **Header/logo reverted to icon size**: the two prior size bumps above
+  (`h-8` → `h-9` → `h-10 sm:h-12 lg:h-16`) had made the header noticeably
+  taller, since `Navbar` (`apps/web/src/app/page.tsx`) has no fixed
+  height — it's just padding around whatever's tallest inside it. Ken
+  asked for the header back to a slim, icon-sized bar. Logo shrunk to
+  `h-6 sm:h-7` (24px/28px, dropping the `lg` bump) at both render sites
+  (`page.tsx`'s signed-out `<img>`, `refresh-all-title.tsx`'s signed-in
+  masked `<span>`), and the header's own `py-3` reduced to `py-2`. If a
+  future request wants the logo bigger again, this entry is why it was
+  taken back down — not an oversight to "fix."
+- **GitHub widget: condensed monthly activity summary**: Ken referenced
+  GitHub's profile "Contribution activity" feed and asked whether Pulse
+  could show something similar. Rather than reproducing GitHub's dense
+  itemized timeline (per-repo commit breakdowns, PR cards with comment
+  counts, expandable "N other pull requests" sections) — which would
+  fight the calm/considered design philosophy and add real adapter/UI
+  surface — built a condensed summary instead: a few non-zero highlight
+  lines ("N commits across M repositories", "N pull requests opened", "N
+  repositories created"), sourced from the same GitHub GraphQL
+  `contributionsCollection` aggregate fields the heatmap already queries
+  (`totalCommitContributions`, `totalRepositoriesWithContributedCommits`,
+  `totalPullRequestContributions`, `totalRepositoryContributions`) — no
+  new REST/events polling, no new OAuth scope. On desktop the summary
+  sits beside the heatmap (`lg:flex-row lg:justify-between` in
+  `component.tsx`) rather than below it, since the heatmap only runs
+  ~320px wide while the card is much wider — filling otherwise-empty
+  space instead of stacking. Below `lg` (tablet/mobile) it stacks
+  normally.
+- **Auto-refresh when the app becomes visible again**: Pulse has no
+  client-side data-fetching layer — the dashboard is a Server Component
+  reading `widget_cache`, refreshed server-side by cron every 30 minutes
+  (2026-07-20 entry) or by the logo's manual-refresh form submit. Nothing
+  previously refreshed on return to the app, so a mobile session left
+  backgrounded for an hour stayed stale until manually tapped. Added
+  `visibilitychange`/`window focus` listeners in `refresh-all-title.tsx`
+  that call `formRef.current?.requestSubmit()` (the same
+  `refreshAllWidgetsAction` the logo click already uses) when the app
+  becomes visible again — but only if at least 5 minutes have passed
+  since the last refresh (`AUTO_REFRESH_THRESHOLD_MS`). Chosen
+  deliberately over refreshing on every single return: every third-party
+  adapter (GitHub, Spotify, Steam, weather) has its own rate limit, and
+  the cron job already keeps data fresh in the background regardless of
+  client activity, so an unconditional trigger would mostly just repeat
+  work for no benefit.
+- **Quote variety + click-to-cycle** (Hero widget): the 30-quote list in
+  `packages/widgets/hero/src/quotes.ts` was already picked via genuine
+  `Math.random()`, but only excluded the *immediately previous* quote —
+  short A→B→A cycles were statistically unsurprising with that small a
+  list, which read as "it keeps repeating." Widened the exclusion window
+  to the last 5 shown quotes (`recentQuotes` added to `HeroData`, tracked
+  in the cache; selection logic extracted to `pick-quote.ts`, shared by
+  the normal 15-minute refresh and the new click handler below). Also
+  made the quote itself clickable to cycle on demand. Ken asked whether a
+  quote-only refresh would be faster than reusing the widget's full
+  refresh action — yes: `actions.refresh` re-runs all of `fetchHeroData`,
+  including a weather API call, on every click, while a dedicated
+  `cycleQuote` (`packages/widgets/hero/src/cycle-quote.ts`) only rewrites
+  the cached `quote`/`recentQuotes` fields, no weather call. Ken chose the
+  dedicated action for responsiveness on repeated clicks. This needed a
+  new optional `cycleQuote` field on the SDK's `WidgetActions` interface
+  (`packages/sdk/src/widget.ts`) — Hero is the only widget that populates
+  or reads it (wired in `apps/web/src/app/page.tsx`'s `WidgetSlot`,
+  matching `widget.id === HERO_WIDGET_ID`); every other widget's `actions`
+  object leaves it `undefined`.

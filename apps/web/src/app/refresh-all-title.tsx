@@ -1,10 +1,20 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import type { WidgetActionState } from "@pulse/sdk";
 import { refreshAllWidgetsAction } from "./actions/widgets";
 
 const initialState: WidgetActionState = {};
+
+/**
+ * Minimum time between visibility-triggered refreshes. Comfortably below
+ * the 30-minute cron interval (docs/DECISIONS.md) so returning to the app
+ * after a real gap catches up quickly, but well above a quick tab/app
+ * switch-and-back — every adapter here (GitHub, Spotify, Steam, weather)
+ * has its own rate limit, and the cron job already keeps data fresh in
+ * the background regardless of client activity.
+ */
+const AUTO_REFRESH_THRESHOLD_MS = 5 * 60 * 1000;
 
 const LOGO_MASK_STYLE = {
   maskImage: "url(/logo-pulse.png)",
@@ -41,9 +51,38 @@ export function RefreshAllTitle() {
   const [active, setActive] = useState(false);
   const [tapPulse, setTapPulse] = useState(false);
   const lit = active || tapPulse;
+  const formRef = useRef<HTMLFormElement>(null);
+  const lastRefreshRef = useRef(0);
+  const isPendingRef = useRef(isPending);
+
+  useEffect(() => {
+    isPendingRef.current = isPending;
+  }, [isPending]);
+
+  useEffect(() => {
+    lastRefreshRef.current = Date.now();
+  }, []);
+
+  useEffect(() => {
+    function maybeAutoRefresh() {
+      if (document.visibilityState !== "visible") return;
+      if (isPendingRef.current) return;
+      if (Date.now() - lastRefreshRef.current < AUTO_REFRESH_THRESHOLD_MS) return;
+
+      lastRefreshRef.current = Date.now();
+      formRef.current?.requestSubmit();
+    }
+
+    document.addEventListener("visibilitychange", maybeAutoRefresh);
+    window.addEventListener("focus", maybeAutoRefresh);
+    return () => {
+      document.removeEventListener("visibilitychange", maybeAutoRefresh);
+      window.removeEventListener("focus", maybeAutoRefresh);
+    };
+  }, []);
 
   return (
-    <form action={formAction}>
+    <form ref={formRef} action={formAction}>
       <h1>
         <button
           type="submit"
@@ -55,6 +94,7 @@ export function RefreshAllTitle() {
           onFocus={() => setActive(true)}
           onBlur={() => setActive(false)}
           onClick={() => {
+            lastRefreshRef.current = Date.now();
             setTapPulse(true);
             window.setTimeout(() => setTapPulse(false), 900);
           }}
@@ -65,7 +105,7 @@ export function RefreshAllTitle() {
           <span
             aria-hidden="true"
             style={LOGO_MASK_STYLE}
-            className={`inline-block aspect-[900/661] h-10 sm:h-12 lg:h-16 transition-colors duration-300 ease-out motion-reduce:transition-none ${
+            className={`inline-block aspect-[900/661] h-6 sm:h-7 transition-colors duration-300 ease-out motion-reduce:transition-none ${
               lit ? "bg-[var(--color-accent)]" : "bg-[var(--foreground)]"
             }`}
           />

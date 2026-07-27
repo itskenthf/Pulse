@@ -265,7 +265,7 @@ function WidgetGrid({ userId }: { userId: string }) {
   return (
     <>
       {heroWidgets.length > 0 && (
-        <div className="-mx-4 -mt-4 border-b border-[var(--color-divider)] px-4 pt-2 pb-6 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-3 sm:pb-8">
+        <div className="-mx-4 -mt-4 border-b border-[var(--color-divider)] px-4 pt-2 pb-2 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-3 sm:pb-3">
           {heroWidgets.map((widget) => (
             <WidgetErrorBoundary key={widget.id} name={widget.name} resetKey={resetKey}>
               <Suspense fallback={<Skeleton variant="hero" />}>
@@ -291,11 +291,11 @@ function WidgetGrid({ userId }: { userId: string }) {
  *  existing `size` field rather than a separate per-widget table. */
 const WIDGET_WEIGHT: Record<WidgetSize, number> = { sm: 1, md: 2, lg: 3, hero: 0 };
 
-/** Steam renders much taller than a typical "md" widget — two full
- *  16:9 cover-art tiles — so its `size` alone underestimates its real
- *  height and left a visible gap under its column-mate. Confirmed by
- *  screenshot, not guessed; see docs/DECISIONS.md. */
-const WIDGET_WEIGHT_OVERRIDE: Record<string, number> = { steam: WIDGET_WEIGHT.lg };
+/** No per-widget overrides today — Steam needed one when its cover art
+ *  rendered as a tall single-column stack (see docs/DECISIONS.md,
+ *  2026-07-25), but its 2-column grid (2026-07-27) brought its real
+ *  height back in line with its "md" size, so the override was removed. */
+const WIDGET_WEIGHT_OVERRIDE: Record<string, number> = {};
 
 interface ColumnItem {
   weight: number;

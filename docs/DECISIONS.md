@@ -2358,3 +2358,58 @@ drop the "dark mode as fallback" language, and `CLAUDE.md`'s definition
 of done (it referenced §7's dark-mode line directly). Pulse is light-only
 going forward — if dark mode is wanted again later, it should be a
 deliberate, actively-designed second theme, not a resurrected fallback.
+
+## 2026-07-29 — Pull-to-refresh, refresh-all latency, and a widget_cache race
+
+Ken reported the app feeling laggy (refresh-all and the `/tasks`/`/notes`
+"view all" pages taking a few seconds) plus newly-added tasks/notes
+occasionally disappearing and reappearing after a reload, and separately
+asked for mobile pull-to-refresh. Traced all three:
+
+- **Pull-to-refresh**: no gesture library existed anywhere in the
+  monorepo, and the touch math needed (track `touchstart` Y only from
+  `window.scrollY === 0`, measure `touchmove` delta, fire on `touchend`
+  past a threshold) is small — hand-rolled as
+  `packages/ui/src/use-pull-to-refresh.ts` rather than adding a
+  dependency, following `use-dismissable-menu.ts`'s existing hook
+  pattern. Wired into `apps/web/src/app/refresh-all-title.tsx` via the
+  same `formRef.current?.requestSubmit()` call `maybeAutoRefresh` already
+  used, so no action-calling logic is duplicated. Added
+  `overscroll-behavior-y: contain` to `body` in `globals.css` so the
+  browser's own native pull-to-reload doesn't fire alongside it.
+- **Refresh latency**: `apps/web/src/lib/refresh-widget.ts`'s
+  `refreshWidget` awaited `readWidgetCache` and `widget.fetchData`
+  sequentially, even though `readWidgetCache`'s result (`previous`) isn't
+  used until after `fetchData` resolves (only for `deriveMemories`).
+  Changed to `Promise.all([...])` — a needless serial round trip removed
+  from every widget's refresh, on top of `refreshAllWidgetsAction`'s
+  existing (and already correct) `Promise.allSettled` across widgets.
+- **The disappear/reappear bug**: `writeWidgetCache`
+  (`packages/database/src/widget-cache.ts`) was a blind last-write-wins
+  `upsert`. `refreshWidget(TASKS_WIDGET_ID, userId)` for the same user can
+  run concurrently from independent triggers that race each other — a
+  user's own post-mutation refresh (`apps/web/src/app/actions/tasks.ts`),
+  the cron scheduler (every 30 min), and `refreshAllWidgetsAction`'s
+  auto-trigger on tab focus (`RefreshAllTitle`'s `maybeAutoRefresh`,
+  every 5+ min). If a background refresh read `tasks` *before* a user's
+  insert committed but its cache write landed *after* the user's own
+  write, it silently overwrote the fresher cache row with a stale one —
+  the new task vanished until the next refresh cycle re-wrote current
+  data. Same class of bug `accounts.ts`'s
+  `updateProviderAccountTokenIfCurrent` already guards against for OAuth
+  token refreshes; applied the same compare-and-swap idea to
+  `writeWidgetCache` via a new optional `readAsOf` parameter — the caller
+  passes the time it started reading its source of truth, and the write
+  only applies if the existing row is older than that, falling back to an
+  `ignoreDuplicates` insert otherwise so a fresher concurrent write is
+  never clobbered. `refreshWidget` now passes this; callers with no
+  meaningful read time to guard (e.g. hero's `cycleQuote`) can omit it and
+  keep the previous unconditional-upsert behavior.
+- **`/tasks`/`/notes` page latency**: traced to `auth()`'s
+  `session: { strategy: "database" }` (`packages/auth/src/config.ts`)
+  doing a real Supabase session-lookup round trip on every page/action
+  call, not a cheap JWT decode. This is an existing, intentional
+  architecture choice used everywhere in the app already — left alone
+  here; switching session strategy would be a real architectural change
+  warranting its own discussion, not a silent fix folded into a
+  performance pass.

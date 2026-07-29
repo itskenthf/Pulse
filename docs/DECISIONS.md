@@ -2413,3 +2413,30 @@ asked for mobile pull-to-refresh. Traced all three:
   here; switching session strategy would be a real architectural change
   warranting its own discussion, not a silent fix folded into a
   performance pass.
+
+## 2026-07-29 — `apps/web` gets its own test suite
+
+Asked for an overall stability assessment ahead of adding more widgets.
+The biggest concrete gap: every widget package and `packages/ui`/
+`packages/database` have Vitest unit tests, but `apps/web` itself — the
+dashboard shell most likely to break as widgets are added (column-
+balancing layout math, every server action) — had none, only Playwright
+e2e for signed-out pages.
+
+Added `apps/web`'s own `test` script (`vitest run`, `apps/web/vitest.config.ts`,
+node environment, `@/*` alias resolved manually since Vitest doesn't read
+`tsconfig.json`'s `paths`) and two suites:
+
+- `apps/web/src/lib/balance-columns.test.tsx` — extracted `balanceColumns`
+  (and its `ColumnItem`/`WIDGET_WEIGHT`/`WIDGET_WEIGHT_OVERRIDE`
+  companions) out of `page.tsx` into their own module so this pure layout
+  math is testable without pulling in `page.tsx`'s Server Component tree
+  (auth, Supabase clients, widget registration side effects). `page.tsx`
+  now just imports it — no behavior change, pure extraction.
+- `apps/web/src/app/actions/tasks.test.ts` — covers `addTaskAction`/
+  `toggleTaskAction`/`deleteTaskAction`'s auth guard, validation, the
+  success path (DB write → `refreshWidget` → `revalidatePath`), and error
+  surfacing, mocking `@/auth`, `@pulse/database`, `@/lib/refresh-widget`,
+  and `next/cache` the same way `packages/database`'s tests mock
+  `./client`. Notes/widgets actions don't have their own test files yet —
+  same pattern, add as a follow-up rather than in one large sweep.

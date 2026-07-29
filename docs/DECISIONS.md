@@ -2413,3 +2413,41 @@ asked for mobile pull-to-refresh. Traced all three:
   here; switching session strategy would be a real architectural change
   warranting its own discussion, not a silent fix folded into a
   performance pass.
+
+## 2026-07-29 — `apps/web` gets its own test suite
+
+Asked for an overall stability assessment ahead of adding more widgets.
+The biggest concrete gap: every widget package and `packages/ui`/
+`packages/database` have Vitest unit tests, but `apps/web` itself — the
+dashboard shell most likely to break as widgets are added (column-
+balancing layout math, every server action) — had none, only Playwright
+e2e for signed-out pages.
+
+Added `apps/web`'s own `test` script (`vitest run`, `apps/web/vitest.config.ts`,
+node environment, `@/*` alias resolved manually since Vitest doesn't read
+`tsconfig.json`'s `paths`) and two suites:
+
+- `apps/web/src/lib/balance-columns.test.tsx` — extracted `balanceColumns`
+  (and its `ColumnItem`/`WIDGET_WEIGHT`/`WIDGET_WEIGHT_OVERRIDE`
+  companions) out of `page.tsx` into their own module so this pure layout
+  math is testable without pulling in `page.tsx`'s Server Component tree
+  (auth, Supabase clients, widget registration side effects). `page.tsx`
+  now just imports it — no behavior change, pure extraction.
+- `apps/web/src/app/actions/tasks.test.ts` — covers `addTaskAction`/
+  `toggleTaskAction`/`deleteTaskAction`'s auth guard, validation, the
+  success path (DB write → `refreshWidget` → `revalidatePath`), and error
+  surfacing, mocking `@/auth`, `@pulse/database`, `@/lib/refresh-widget`,
+  and `next/cache` the same way `packages/database`'s tests mock
+  `./client`.
+
+Follow-up pass added the remaining actions/lib coverage using the same
+mocking pattern: `actions/notes.test.ts`, `actions/hero.test.ts`,
+`actions/widgets.test.ts` (`refreshWidgetAction`/`updateWidgetSettingsAction`,
+plus `refreshAllWidgetsAction`'s per-widget `"{name}: {reason}"` error
+aggregation and its `Promise.allSettled` isolation — the exact behavior
+central to the disappearing-task investigation), and
+`lib/refresh-widget.test.ts` (the `Promise.all` concurrency + `readAsOf`
+guard from the widget_cache race fix, `deriveMemories` wiring, and that a
+failing memory write never fails the refresh itself). `apps/web` now has
+45 unit tests across 6 files, on top of its existing signed-out Playwright
+e2e suite.

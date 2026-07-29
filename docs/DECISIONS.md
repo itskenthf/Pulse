@@ -2438,5 +2438,16 @@ node environment, `@/*` alias resolved manually since Vitest doesn't read
   success path (DB write → `refreshWidget` → `revalidatePath`), and error
   surfacing, mocking `@/auth`, `@pulse/database`, `@/lib/refresh-widget`,
   and `next/cache` the same way `packages/database`'s tests mock
-  `./client`. Notes/widgets actions don't have their own test files yet —
-  same pattern, add as a follow-up rather than in one large sweep.
+  `./client`.
+
+Follow-up pass added the remaining actions/lib coverage using the same
+mocking pattern: `actions/notes.test.ts`, `actions/hero.test.ts`,
+`actions/widgets.test.ts` (`refreshWidgetAction`/`updateWidgetSettingsAction`,
+plus `refreshAllWidgetsAction`'s per-widget `"{name}: {reason}"` error
+aggregation and its `Promise.allSettled` isolation — the exact behavior
+central to the disappearing-task investigation), and
+`lib/refresh-widget.test.ts` (the `Promise.all` concurrency + `readAsOf`
+guard from the widget_cache race fix, `deriveMemories` wiring, and that a
+failing memory write never fails the refresh itself). `apps/web` now has
+45 unit tests across 6 files, on top of its existing signed-out Playwright
+e2e suite.

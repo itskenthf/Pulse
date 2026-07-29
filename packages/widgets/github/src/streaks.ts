@@ -2,15 +2,24 @@ import type { ContributionWeek } from "@pulse/adapter-github";
 
 /**
  * Current + longest streak, computed from the same daily data the heatmap
- * already renders — no extra API call. Bounded to the fetched heatmap
- * window (see constants.ts's HEATMAP_WEEKS), so "longest" reflects that
- * window, not necessarily all-time.
+ * already renders — no extra API call. `weeks` now spans the full
+ * calendar year (see @pulse/adapter-github's fetchContributions), padded
+ * with zero-count days after today — those must be excluded before
+ * running this, or a future day's guaranteed-zero count would look like
+ * "today hasn't happened yet" no matter how far in the future it is.
+ * `today` is injectable (defaults to the real current time) so this stays
+ * a pure, easily-tested function rather than reaching for `new Date()`
+ * internally.
  */
-export function computeStreaks(weeks: ContributionWeek[]): {
+export function computeStreaks(
+  weeks: ContributionWeek[],
+  today: Date = new Date(),
+): {
   current: number;
   longest: number;
 } {
-  const days = weeks.flatMap((week) => week.days);
+  const todayStr = today.toISOString().slice(0, 10);
+  const days = weeks.flatMap((week) => week.days).filter((day) => day.date <= todayStr);
 
   let longest = 0;
   let running = 0;

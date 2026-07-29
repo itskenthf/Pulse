@@ -64,10 +64,12 @@ export function GitHubComponent({
             <Metric label="This week" value={data.totalThisWeek} />
             {streaks && <Metric label="Streak" value={streaks.current} suffix="d" />}
           </div>
-          <div
-            className={`flex flex-col gap-4 px-4 py-3 lg:flex-row lg:items-center lg:justify-between ${RADIUS.chip} ${GLASS_CHIP}`}
-          >
-            <Heatmap weeks={data.weeks} />
+          <div className={`flex flex-col gap-4 px-4 py-3 ${RADIUS.chip} ${GLASS_CHIP}`}>
+            <Heatmap
+              weeks={data.weeks}
+              totalThisYear={data.totalThisYear}
+              year={new Date(data.fetchedAt).getUTCFullYear()}
+            />
             <ActivitySummaryBlock summary={data.activitySummary} />
           </div>
           {data.latestActivity && (

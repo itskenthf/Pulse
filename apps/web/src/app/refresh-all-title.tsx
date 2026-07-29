@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import type { WidgetActionState } from "@pulse/sdk";
+import { usePullToRefresh } from "@pulse/ui";
 import { refreshAllWidgetsAction } from "./actions/widgets";
 
 const initialState: WidgetActionState = {};
@@ -81,8 +82,30 @@ export function RefreshAllTitle() {
     };
   }, []);
 
+  // Mobile pull-to-refresh — same trigger as a manual logo tap
+  // (formRef.current?.requestSubmit()), just gesture-driven instead of
+  // click-driven. See packages/ui/src/use-pull-to-refresh.ts.
+  const { pullDistance, armed } = usePullToRefresh({
+    onRefresh: () => {
+      lastRefreshRef.current = Date.now();
+      formRef.current?.requestSubmit();
+    },
+    pending: isPending,
+  });
+
   return (
     <form ref={formRef} action={formAction}>
+      {pullDistance > 0 && (
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none fixed inset-x-0 top-0 z-30 flex justify-center pt-2 text-xs transition-opacity ${
+            armed ? "text-[var(--color-accent)]" : "text-[var(--color-neutral-500)]"
+          }`}
+          style={{ opacity: Math.min(pullDistance / 70, 1) }}
+        >
+          {armed ? "Release to refresh" : "Pull to refresh"}
+        </div>
+      )}
       <h1>
         <button
           type="submit"

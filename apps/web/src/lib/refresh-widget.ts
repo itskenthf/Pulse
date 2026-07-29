@@ -31,10 +31,18 @@ export async function refreshWidget(widgetId: string, userId: string): Promise<v
   const widget = getWidget(widgetId);
   if (!widget) throw new Error(`Unknown widget "${widgetId}"`);
 
-  const previous = await readWidgetCache(userId, widgetId, widget.dataSchema);
-  const data = await widget.fetchData({ userId, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+  // Captured before either read starts — see writeWidgetCache's readAsOf
+  // doc comment for why this guards against a concurrent stale write.
+  const readAsOf = new Date().toISOString();
+  // `previous` (used below for deriveMemories) doesn't depend on
+  // fetchData's result or vice versa — reading both concurrently instead
+  // of sequentially roughly halves this function's own latency.
+  const [previous, data] = await Promise.all([
+    readWidgetCache(userId, widgetId, widget.dataSchema),
+    widget.fetchData({ userId, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) }),
+  ]);
 
-  await writeWidgetCache(userId, widgetId, data);
+  await writeWidgetCache(userId, widgetId, data, readAsOf);
 
   const events = widget.deriveMemories?.(previous?.data ?? null, data) ?? [];
   if (events.length > 0) {

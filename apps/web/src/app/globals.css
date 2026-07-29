@@ -50,17 +50,6 @@
   --font-body: var(--font-lora);
 }
 
-/* Dark mode is a fallback, not an actively designed theme (see
-   docs/PROJECT_REFERENCE.md §7) — a straight tonal inversion that keeps the
-   accent legible is enough; it doesn't need Classical's own ramp. */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #18140f;
-    --foreground: #ededea;
-    --color-divider: color-mix(in srgb, #ededea 16%, transparent);
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);

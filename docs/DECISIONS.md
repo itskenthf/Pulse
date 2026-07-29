@@ -2334,3 +2334,27 @@ sessions ≥15 min) — plus a Timeline page (`apps/web/src/app/timeline/
 page.tsx`) grouping events into Today/Yesterday/Last Week/by-month,
 linked from the profile menu. Hero deliberately has no `deriveMemories`;
 greeting/weather/quote aren't memory-worthy content.
+
+## 2026-07-27 — Dark mode removed entirely
+
+The 2026-07-24 entry ("Dark mode.") deliberately kept a `dark:` fallback
+(a straight tonal inversion via `prefers-color-scheme`, amending
+reference doc §7 to mean "doesn't break," not "actively designed") rather
+than deleting it outright. Ken has now asked for it to be removed
+completely — that earlier decision is superseded, not an oversight if a
+future reader finds no dark-mode code left.
+
+Removed: the `@media (prefers-color-scheme: dark)` block in
+`apps/web/src/app/globals.css` (the only place dark-mode CSS variables
+were defined), and every `dark:*` Tailwind class across `apps/web`,
+`packages/ui`, and `packages/widgets/hero` (~10 files, ~15 occurrences —
+plain deletions, no logic changes since removing a `dark:` variant just
+leaves the light-mode class as the only one). There was never a
+`next-themes`/`ThemeProvider`/manual toggle to also remove — dark mode
+was OS-preference-only.
+
+Updated `docs/PROJECT_REFERENCE.md` §7 and `docs/DESIGN_SYSTEM.md` to
+drop the "dark mode as fallback" language, and `CLAUDE.md`'s definition
+of done (it referenced §7's dark-mode line directly). Pulse is light-only
+going forward — if dark mode is wanted again later, it should be a
+deliberate, actively-designed second theme, not a resurrected fallback.

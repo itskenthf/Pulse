@@ -6,6 +6,10 @@ export { ensureWidgetRegistered } from "./widget-registry";
 export { listUserIds, readUserName } from "./users";
 export { writeMemories, listMemories } from "./memories";
 export type { Memory } from "./memories";
+export { listTasks, createTask, setTaskCompleted, deleteTask } from "./tasks";
+export type { Task } from "./tasks";
+export { listNotes, createNote, updateNote, deleteNote } from "./notes";
+export type { Note } from "./notes";
 export {
   readProviderAccessToken,
   readProviderAccount,

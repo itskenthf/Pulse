@@ -44,7 +44,7 @@ export function QuoteButton({ quote, cycleAction }: QuoteButtonProps) {
         </button>
       </div>
       {state?.error && (
-        <p className="mt-1 text-xs text-red-600 dark:text-red-400">{state.error}</p>
+        <p className="mt-1 text-xs text-red-600">{state.error}</p>
       )}
     </form>
   );

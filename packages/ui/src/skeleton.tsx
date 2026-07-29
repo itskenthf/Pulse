@@ -11,7 +11,7 @@ export interface SkeletonProps {
   variant?: "hero" | "card";
 }
 
-const PULSE_BLOCK = "animate-pulse motion-reduce:animate-none rounded-xl bg-zinc-950/10 dark:bg-white/10";
+const PULSE_BLOCK = "animate-pulse motion-reduce:animate-none rounded-xl bg-zinc-950/10";
 
 /** Suspense fallback shown while a widget's cache read is in flight —
  *  lets other widgets stream in without waiting on the slowest one. */

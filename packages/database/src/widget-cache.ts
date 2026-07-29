@@ -44,18 +44,66 @@ export async function readWidgetCache<T>(
   return { data: parsed.data, updatedAt: data.updated_at as string };
 }
 
+/**
+ * `readAsOf`, when given, guards against a stale concurrent write clobbering
+ * a fresher one — the same compare-and-swap idea as
+ * `updateProviderAccountTokenIfCurrent` (accounts.ts), applied to
+ * widget_cache. Two overlapping `refreshWidget` calls for the same
+ * user/widget (e.g. the cron scheduler and a user's own post-mutation
+ * refresh landing close together) can otherwise race: whichever write's
+ * network round trip lands last in Postgres wins outright, even if it read
+ * its data *before* the other call's write, silently reverting a newer
+ * result to an older one (see docs/DECISIONS.md — this is how a just-added
+ * task/note could vanish until the next refresh cycle).
+ *
+ * Passing `readAsOf` (the time this call started reading its source of
+ * truth, before any external fetch) makes the write conditional: it only
+ * overwrites an existing row if that row is *older* than `readAsOf` — i.e.
+ * nothing fresher has landed since this call started. If a fresher row
+ * already exists, the write is silently skipped rather than overwriting it.
+ * Callers with no meaningful "read time" to guard against (e.g. quote
+ * cycling, which reads and writes within the same short call) can omit it
+ * and get the previous unconditional upsert behavior.
+ */
 export async function writeWidgetCache(
   userId: string,
   widgetId: string,
   data: unknown,
+  readAsOf?: string,
 ): Promise<void> {
   const supabase = createServiceClient();
-  const { error } = await supabase
+  const payload = { data, updated_at: new Date().toISOString() };
+
+  if (!readAsOf) {
+    const { error } = await supabase
+      .from("widget_cache")
+      .upsert({ user_id: userId, widget_id: widgetId, ...payload }, { onConflict: "user_id,widget_id" });
+
+    if (error) throw new Error(`Failed to write widget cache: ${error.message}`);
+    return;
+  }
+
+  const { data: updated, error: updateError } = await supabase
+    .from("widget_cache")
+    .update(payload)
+    .eq("user_id", userId)
+    .eq("widget_id", widgetId)
+    .lt("updated_at", readAsOf)
+    .select("user_id");
+
+  if (updateError) throw new Error(`Failed to write widget cache: ${updateError.message}`);
+  if ((updated?.length ?? 0) > 0) return;
+
+  // No existing row was older than readAsOf — either there's no row yet
+  // (first write for this widget), or a fresher write already landed since
+  // this call started reading. `ignoreDuplicates` makes the insert a no-op
+  // in the latter case instead of overwriting that fresher row.
+  const { error: insertError } = await supabase
     .from("widget_cache")
     .upsert(
-      { user_id: userId, widget_id: widgetId, data, updated_at: new Date().toISOString() },
-      { onConflict: "user_id,widget_id" },
+      { user_id: userId, widget_id: widgetId, ...payload },
+      { onConflict: "user_id,widget_id", ignoreDuplicates: true },
     );
 
-  if (error) throw new Error(`Failed to write widget cache: ${error.message}`);
+  if (insertError) throw new Error(`Failed to write widget cache: ${insertError.message}`);
 }

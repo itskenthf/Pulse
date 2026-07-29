@@ -17,5 +17,7 @@ export { Metric } from "./metric";
 export type { MetricProps } from "./metric";
 export { useDismissableMenu } from "./use-dismissable-menu";
 export type { UseDismissableMenuResult } from "./use-dismissable-menu";
+export { usePullToRefresh } from "./use-pull-to-refresh";
+export type { UsePullToRefreshOptions, UsePullToRefreshResult } from "./use-pull-to-refresh";
 export { EmptyState } from "./empty-state";
 export type { EmptyStateProps } from "./empty-state";

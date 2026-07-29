@@ -13,7 +13,9 @@ export interface NormalizedContributions {
   totalToday: number;
   totalThisWeek: number;
   totalThisYear: number;
-  /** Oldest → newest. Only the requested window, not the full year. */
+  /** Oldest → newest, the full calendar year (Jan 1–Dec 31 UTC). Days
+   *  after today are included with count 0 / level 0 — GitHub returns
+   *  these directly rather than Pulse needing to pad the array itself. */
   weeks: ContributionWeek[];
   fetchedAt: string;
 }
@@ -147,44 +149,51 @@ async function queryCalendar(
 }
 
 /**
- * Two calendar queries: a ~12-week window for the heatmap and this-week/
- * today numbers, and a year-to-date window for the yearly total. GitHub
- * caps each query's range at one year.
+ * A single calendar query spanning the whole current year (Jan 1–Dec 31
+ * UTC) supplies everything: the full heatmap, the yearly total, and (by
+ * inspecting the data itself) today/this-week — no separate windowed
+ * query needed. This used to be two parallel queries (a trailing window
+ * for the heatmap/today/this-week, plus a year-to-date query whose
+ * per-day data was discarded and only its total kept) — one full-year
+ * query removes a whole request/response round trip and GitHub API
+ * rate-limit unit per refresh, on top of also being the data a full-year
+ * heatmap needs. GitHub caps a single query's range at one year, which a
+ * calendar year fits exactly.
  */
 export async function fetchContributions(
   accessToken: string,
-  heatmapWeeks: number,
   signal?: AbortSignal,
 ): Promise<NormalizedContributions> {
   const now = new Date();
-  const windowStart = new Date(now);
-  windowStart.setDate(windowStart.getDate() - heatmapWeeks * 7);
   const yearStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+  const yearEnd = new Date(Date.UTC(now.getUTCFullYear(), 11, 31, 23, 59, 59));
 
-  const [windowResult, yearResult] = await Promise.all([
-    queryCalendar(accessToken, windowStart, now, signal),
-    queryCalendar(accessToken, yearStart, now, signal),
-  ]);
+  const yearResult = await queryCalendar(accessToken, yearStart, yearEnd, signal);
+  const allDays = yearResult.weeks.flatMap((week) => week.days);
 
-  // "Today" comes from GitHub's own last returned day, not a UTC date
-  // string computed here — GitHub buckets contribution days by the
-  // viewer's *profile* timezone, not UTC, so matching against
-  // now.toISOString()'s UTC date could miss/misattribute "today" for
-  // several hours around midnight depending on the offset between UTC
-  // and the viewer's timezone. `allDays` is oldest → newest (see
-  // NormalizedContributions's doc comment), so the last entry is
-  // GitHub's own answer to "what day is today for this viewer."
-  const allDays = windowResult.weeks.flatMap((week) => week.days);
-  const totalToday = allDays[allDays.length - 1]?.count ?? 0;
+  // "Today" comes from GitHub's own data, not a UTC date string computed
+  // here — GitHub buckets contribution days by the viewer's *profile*
+  // timezone, not UTC, so matching against now.toISOString()'s UTC date
+  // could miss/misattribute "today" for several hours around midnight
+  // depending on the offset. `allDays` now runs through Dec 31 (future
+  // days included as zero-count placeholders), so the real "today" is
+  // the last entry whose date isn't in the future, not simply the
+  // array's last element.
+  const todayStr = now.toISOString().slice(0, 10);
+  const pastOrTodayDays = allDays.filter((day) => day.date <= todayStr);
+  const totalToday = pastOrTodayDays.at(-1)?.count ?? 0;
 
-  const lastWeek = windowResult.weeks[windowResult.weeks.length - 1];
-  const totalThisWeek = (lastWeek?.days ?? []).reduce((sum, day) => sum + day.count, 0);
+  const todayDate = pastOrTodayDays.at(-1)?.date;
+  const currentWeek = yearResult.weeks.find((week) =>
+    week.days.some((day) => day.date === todayDate),
+  );
+  const totalThisWeek = (currentWeek?.days ?? []).reduce((sum, day) => sum + day.count, 0);
 
   return {
     totalToday,
     totalThisWeek,
     totalThisYear: yearResult.total,
-    weeks: windowResult.weeks,
+    weeks: yearResult.weeks,
     fetchedAt: now.toISOString(),
   };
 }

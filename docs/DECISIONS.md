@@ -2451,3 +2451,79 @@ guard from the widget_cache race fix, `deriveMemories` wiring, and that a
 failing memory write never fails the refresh itself). `apps/web` now has
 45 unit tests across 6 files, on top of its existing signed-out Playwright
 e2e suite.
+
+## 2026-07-29 — GitHub heatmap expanded to a full calendar year
+
+Ken asked whether the GitHub widget's contribution heatmap could match
+GitHub's own profile graph: full Jan–Dec, month/weekday labels, a
+Less→More legend, an annual total, hover tooltips, and a mobile tap
+popup. This is a deliberate departure from `docs/redesign-reference/`,
+whose own mockup JS generates exactly the previous compact 20-week grid
+with none of the above — confirmed with Ken first, per CLAUDE.md's
+design-fidelity rule, before building. Detail level for the hover/tap
+popup was also decided explicitly: **count only** (`"N contributions on
+Month Day"`), not a commits/PRs/issues breakdown — the latter would need
+a live per-tap GraphQL call with its own latency/failure surface, for a
+benefit the reference screenshots Ken provided don't even show.
+
+**Adapter simplification, not just a feature add.**
+`packages/adapters/github/src/contributions.ts`'s `fetchContributions`
+used to fire two parallel GraphQL queries: a 20-week trailing window (for
+the heatmap and today/this-week numbers) and a separate Jan-1-to-now
+query whose per-day data was discarded, keeping only its `.total`.
+GitHub's `contributionsCollection.contributionCalendar` field already
+returns exactly the per-day `{date, count, level}` shape a full-year
+heatmap needs, is capped at one year of range (a calendar year fits
+exactly), and needs no OAuth scope beyond the already-granted
+`read:user` — so this became **one** query (Jan 1–Dec 31 UTC) instead of
+two, removing a whole request/response round trip and API rate-limit
+unit per refresh. GitHub returns future dates as zero-count/level-0 days
+directly (no client-side padding needed) — exactly the "blank Aug–Dec"
+behavior in Ken's own reference screenshots for a year still in
+progress. `totalToday`/`totalThisWeek` now derive from the real "today"
+entry in that array (filtering to `date <= today` first) rather than
+simply the array's last element, which is now Dec 31, not today.
+
+**Streaks got more accurate for free.** `computeStreaks` was bounded to
+whatever window it was given — with a full year now available instead of
+20 weeks, `longest` is accurate for the whole calendar year instead of a
+rolling ~140-day slice. Its "today hasn't happened yet, don't break the
+streak" special case assumed the array's last element was always today;
+now that the array is padded through Dec 31, `computeStreaks` takes an
+injectable `today` param (defaults to `new Date()`) and filters to
+past-or-today days first, so a future zero-count day can never be
+mistaken for "not yet logged."
+
+**New pure helper, not inline JSX math.** `computeMonthLabels`
+(`packages/widgets/github/src/heatmap-layout.ts`) figures out which
+week-column each month's 1st day falls in — extracted the same way
+`apps/web/src/lib/balance-columns.tsx` was, so this date/index math is
+unit-testable (leap years, year-boundary padding) without rendering
+anything.
+
+**Hover/tap popover kept local, not added to `packages/ui`.**
+`use-day-popover.ts` is a small hand-rolled hook (one shared `openDate`
+state for the whole grid, not one `useDismissableMenu` instance per
+day cell) following `use-pull-to-refresh.ts`'s precedent: no new
+dependency, and — per the same anti-premature-abstraction reasoning
+`useDismissableMenu` itself followed (extracted to `packages/ui` only
+after being duplicated twice) — kept inside the GitHub widget package
+since there's only one consumer so far. Extract later if a second widget
+wants the same interaction.
+
+**Layout**: switched from a flex-of-flex-columns to CSS grid
+(`grid-auto-flow: column`) so month labels and weekday labels could
+align against it; wrapped the day grid in a horizontal-scroll container
+rather than shrinking ~53 weekly columns to illegibility on narrow
+screens (matching how GitHub's own graph behaves on mobile). The
+heatmap/activity-summary chip in `component.tsx` now stacks vertically at
+every breakpoint instead of sitting side-by-side at `lg` — the fuller
+heatmap is wide enough to fill that space on its own, consistent with
+`docs/PROJECT_REFERENCE.md`'s "cards size to their own content" rule
+already in place elsewhere.
+
+Added `vitest`/Testing Library test setups to both `packages/
+adapters/github` and `packages/widgets/github` (neither had a `test`
+script before) — 5 new adapter tests and 27 new/updated widget tests
+(streaks, month-label math, the popover hook, and a `Heatmap` component
+smoke test covering the total line, legend, and hover/tap popover text).

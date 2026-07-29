@@ -53,13 +53,16 @@ In progress. Per the reference doc's widget development order (§9):
    Google Cloud Console setup time (consent screen, test users, scopes).
    Skipped ahead to GitHub; revisit when there's time for the manual setup.
 5. [x] GitHub — `packages/widgets/github` + `packages/adapters/github`:
-   contribution counts (today / this week / this year) plus a 12-week mini
-   heatmap, via GitHub's GraphQL `contributionsCollection`. Scoped down
-   from the original "commits + open PRs" concept at Ken's request — kept
-   deliberately simple. Reuses the login token from `next_auth.accounts`
-   (`readProviderAccessToken` in `packages/database`) — no scope change,
-   no second OAuth flow, no settings. Establishes the "widget using the
-   login provider's token" pattern that Spotify/Google widgets will follow.
+   contribution counts (today / this week / this year) plus a full
+   Jan–Dec calendar-year heatmap (month/weekday labels, Less→More
+   legend, hover/tap day popovers — expanded 2026-07-29 from an initial
+   compact 20-week window, see `docs/DECISIONS.md`), via GitHub's GraphQL
+   `contributionsCollection`. Scoped down from the original "commits +
+   open PRs" concept at Ken's request — kept deliberately simple. Reuses
+   the login token from `next_auth.accounts` (`readProviderAccessToken`
+   in `packages/database`) — no scope change, no second OAuth flow, no
+   settings. Establishes the "widget using the login provider's token"
+   pattern that Spotify/Google widgets will follow.
 
 Also shipped, pulled forward from the §10 backlog at Ken's request:
 

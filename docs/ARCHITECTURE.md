@@ -162,8 +162,8 @@ touching any widget.
    actions in `apps/web/src/app/actions/widgets.ts` are all already generic
    over every registered widget.
 6. Confirm it meets every item in the reference doc's definition of done
-   (§7) before calling it finished — including dark mode and responsive
-   layout, not just "it fetches data."
+   (§7) before calling it finished — including responsive layout, not
+   just "it fetches data."
 
 ## Auth
 

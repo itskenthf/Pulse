@@ -112,7 +112,7 @@ export function RefreshAllTitle() {
         </button>
       </h1>
       {state?.error && (
-        <p className="mt-1 max-w-64 text-xs whitespace-pre-line text-red-600 dark:text-red-400">
+        <p className="mt-1 max-w-64 text-xs whitespace-pre-line text-red-600">
           {state.error}
         </p>
       )}

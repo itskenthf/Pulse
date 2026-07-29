@@ -11,11 +11,11 @@ export type GlassLevel = "light" | "medium" | "heavy";
  */
 const GLASS: Record<GlassLevel, string> = {
   light:
-    "bg-[var(--background)] border border-[var(--color-divider)] shadow-[0_1px_2px_color-mix(in_srgb,#2d2b2b_14%,transparent)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.4)]",
+    "bg-[var(--background)] border border-[var(--color-divider)] shadow-[0_1px_2px_color-mix(in_srgb,#2d2b2b_14%,transparent)]",
   medium:
-    "bg-[var(--background)] border border-[var(--color-divider)] shadow-[0_3px_10px_color-mix(in_srgb,#2d2b2b_16%,transparent)] dark:shadow-[0_3px_10px_rgba(0,0,0,0.45)]",
+    "bg-[var(--background)] border border-[var(--color-divider)] shadow-[0_3px_10px_color-mix(in_srgb,#2d2b2b_16%,transparent)]",
   heavy:
-    "bg-[var(--background)] border border-[var(--color-divider)] shadow-[0_12px_32px_color-mix(in_srgb,#2d2b2b_22%,transparent)] dark:shadow-[0_12px_32px_rgba(0,0,0,0.55)]",
+    "bg-[var(--background)] border border-[var(--color-divider)] shadow-[0_12px_32px_color-mix(in_srgb,#2d2b2b_22%,transparent)]",
 };
 
 export function glassClass(level: GlassLevel = "light"): string {

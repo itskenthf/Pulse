@@ -1,4 +1,4 @@
-import type { Widget } from "./widget";
+import type { Widget, WidgetActions } from "./widget";
 
 const registry = new Map<string, Widget>();
 
@@ -8,7 +8,11 @@ const registry = new Map<string, Widget>();
  * no-op (module re-evaluation under dev/HMR) — registering a *different*
  * widget under an id already in use is a real bug and still throws.
  */
-export function registerWidget<TData, TSettings>(widget: Widget<TData, TSettings>): void {
+export function registerWidget<
+  TData,
+  TSettings,
+  TActions extends WidgetActions = WidgetActions,
+>(widget: Widget<TData, TSettings, TActions>): void {
   const existing = registry.get(widget.id);
   if (existing) {
     if (existing === widget) return;

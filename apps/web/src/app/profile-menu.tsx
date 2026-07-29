@@ -8,8 +8,8 @@ import { signOutAction } from "./actions/sign-out";
 const NAV_LINKS = [
   { label: "Dashboard", active: true, href: undefined },
   { label: "Timeline", active: false, href: "/timeline" },
-  { label: "Tasks", active: false, href: undefined },
-  { label: "Notes", active: false, href: undefined },
+  { label: "Tasks", active: false, href: "/tasks" },
+  { label: "Notes", active: false, href: "/notes" },
   { label: "Settings", active: false, href: undefined },
 ] as const;
 

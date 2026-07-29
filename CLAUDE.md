@@ -251,8 +251,6 @@ A widget or UI change is complete only when:
 - Registered with the widget registry, fetches real data, reads/writes
   cache, and has loading/error/empty states, manual refresh, and settings
   (unless explicitly exempted — see `docs/PROJECT_REFERENCE.md` §7)
-- Dark mode still functions as a fallback (not necessarily polished —
-  see §7)
 - `docs/DECISIONS.md` / `docs/ROADMAP.md` updated if the change is a real
   architectural or scope decision, not just an implementation detail
 

@@ -54,6 +54,10 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-body), Georgia, serif;
+  /* Suppresses the browser's own native pull-to-reload so it doesn't fire
+     alongside the app's custom pull-to-refresh gesture (RefreshAllTitle /
+     use-pull-to-refresh.ts) and double-trigger a refresh. */
+  overscroll-behavior-y: contain;
 }
 
 h1, h2, h3, h4 {

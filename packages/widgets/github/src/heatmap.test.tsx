@@ -30,24 +30,24 @@ describe("Heatmap", () => {
     expect(screen.getByText("Jan")).toBeInTheDocument();
   });
 
-  it("shows a count+date popover on hover and hides it on mouse leave", () => {
+  it("shows no popover on hover — the only hover hint is the native title attribute, matching the original heatmap", () => {
     render(<Heatmap weeks={weeks} totalThisYear={162} year={2026} />);
 
     const cell = screen.getByTitle("2026-07-26: 5 contributions");
     fireEvent.mouseEnter(cell);
-    expect(screen.getByRole("tooltip")).toHaveTextContent("5 contributions on July 26");
 
-    fireEvent.mouseLeave(cell);
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
   });
 
-  it("pins the popover open on tap/click, independent of hover", () => {
+  it("opens a count+date popover on click/tap, and closes it on a second click", () => {
     render(<Heatmap weeks={weeks} totalThisYear={162} year={2026} />);
 
     const cell = screen.getByTitle("2026-07-26: 5 contributions");
     fireEvent.click(cell);
-
     expect(screen.getByRole("tooltip")).toHaveTextContent("5 contributions on July 26");
+
+    fireEvent.click(cell);
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
   });
 
   it("uses singular 'contribution' for a count of exactly 1", () => {

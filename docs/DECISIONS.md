@@ -2527,3 +2527,75 @@ adapters/github` and `packages/widgets/github` (neither had a `test`
 script before) — 5 new adapter tests and 27 new/updated widget tests
 (streaks, month-label math, the popover hook, and a `Heatmap` component
 smoke test covering the total line, legend, and hover/tap popover text).
+
+## 2026-07-30 — GitHub heatmap: no-scroll layout, click-only popover
+
+Ken caught real bugs in the first pass above by looking at it live: a
+horizontal *and* vertical scrollbar appeared (the horizontal-scroll
+choice from 2026-07-29 was wrong — his reference expects the full year
+visible with no scrolling at all, cells shrinking instead), the hover
+popover was invisible in practice (clipped by that same scroll
+container), its background was transparent instead of opaque, and it
+duplicated the native `title` tooltip. He also explicitly asked for
+"no hover effects... follow previous heatmaps," i.e. drop the
+custom hover-triggered popover entirely — the original 20-week heatmap's
+only hover hint was the bare native `title` attribute.
+
+Before making any fix, built a throwaway Playwright+Vite harness
+(`packages/widgets/github/.preview/`, never committed) that renders the
+real `Heatmap` component with fixture data and real Tailwind CSS —
+outside `apps/web`, no Supabase/GitHub OAuth credentials needed, since
+these bugs are pure rendering issues in one component. This let the
+prior diagnosis be confirmed empirically (measured
+`containerOverflowY: "auto"`, the popover's bounding rect literally
+below the scroll container's own bottom edge, `backgroundColor:
+"rgba(0,0,0,0)"`) instead of staying a code-reading guess — and caught a
+second live-only bug during the fix itself (see below). Worth
+remembering as a technique: component-level UI bugs don't need a signed-
+in `apps/web` session to verify, just a way to render the component in
+a real browser with synthetic data.
+
+**No-scroll layout**: replaced the fixed-`CELL_PX` + `overflow-x-auto`
+grid with cell sizing computed by the browser via CSS container query
+units (`cqw`), not JS measurement — `container-type: inline-size` on the
+row wrapping both the weekday-label column and the day grid, with
+`cellSize = calc((100cqw - labelColumnWidth - gaps) / columnCount)`. This
+always exactly fills the available width with zero overflow, at any
+card/viewport width, with no `ResizeObserver`/JS recompute and no
+hydration flash. Verified via the harness at 760px/500px/340px card
+widths: `scrollWidth === clientWidth` and no `hasVScroll` at every size.
+
+**A second live-only bug found while building this fix**: an initial
+attempt gave the weekday-label column its own independent `cqw`-based
+row heights, reasoning that flexbox `align-items: stretch` (the row's
+default) would make it match the day grid's rendered height. Live
+screenshots showed Wed/Fri rendering nowhere near their real grid rows.
+Measured why: `cqw` only resolves correctly for *descendants* of the
+element declaring `container-type` — the label column was a *sibling* of
+that element, so its `cqw` resolved against a different (wrong) ancestor
+context entirely, and separately, flexbox stretch doesn't shrink an
+intrinsically-taller sibling (the label text's minimum legible
+line-height) to match a shorter one — it grows the shorter one to match
+the taller, which silently broke the row alignment instead. Fixed by
+moving `container-type: inline-size` up to the single row wrapping both
+the label column and the grid, and writing `cellSize`'s formula to
+subtract the label column's own fixed width from that shared `100cqw`
+budget — so both the label row heights and the grid's own cell size are
+computed from the exact same query context and never disagree. This is
+the kind of layout bug that's very hard to catch from reading the JSX
+alone (the code looked reasonable) and exactly why the harness was
+worth building before considering the fix done.
+
+**Popover**: dropped `onMouseEnter`/`onMouseLeave` and the `hoveredDate`
+state entirely — the popover now opens only on click/tap (also
+naturally serving as the mobile tap-to-see-detail interaction from the
+original ask), toggling closed on a second click. The native `title`
+attribute stays as the only hover hint, matching the original heatmap.
+Switched the popover's background from a hand-rolled `GLASS_CHIP` +
+`bg-[var(--background)]` combination (whose two `bg-*` utility classes
+had equal specificity, and `bg-transparent` from `GLASS_CHIP` silently
+won) to `glassClass("light")`, which already provides the correct
+opaque background/border/shadow with nothing to conflict.
+
+Updated `heatmap.test.tsx` to assert hover produces no popover and
+click toggles it open/closed, replacing the old hover-based test.

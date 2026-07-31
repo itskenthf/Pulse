@@ -7,12 +7,25 @@ import { NOTEBOOK_WIDGET_ID } from "@pulse/widget-notebook";
 import { auth } from "@/auth";
 import { refreshWidget } from "@/lib/refresh-widget";
 
-/** Same shape as actions/notes.ts — write → `refreshWidget` →
- *  `revalidatePath("/")` + `revalidatePath("/notebook")`, so autosaves
- *  reflect instantly on both the dashboard card and the full history
- *  page. `addEntryAction` additionally returns the created entry's id so
- *  the client can upsert into it on later autosaves while the box stays
- *  open. */
+/**
+ * `addEntryAction` fires once per new entry (infrequent) and follows
+ * actions/notes.ts's shape exactly: write → `refreshWidget` →
+ * `revalidatePath("/")` + `revalidatePath("/notebook")`, so the new entry
+ * shows up on both surfaces right away. It also returns the created
+ * entry's id so the client can upsert into it on later autosaves while
+ * the box stays open.
+ *
+ * `updateEntryAction` fires on every autosave pause *while composing* —
+ * potentially many times for one entry — so it deliberately skips
+ * `refreshWidget` (a full fetchData + widget_cache write) and
+ * `revalidatePath("/")` (which would re-render every widget on the
+ * dashboard, not just this one). Doing that on every keystroke pause
+ * made the whole page feel laggy while typing. The write is still fully
+ * durable; the dashboard card's copy of this entry catches up via the
+ * widget's 15-minute cron backstop or the next `addEntryAction`. Keeps
+ * only the cheap `revalidatePath("/notebook")` so the full history page
+ * stays reasonably fresh.
+ */
 
 export async function addEntryAction(
   _prevState: WidgetActionState,
@@ -52,12 +65,10 @@ export async function updateEntryAction(
 
   try {
     await updateNotebookEntry(session.user.id, entryId, content);
-    await refreshWidget(NOTEBOOK_WIDGET_ID, session.user.id);
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Failed to save entry" };
   }
 
-  revalidatePath("/");
   revalidatePath("/notebook");
   return { entryId };
 }

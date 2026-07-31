@@ -5,11 +5,13 @@ import { readWidgetCache, readWidgetSettings } from "@pulse/database";
 import { Skeleton, SPRING_PRESS, WidgetCard, WidgetErrorBoundary } from "@pulse/ui";
 import { HERO_WIDGET_ID } from "@pulse/widget-hero";
 import { NOTES_WIDGET_ID } from "@pulse/widget-notes";
+import { NOTEBOOK_WIDGET_ID } from "@pulse/widget-notebook";
 import { TASKS_WIDGET_ID } from "@pulse/widget-tasks";
 import { auth, signIn } from "@/auth";
 import { balanceColumns, WIDGET_WEIGHT, WIDGET_WEIGHT_OVERRIDE, type ColumnItem } from "@/lib/balance-columns";
 import { cycleHeroQuoteAction } from "./actions/hero";
 import { addNoteAction, deleteNoteAction, updateNoteAction } from "./actions/notes";
+import { addEntryAction, updateEntryAction } from "./actions/notebook";
 import { addTaskAction, deleteTaskAction, toggleTaskAction } from "./actions/tasks";
 import { refreshWidgetAction, updateWidgetSettingsAction } from "./actions/widgets";
 import { ProfileMenu } from "./profile-menu";
@@ -19,7 +21,8 @@ import "@/lib/register-widgets";
 /**
  * Per-widget custom actions (beyond the generic refresh/updateSettings
  * every widget gets) — Hero's quote cycling, Tasks' add/toggle/delete,
- * Notes' add/update/delete. See `Widget`/`WidgetRenderProps`'s `TActions`
+ * Notes' add/update/delete, Notebook's autosave add/update. See
+ * `Widget`/`WidgetRenderProps`'s `TActions`
  * generic in packages/sdk/src/widget.ts for why this is spread into the
  * base actions object rather than each widget growing the shared
  * `WidgetActions` interface directly.
@@ -35,6 +38,10 @@ const CUSTOM_ACTIONS: Record<string, Record<string, WidgetAction>> = {
     addNote: addNoteAction,
     updateNote: updateNoteAction,
     deleteNote: deleteNoteAction,
+  },
+  [NOTEBOOK_WIDGET_ID]: {
+    addEntry: addEntryAction,
+    updateEntry: updateEntryAction,
   },
 };
 

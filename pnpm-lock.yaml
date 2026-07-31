@@ -47,6 +47,9 @@ importers:
       '@pulse/widget-hero':
         specifier: workspace:*
         version: link:../../packages/widgets/hero
+      '@pulse/widget-notebook':
+        specifier: workspace:*
+        version: link:../../packages/widgets/notebook
       '@pulse/widget-notes':
         specifier: workspace:*
         version: link:../../packages/widgets/notes
@@ -290,6 +293,37 @@ importers:
       '@pulse/adapter-weather':
         specifier: workspace:*
         version: link:../../adapters/weather
+      '@pulse/database':
+        specifier: workspace:*
+        version: link:../../database
+      '@pulse/sdk':
+        specifier: workspace:*
+        version: link:../../sdk
+      '@pulse/ui':
+        specifier: workspace:*
+        version: link:../../ui
+      lucide-react:
+        specifier: ^1.26.0
+        version: 1.26.0(react@19.2.4)
+      react:
+        specifier: ^19
+        version: 19.2.4
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      '@types/react':
+        specifier: ^19
+        version: 19.2.17
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@22.20.1)(jsdom@29.1.1)(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0))
+
+  packages/widgets/notebook:
+    dependencies:
       '@pulse/database':
         specifier: workspace:*
         version: link:../../database

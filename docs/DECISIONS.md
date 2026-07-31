@@ -2717,3 +2717,61 @@ Also added the "View all →" link to the dashboard card (same style as
 Notes'), and `revalidatePath("/notebook")` alongside the existing
 `revalidatePath("/")` in both `addEntryAction`/`updateEntryAction`, so
 edits from either surface show up instantly on both.
+
+## 2026-07-31 — Notebook: fix /notebook crash, duplicate entries, and revalidation storm lag
+
+Three real bugs found after PR #70 shipped, reported live (screenshots
+from the actual deployed app): the new `/notebook` page crashed with
+Next's generic "Something went wrong" boundary, the card showed the same
+entry twice, and the whole dashboard felt laggy while typing in Notebook.
+
+**Crash**: `apps/web/src/app/notebook/page.tsx` is an async Server
+Component. It rendered `<NotebookInput onPendingChange={() => {}} />` —
+a plain closure passed directly from a Server Component to a Client
+Component. Next.js can only serialize Server Actions (functions marked
+`"use server"`) across that boundary, not arbitrary closures; anything
+else throws immediately during RSC serialization, which is exactly what
+surfaced as the generic root `error.tsx` boundary. Missed in the
+original PR because the throwaway preview harness used to verify
+`/notebook` rendered `NotebookCard`/`NotebookInput` directly from a
+`"use client"` scratch page — never through an actual Server Component,
+so it couldn't reproduce a server/client boundary bug by construction.
+Fixed by making `onPendingChange` optional on `NotebookInput` (defaulting
+to a no-op internally via `onPendingChange?.(pending)`) and simply not
+passing it from `/notebook/page.tsx` at all — `notebook-card.tsx` (which
+*is* a Client Component) is unaffected and still passes a real callback.
+Reverified this specific class of bug by reproducing the exact
+Server-Component-renders-NotebookInput shape in a second throwaway
+route — the lesson being that a preview harness needs to match the
+*real* rendering context (server vs. client boundary), not just the
+visual output, or it can pass while the real page still crashes.
+
+**Duplicate entries**: the autosave upsert (see 2026-07-31's first
+Notebook entry) tracks the in-progress entry's id in a ref, set only
+once the create request's response comes back. Nothing stopped a second
+debounce firing — and calling `addEntryAction` a second time — while the
+first was still in flight, since `draftIdRef` was still `null` at that
+point. Two `addEntryAction` calls for the same "thought" raced, and both
+succeeded, producing two entries. Fixed with a synchronous `savingRef`
+in `notebook-input.tsx`: set `true` right before dispatching a save,
+cleared once the action's pending state settles; a debounce that fires
+while a save is already in flight now retries shortly instead of firing
+a second, concurrent request. (A plain `pending` boolean from
+`useActionState` wasn't enough here — it only updates after a render
+commits, leaving a real window for a second `setTimeout` to fire first;
+a ref gives synchronous truth at the exact moment the timer callback runs.)
+
+**Revalidation storm**: `updateEntryAction` — which fires on *every*
+autosave pause while composing a longer entry, not just once — was
+calling `refreshWidget()` (its own extra DB round-trip) and
+`revalidatePath("/")` on every single save. `revalidatePath("/")`
+invalidates the whole dashboard's router cache, so every widget
+(GitHub, Steam, Spotify, Tasks, Notes, Hero) re-fetches on the next
+render — multiplied by however many pauses one entry took to write.
+Fixed by having `updateEntryAction` skip both entirely: the DB write
+alone is fully durable, and the dashboard card's copy of that entry
+catches up via the widget's existing 15-minute cron backstop or the
+next `addEntryAction` (which still does the full refresh, since it's
+infrequent — once per new entry, not once per pause). Kept the cheap
+`revalidatePath("/notebook")` so the full history page doesn't go stale
+for long. `addEntryAction` is unchanged.

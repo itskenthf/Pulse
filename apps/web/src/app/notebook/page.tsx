@@ -42,7 +42,6 @@ export default async function NotebookPage() {
             addEntry: addEntryAction,
             updateEntry: updateEntryAction,
           }}
-          onPendingChange={() => {}}
         />
 
         <NotebookEntryList entries={entries} />

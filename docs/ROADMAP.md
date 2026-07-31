@@ -529,6 +529,22 @@ production crash, close remaining redesign fidelity gaps" entry for the
 full root-cause analysis and the one confirmed-deliberate deviation kept
 (the grid layout).
 
+### Notebook widget (2026-07-31)
+
+Added a freeform "digital pocket notebook" widget: an untitled,
+autosaving entry stream (`packages/widgets/notebook`), distinct from the
+existing titled/editable Notes widget. No tags, folders, search, editing,
+or deletion — typing pauses (~1s debounce) autosave the still-open entry
+in place; clearing the input starts a new one. Entries render newest
+first, capped to the last 10, grouped by relative day ("This morning" /
+"Yesterday" / "Two days ago" / date), fading in opacity as they recede.
+Size `"lg"`. Own `notebook_entries` Supabase table (same own-table
+pattern Notes/Tasks established for user-authored content, as opposed to
+the generic `widget_cache` JSON blob used for externally-fetched data) —
+see `docs/DECISIONS.md`'s entry for the full reasoning, including the
+`WidgetActionState.entryId` addition to `@pulse/sdk` that the autosave
+upsert needed.
+
 ## Phase 2 — make it actionable
 
 Not started. Blocked on Phase 1 gate.

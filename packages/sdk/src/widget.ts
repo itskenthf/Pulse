@@ -27,6 +27,10 @@ export interface WidgetActionState {
    *  updates instantly without forcing every other widget to re-read its
    *  cache too. */
   quote?: string;
+  /** Notebook-only: the created entry's id, returned so the client can
+   *  upsert into it on subsequent autosaves (while the box stays open)
+   *  without a full widget refresh round-trip. */
+  entryId?: string;
 }
 
 /** A server action bindable to a `<form action>`, used with `useActionState`. */

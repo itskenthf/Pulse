@@ -2599,3 +2599,80 @@ opaque background/border/shadow with nothing to conflict.
 
 Updated `heatmap.test.tsx` to assert hover produces no popover and
 click toggles it open/closed, replacing the old hover-based test.
+
+## 2026-07-31 — Notebook widget: a second user-authored-content pattern, and autosave upsert
+
+Added the Notebook widget: a freeform, untitled entry stream — "a
+digital pocket notebook" — distinct from the existing Notes widget
+(titled, editable, delete-able list). No tags, folders, search, edit, or
+delete in v1; the person just types, and pausing autosaves.
+
+**Persistence — confirms, doesn't establish, the own-table precedent.**
+Notes and Tasks already write to their own Postgres tables
+(`notes`/`tasks`) rather than the generic `widget_cache` JSON blob used
+for externally-fetched data — that split (own table for genuinely
+relational/queryable user-authored content vs. `widget_cache` for
+adapter-fetched external data) was real prior art, just never written
+down as its own decision. Notebook follows it exactly: a new
+`notebook_entries` table (`supabase/migrations/0005_notebook_entries_table.sql`),
+`packages/database/src/notebook.ts` with the same
+`create/update/list` + `service_role`/`user_id`-filter shape as
+`notes.ts`. `fetchData()` still goes through the normal cron-first path
+(`widget_cache` caches the *read* of `notebook_entries`, same as Notes) —
+only the write side bypasses `widget_cache`.
+
+**Autosave is an upsert while composing, not "one entry per pause."**
+The spec's "do not auto-append to the most recent existing entry" could
+be read two ways: (a) every debounced pause creates a new entry and
+clears the box, or (b) the input box is a single "living draft" —
+pausing updates that same entry in place, and only clearing the box (or
+never having typed yet) starts a new one. Went with (b), confirmed with
+Ken before building: typing a paragraph with natural mid-sentence pauses
+should stay one entry, not fragment into several. "Do not auto-append to
+the most recent existing entry" refers to *old, already-closed* entries
+from a previous session — not the entry currently being composed.
+
+This needed a small extension to the shared SDK contract:
+`WidgetActionState` (`packages/sdk/src/widget.ts`) gained an optional
+`entryId?: string` field, alongside the existing `error`/`quote`
+(Hero-only) fields — `addEntryAction` returns the newly created row's id
+so the client can track it as the open draft and call `updateEntryAction`
+on subsequent pauses instead of creating a new row each time. First
+widget besides Hero to extend that shared type.
+
+Also first widget to call a `useActionState` dispatch function
+(`addFormAction`/`updateFormAction`) directly from a `setTimeout`
+callback rather than via `<form action>` or a click handler. React
+requires that call to happen inside `startTransition` when it's not
+triggered by a real form submission/action prop — omitting it doesn't
+throw, but silently breaks `isPending` tracking and logs a runtime
+warning (caught via a throwaway preview harness — see below — not from
+reading the code, since the failure is silent otherwise).
+
+**No settings, no full-page view — both deliberate scope calls, not
+oversights.** Notebook is the second widget (after Hero) to claim
+CLAUDE.md §7's "no per-user configuration" exemption — confirmed with
+Ken first, since only one other widget had ever claimed it. It also
+skips the `/notes`-style full-page "view all" route Notes has: the spec
+caps rendering at the last 10 entries with older ones simply not shown
+(still stored, not a browsable archive), and nothing in the spec asked
+for a browse-everything page — adding one would have been scope beyond
+what was requested.
+
+**Empty state is the textarea's own placeholder, not a bolted-on
+`EmptyState`.** The input area is always-present real content (never a
+contentless card), so the "quiet italic serif line" the spec asks for
+lives on the textarea's `placeholder` attribute (`font-body italic`,
+muted) rather than the shared `EmptyState` component rendered
+underneath it. Confirmed with Ken as the intended reading of "empty/
+prompt state" for this specific widget shape, rather than assumed.
+
+**Verified without live Supabase/OAuth credentials**, same technique as
+the GitHub heatmap fix (see 2026-07-30 entry): a throwaway page under
+`apps/web/src/app/` (never committed) rendered `NotebookCard` directly
+with fixture entries and no-op actions, run through the real dev server
+so real Tailwind CSS applied. Caught the `startTransition` bug above via
+the dev overlay's console warning, confirmed the fade opacity ramp,
+italic placeholder, no-border textarea, and the autosave dot's
+appear/linger/fade behavior by screenshotting mid-debounce, and checked
+390px/900px widths for overflow — before deleting the scratch route.

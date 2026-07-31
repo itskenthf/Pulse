@@ -59,6 +59,12 @@ export function NotebookCard({
       <div className="flex flex-col gap-4">
         <NotebookInput actions={actions} onPendingChange={handlePendingChange} />
         <NotebookEntryList entries={entries} />
+        <a
+          href="/notebook"
+          className="text-sm font-medium text-[var(--color-accent)] hover:underline"
+        >
+          View all →
+        </a>
       </div>
     </WidgetCard>
   );

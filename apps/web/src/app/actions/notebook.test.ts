@@ -61,6 +61,7 @@ describe("addEntryAction", () => {
     expect(createNotebookEntry).toHaveBeenCalledWith("user-1", "A thought");
     expect(refreshWidget).toHaveBeenCalledWith("notebook", "user-1");
     expect(revalidatePath).toHaveBeenCalledWith("/");
+    expect(revalidatePath).toHaveBeenCalledWith("/notebook");
     expect(result).toEqual({ entryId: "entry-1" });
   });
 
@@ -95,6 +96,7 @@ describe("updateEntryAction", () => {
     expect(updateNotebookEntry).toHaveBeenCalledWith("user-1", "entry-1", "Updated");
     expect(refreshWidget).toHaveBeenCalledWith("notebook", "user-1");
     expect(revalidatePath).toHaveBeenCalledWith("/");
+    expect(revalidatePath).toHaveBeenCalledWith("/notebook");
     expect(result).toEqual({ entryId: "entry-1" });
   });
 

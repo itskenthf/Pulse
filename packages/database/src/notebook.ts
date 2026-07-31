@@ -22,14 +22,20 @@ function clampContent(content: string): string {
   return content.slice(0, NOTEBOOK_ENTRY_MAX_LENGTH);
 }
 
-export async function listNotebookEntries(userId: string, limit: number): Promise<NotebookEntry[]> {
+/** `limit` omitted returns the user's full history — used by the
+ *  `/notebook` "view all" page, since the widget's own `widget_cache`
+ *  only ever holds the capped preview `fetchData()` reads. */
+export async function listNotebookEntries(userId: string, limit?: number): Promise<NotebookEntry[]> {
   const supabase = createServiceClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("notebook_entries")
     .select("id, content, created_at, updated_at")
     .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(limit);
+    .order("created_at", { ascending: false });
+
+  if (limit !== undefined) query = query.limit(limit);
+
+  const { data, error } = await query;
 
   if (error) throw new Error(`Failed to list notebook entries: ${error.message}`);
   return (data ?? []).map(mapRow);

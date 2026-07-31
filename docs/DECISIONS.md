@@ -2676,3 +2676,44 @@ the dev overlay's console warning, confirmed the fade opacity ramp,
 italic placeholder, no-border textarea, and the autosave dot's
 appear/linger/fade behavior by screenshotting mid-debounce, and checked
 390px/900px widths for overflow — before deleting the scratch route.
+
+## 2026-07-31 — Notebook follow-up: manual-migration gotcha, "View all" page
+
+Two fixes on top of the Notebook widget (see the entry above).
+
+**"Could not find the table 'public.notebook_entries'" on the live
+app.** Not a code bug — this repo has no automated migration pipeline
+(confirmed: no workflow runs `supabase db push`/`migration up`, no
+`supabase/config.toml` linking a project). Migrations are applied by
+hand, pasting each file into the Supabase Dashboard's SQL Editor in
+filename order (same process 0002's own comment already warns about —
+see that migration's note about `service_role` grants). Migration 0005
+was committed but never run against the live database, so the table
+genuinely didn't exist. Fixed by running it manually; no code changed
+for this half. Worth remembering for every future migration: committing
+the file is not the same as applying it here.
+
+**Added `/notebook`, a "View all" history page**, matching `/notes` and
+`/tasks`'s existing shell (`ArrowLeft` "Dashboard" back link, `font-
+heading text-2xl` title, no `WidgetCard` chrome, auth-gated). The
+original spec deliberately left this out (cap at 10, older entries
+"still stored, just not shown," no browse UI) — added now on explicit
+request, superseding that scope note.
+
+The one real wrinkle: Notes/Tasks' full pages read history via
+`readWidgetCache(...)` because their `fetchData()` has no row limit, so
+the cache already holds everything. Notebook's `fetchData()` calls
+`listNotebookEntries(userId, RENDER_LIMIT)` (`RENDER_LIMIT = 10`), so
+its `widget_cache` row only ever holds the 10 most recent entries —
+reusing `readWidgetCache` on `/notebook` would have silently capped
+"view all" at 10, defeating the point. Fixed by making
+`listNotebookEntries`'s `limit` parameter optional (`packages/database/
+src/notebook.ts`) — omitted entirely, it skips `.limit()` and returns
+full history — and having `/notebook/page.tsx` call it directly,
+unbounded, instead of going through the cache. `fetch.ts` (the widget's
+actual `fetchData()`) is unchanged, still passing `RENDER_LIMIT`.
+
+Also added the "View all →" link to the dashboard card (same style as
+Notes'), and `revalidatePath("/notebook")` alongside the existing
+`revalidatePath("/")` in both `addEntryAction`/`updateEntryAction`, so
+edits from either surface show up instantly on both.

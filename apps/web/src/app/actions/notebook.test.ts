@@ -86,16 +86,19 @@ describe("updateEntryAction", () => {
     expect(updateNotebookEntry).not.toHaveBeenCalled();
   });
 
-  it("updates the entry, refreshes the widget, revalidates, and echoes back the entry id", async () => {
+  it("updates the entry, skips the full-dashboard refresh, and echoes back the entry id", async () => {
     auth.mockResolvedValueOnce({ user: { id: "user-1" } });
     updateNotebookEntry.mockResolvedValueOnce(undefined);
-    refreshWidget.mockResolvedValueOnce(undefined);
 
     const result = await updateEntryAction({}, formData({ entryId: "entry-1", content: "Updated" }));
 
     expect(updateNotebookEntry).toHaveBeenCalledWith("user-1", "entry-1", "Updated");
-    expect(refreshWidget).toHaveBeenCalledWith("notebook", "user-1");
-    expect(revalidatePath).toHaveBeenCalledWith("/");
+    // Deliberately does NOT call refreshWidget or revalidatePath("/") — an
+    // update fires on every autosave pause while composing, and doing a
+    // full dashboard refresh on each one made the whole page feel laggy.
+    // See actions/notebook.ts's doc comment.
+    expect(refreshWidget).not.toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalledWith("/");
     expect(revalidatePath).toHaveBeenCalledWith("/notebook");
     expect(result).toEqual({ entryId: "entry-1" });
   });

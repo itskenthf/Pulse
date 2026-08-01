@@ -18,6 +18,14 @@ const GAP_PX = 2;
 const MONTH_ROW_HEIGHT_PX = 14;
 const WEEKDAY_LABEL_WIDTH_PX = 24;
 const LABEL_TO_GRID_GAP_PX = 8;
+/** GitHub's own contribution graph uses a fixed, small cell size (not
+ *  stretched to fill whatever container it's in) — this caps how big a
+ *  cell can grow. Without a cap, the fill-to-container-width formula
+ *  below produces huge cells once the column count is small (e.g. the
+ *  12-week recent strip), since the same width is now divided among far
+ *  fewer columns than the old full-year (~53 column) grid it was
+ *  originally tuned for. */
+const MAX_CELL_PX = 11;
 
 const WEEKDAY_LABELS = ["", "Mon", "", "Wed", "", "Fri", ""] as const;
 
@@ -45,11 +53,14 @@ export function Heatmap({
   // day grid's actual available share — this is what makes both the
   // label row heights and the grid's own cell size agree exactly, so
   // Mon/Wed/Fri always line up with their real rows regardless of card
-  // width. A full year (~53 columns) always fits with no scrolling at
-  // any width this way — cell size just shrinks — see docs/DECISIONS.md
+  // width. Wrapped in `min(..., MAX_CELL_PX)` so cells never grow past a
+  // normal, GitHub-like size on wide cards — a full year (~53 columns)
+  // or the current recent-weeks strip both still shrink further on
+  // narrow widths with no scrolling either way — see docs/DECISIONS.md
   // for why an earlier horizontal-scroll version was wrong.
   const availableForGrid = `(100cqw - ${WEEKDAY_LABEL_WIDTH_PX + LABEL_TO_GRID_GAP_PX}px)`;
-  const cellSize = `calc((${availableForGrid} - ${GAP_PX * (columnCount - 1)}px) / ${columnCount})`;
+  const fillCellSize = `((${availableForGrid} - ${GAP_PX * (columnCount - 1)}px) / ${columnCount})`;
+  const cellSize = `min(${fillCellSize}, ${MAX_CELL_PX}px)`;
 
   return (
     <div className="flex flex-col gap-2">

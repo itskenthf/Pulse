@@ -2919,3 +2919,87 @@ passes (uncommitted, deleted after): screenshotted all four widgets,
 confirmed the heatmap chip's hover shows a border with no fill, opened
 the notes modal in both edit and create mode, and confirmed no
 console/hydration errors.
+
+## 2026-08-01 — Dashboard polish round 2: heatmap bug, Steam row, paired widgets, pinning
+
+Follow-up to the same day's earlier "Dashboard polish" entry (PR #73).
+Ken's live screenshots surfaced a real bug and three more layout
+requests, all confirmed via `AskUserQuestion` before implementation.
+
+**GitHub heatmap bug, root cause and fix.** The compact-recent-weeks
+change (this same day's earlier entry) did `data.weeks.slice(-RECENT_WEEKS_COUNT)`.
+`data.weeks` is the full Jan 1–Dec 31 year, and — as
+`packages/adapters/github/src/contributions.ts`'s own doc comment
+already said — GitHub pads days *after today* into that array at count/
+level 0, all the way through Dec 31. Slicing from the end of the array
+grabbed the literal tail of the calendar year (November/December, pure
+future padding), not the weeks actually leading up to today whenever
+today isn't late in the year — exactly why the live card showed "Nov"/
+"Dec" labels with every cell blank. Fixed with a new pure helper,
+`selectRecentWeeks(weeks, fetchedAt, count)` in
+`packages/widgets/github/src/heatmap-layout.ts` (alongside the existing
+`computeMonthLabels`): filters to weeks containing at least one
+past-or-today day *before* slicing the last N. Confirmed with Ken this
+keeps the compact-strip approach rather than reverting to the full year.
+
+**Steam: one row instead of stacked.** `packages/widgets/steam/src/
+component.tsx`'s games list changed from `flex flex-col` (vertically
+stacked rows) to `flex flex-row flex-wrap` — both (still capped at
+`MAX_GAMES = 2`) games now sit side-by-side, wrapping to a second line
+only if the card is too narrow. Thumbnail width trimmed `w-16` → `w-12`
+to fit comfortably two-up in a half-width card (see next entry).
+
+**Steam + Spotify paired into one row — first time two separate widgets
+share physical row space.** Both noticeably under-used their column's
+width on their own (compact rows in a column sized for GitHub's wide
+heatmap), leaving visible empty space. `apps/web/src/app/page.tsx`'s
+`WidgetGrid` now pulls both out of the normal per-widget flow and
+renders them together as one `ColumnItem`:
+```tsx
+<div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+  <WidgetCell widget={steamWidget} ... />
+  <WidgetCell widget={spotifyWidget} ... />
+</div>
+```
+weighted as a single `WIDGET_WEIGHT.md` (2) rather than the sum of both
+— side-by-side, the pair now takes about as much vertical height as one
+`md` widget, so summing would have over-weighted it in `balanceColumns`
+relative to its real on-screen height (same reasoning
+`WIDGET_WEIGHT_OVERRIDE`'s existing doc comment already established for
+Steam once, back when its height didn't match its declared size).
+`packages/widgets/spotify/src/index.ts` gained a `WIDGET_ID` export
+(Steam's already had one) so `page.tsx` can find both by id. Collapses
+to a single column below `sm:` — verified no overflow at mobile widths.
+Both widgets are still fully independent (own fetch/cache/error
+boundary/`WidgetCell`); only their layout placement is shared.
+
+**Tasks/Notes/Notebook pinned to the top of the right column.** The
+left/right split comes from `balanceColumns`
+(`apps/web/src/lib/balance-columns.tsx`), a greedy weight-balancer with
+no concept of "this widget matters more, put it first" — Ken wanted
+Tasks (his most-checked widget) reliably at the top of the right column,
+followed by Notes then Notebook, not wherever the weight math happened
+to land it (today: Tasks was actually the *last* item in the left
+column, since it was the widget that tipped the running weight just
+past half). Rather than reorder the widget registry and hope future
+size changes don't shift things again, `WidgetGrid` now pulls
+`PINNED_RIGHT_ORDER = [TASKS_WIDGET_ID, NOTES_WIDGET_ID,
+NOTEBOOK_WIDGET_ID]` out of the normal flow entirely and prepends them
+to `right` in that exact order; `balanceColumns` runs unchanged on
+everything else (GitHub, the Steam+Spotify pair, the "coming soon"
+placeholders) and stays a simple, purely weight-driven function with
+its existing unit tests intact — pinning is layered on top in
+`page.tsx`, not inside the balancer. With current widget sizes this
+settles into left = GitHub + the Steam/Spotify pair, right = Tasks,
+Notes, Notebook, then Habits/Reading/RSS — matching what Ken described.
+Also reads better on the mobile single-column stack (which renders
+`left` fully before `right`): GitHub → Steam/Spotify → Tasks → Notes →
+Notebook → placeholders, instead of Tasks being interleaved with
+Steam/Spotify like before.
+
+Verified via the same throwaway-preview-route technique as previous
+passes (uncommitted, deleted after): fixture GitHub data with real
+future-padded days confirmed the heatmap now shows genuine recent
+colored cells with correct month labels (no more blank Nov/Dec), and
+the Steam+Spotify paired-row wrapper was screenshotted at desktop and
+mobile widths — no overflow, no console/hydration errors.

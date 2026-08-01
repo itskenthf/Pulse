@@ -41,3 +41,24 @@ export function computeMonthLabels(weeks: ContributionWeek[], year: number): Mon
 
   return labels;
 }
+
+/**
+ * The most recent `count` weeks *relative to today*, not the last
+ * `count` entries of the raw array. `weeks` is the full Jan 1–Dec 31
+ * year from `fetchContributions`, which GitHub pads with days *after
+ * today* at count/level 0 all the way through Dec 31 — a plain
+ * `weeks.slice(-count)` would grab the tail of the calendar year
+ * (November/December, all future padding) instead of the weeks actually
+ * leading up to today whenever today isn't late in the year. Filtering
+ * to weeks containing at least one past-or-today day before slicing
+ * fixes that.
+ */
+export function selectRecentWeeks(
+  weeks: ContributionWeek[],
+  fetchedAt: string,
+  count: number,
+): ContributionWeek[] {
+  const todayStr = fetchedAt.slice(0, 10);
+  const pastOrTodayWeeks = weeks.filter((week) => week.days.some((day) => day.date <= todayStr));
+  return pastOrTodayWeeks.slice(-count);
+}

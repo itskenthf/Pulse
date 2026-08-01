@@ -22,7 +22,7 @@ export interface MetricProps {
 export function Metric({ label, value, suffix }: MetricProps) {
   return (
     <div className="flex flex-col">
-      <span className="font-heading text-3xl font-semibold tracking-tight text-[var(--foreground)] tabular-nums">
+      <span className="text-3xl font-semibold tracking-tight text-[var(--foreground)] tabular-nums">
         {value}
         {suffix && (
           <span className="text-lg font-semibold text-[var(--color-neutral-400)]">{suffix}</span>

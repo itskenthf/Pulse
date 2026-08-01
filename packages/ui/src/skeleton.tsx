@@ -27,7 +27,7 @@ export function Skeleton({ variant = "card" }: SkeletonProps) {
   }
 
   return (
-    <div aria-hidden="true" className={cardShellClass()}>
+    <div aria-hidden="true" className={cardShellClass({ minHeight: "min-h-64" })}>
       <div className="flex items-center gap-3">
         <div className={`h-9 w-9 shrink-0 ${RADIUS.chip} ${PULSE_BLOCK}`} />
         <div className={`h-4 w-24 ${PULSE_BLOCK}`} />
@@ -36,6 +36,7 @@ export function Skeleton({ variant = "card" }: SkeletonProps) {
         <div className={`h-4 w-full ${PULSE_BLOCK}`} />
         <div className={`h-4 w-5/6 ${PULSE_BLOCK}`} />
         <div className={`h-4 w-2/3 ${PULSE_BLOCK}`} />
+        <div className={`h-4 w-4/5 ${PULSE_BLOCK}`} />
       </div>
     </div>
   );

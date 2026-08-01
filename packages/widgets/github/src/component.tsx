@@ -29,7 +29,7 @@ function ActivitySummaryBlock({ summary }: { summary: GitHubData["activitySummar
   if (rows.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-1.5 lg:max-w-56">
+    <div className="flex flex-col gap-1.5">
       <span className="text-xs tracking-[0.08em] text-[var(--color-neutral-400)] uppercase">
         This month
       </span>

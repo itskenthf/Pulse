@@ -1,6 +1,5 @@
 import { AlertTriangle } from "lucide-react";
-import { glassClass } from "./glass";
-import { RADIUS } from "./tokens";
+import { cardShellClass } from "./card-shell";
 
 export interface ErrorStateProps {
   title?: string;
@@ -22,7 +21,7 @@ export function ErrorState({ title = "Something went wrong", message }: ErrorSta
   return (
     <div
       role="alert"
-      className={`flex h-full min-h-32 flex-col items-center justify-center gap-2 ${RADIUS.card} p-6 text-center ${glassClass("light")}`}
+      className={`items-center justify-center text-center ${cardShellClass({ padding: "p-6", minHeight: "min-h-32" })}`}
     >
       <AlertTriangle className="h-5 w-5 text-red-600" aria-hidden="true" />
       <p className="font-heading text-sm font-medium text-[var(--foreground)]">{title}</p>

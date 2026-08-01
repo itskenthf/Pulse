@@ -26,6 +26,14 @@ export function TasksComponent({
       title="Tasks"
       icon={<CheckSquare className="h-4 w-4" aria-hidden="true" />}
       action={<WidgetMenu id="tasks" actions={actions} />}
+      footer={
+        <a
+          href="/tasks"
+          className="text-sm font-medium text-[var(--color-accent)] hover:underline"
+        >
+          View all →
+        </a>
+      }
     >
       <div className="flex flex-col gap-3">
         <AddTaskForm action={actions.addTask} />
@@ -43,12 +51,6 @@ export function TasksComponent({
         ) : (
           <EmptyState message="Nothing to do — add a task above." />
         )}
-        <a
-          href="/tasks"
-          className="text-sm font-medium text-[var(--color-accent)] hover:underline"
-        >
-          View all →
-        </a>
       </div>
     </WidgetCard>
   );

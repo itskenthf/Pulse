@@ -27,7 +27,13 @@ independent of the Phase 0-4 numbering below — see
 
 ## Phase 1 — MVP (read-only dashboard)
 
-In progress. Per the reference doc's widget development order (§9):
+**Widget-build scope is complete.** Every widget on the active target list
+(§9) is built and live; the only remaining Phase 1 item is the personal-
+usage gate in §18 (two consecutive weeks of daily use), which is Ken's own
+call to confirm, not something tracked here. In practice the project has
+already moved into Phase 2 territory in parallel — see that section below.
+
+Per the reference doc's original widget development order (§9):
 
 1. [x] Weather (no auth) — end-to-end: `packages/adapters/weather`
    (Open-Meteo), `packages/widgets/weather` (Widget contract impl),
@@ -49,9 +55,11 @@ In progress. Per the reference doc's widget development order (§9):
    on a 15-30 min cron cycle would just show a frozen, wrong clock between
    refreshes. `fetchData()` still exists (SDK contract requirement) but is
    a no-op; the real per-widget state is the timezone/12h-24h setting.
-4. [~] Calendar (first OAuth widget — Google) — **deferred by Ken**: needs
-   Google Cloud Console setup time (consent screen, test users, scopes).
-   Skipped ahead to GitHub; revisit when there's time for the manual setup.
+4. [removed] Calendar (first OAuth widget — Google) — originally deferred
+   pending Google Cloud Console setup time; **permanently removed from
+   scope 2026-08-01** — Ken decided against ever building it. Skipped
+   ahead to GitHub at the time; see the "Documentation accuracy pass"
+   entry below for the full removal.
 5. [x] GitHub — `packages/widgets/github` + `packages/adapters/github`:
    contribution counts (today / this week / this year) plus a full
    Jan–Dec calendar-year heatmap (month/weekday labels, Less→More
@@ -119,15 +127,22 @@ useful to him long-term — dropped from active scope, not deleted from the
 plan; trivial to revive later since nothing about the architecture depends
 on building them in order:
 
-- [~] Tasks — skipped, doesn't track tasks in any tool
-- [~] Email (Gmail readonly) — blocked behind the same Google Cloud setup
-  as Calendar anyway
-- [~] Focus timer — dropped
+- [x] Tasks — skipped here as "doesn't track tasks in any tool," but
+  later built anyway (own Supabase-backed store, `packages/widgets/tasks`,
+  `/tasks` page) — see the Phase 2 section below.
+- [removed] Email (Gmail readonly) — **permanently removed from scope
+  2026-08-01**, not just deferred; Ken decided against ever building it.
+- [removed] Focus timer — **permanently removed from scope 2026-08-01**,
+  not just dropped-for-now; Ken decided against ever building it.
 - [~] Habits — dropped (reopened 2026-07-26 as a "Coming soon" placeholder
   only, not a real widget yet — see `docs/DECISIONS.md`)
-- [~] YouTube — blocked behind Google Cloud setup, dropped
-- [~] Calendar (Google) — stays deferred, revisit if/when there's time for
-  the Google Cloud Console setup
+- [removed] YouTube — **permanently removed from scope 2026-08-01**, not
+  just blocked; Ken decided against ever building it.
+- [removed] Calendar (Google) — **permanently removed from scope
+  2026-08-01**, not just deferred; Ken decided against ever building it.
+  (The unrelated "Calendar (date display)" widget further below, a plain
+  local date string, was already built and later merged into Hero — this
+  removal is only about the Google Calendar integration.)
 
 **Remaining active target for Phase 1**, in the order Ken wants them:
 
@@ -545,13 +560,53 @@ see `docs/DECISIONS.md`'s entry for the full reasoning, including the
 `WidgetActionState.entryId` addition to `@pulse/sdk` that the autosave
 upsert needed.
 
+### Documentation accuracy pass (2026-08-01)
+
+A status/bug audit found this doc and `docs/PROJECT_REFERENCE.md` had
+drifted from actual shipped code — most notably still describing Tasks
+as "skipped" and Phase 2 as "Not started" when Tasks/Notes/Notebook
+write-back functionality was already live. Also, per Ken's explicit
+instruction, **Calendar (Google), Email (Gmail), Focus timer, and
+YouTube are permanently removed from Pulse's scope** — not deferred,
+not backlog, never being built. Updated throughout both docs:
+
+- `docs/PROJECT_REFERENCE.md` §9 (core widget list), §10 (backlog), §11
+  (APIs needed), §12 (phase-by-phase roadmap), and §18 (success gates)
+  all had references to these four removed.
+- This doc's Phase 1 rescoped list and Phase 2 section (below) updated
+  to reflect what's actually built.
+
+The unrelated "Calendar (date display)" widget (plain local date text,
+built 2026-07-24, later merged into Hero) is unaffected — it never was
+the Google Calendar integration and was always a different, deliberately
+separate thing; see that entry above.
+
 ## Phase 2 — make it actionable
 
-Not started. Blocked on Phase 1 gate.
+**Partially shipped already, ahead of the formal Phase 1 gate** — Ken
+asked for Tasks, Notes, and Notebook (all write-back-to-own-table
+features) directly, rather than waiting for two weeks of confirmed daily
+Phase 1 usage first. Real status:
+
+- [x] Task check-off with write-back — Tasks widget, own Supabase table,
+  `/tasks` page
+- [x] Freeform write-back content — Notes (titled, editable) and Notebook
+  (untitled, autosaving stream) widgets, each with their own table and a
+  full history page
+- [ ] Habit check-ins logged to `habits` — not started; Habits is still
+  just a "Coming soon" placeholder card
+
+Focus-session start/stop (originally planned for this phase) was removed
+along with the rest of the focus-timer target — see the "Documentation
+accuracy pass" entry below.
 
 ## Phase 3 — personal analytics
 
-Not started. Blocked on Phase 2 gate.
+Not started in its own right, though GitHub's streak computation
+(current/longest, `packages/widgets/github/src/streaks.ts`) and the
+separate Memory/Timeline milestone track (`docs/MEMORY_ROADMAP.md`) are
+both early analytics-flavored work already underway outside this phase's
+formal numbering.
 
 ## Phase 4 — publish (optional)
 

@@ -53,11 +53,11 @@ export default async function Home() {
     <div className="relative flex min-h-screen flex-col bg-[var(--background)]">
       <Navbar session={session} />
 
-      <main className="flex flex-1 flex-col gap-6 p-4 sm:p-6">
+      <main className="flex flex-1 flex-col gap-6">
         {session?.user?.id ? (
           <WidgetGrid userId={session.user.id} />
         ) : (
-          <p className="text-sm text-zinc-600">
+          <p className="p-4 text-sm text-zinc-600 sm:p-6">
             Sign in to see your dashboard.
           </p>
         )}
@@ -228,7 +228,7 @@ function WidgetGrid({ userId }: { userId: string }) {
   return (
     <>
       {heroWidgets.length > 0 && (
-        <div className="-mx-4 -mt-4 border-b border-[var(--color-divider)] px-4 pt-2 pb-2 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-3 sm:pb-3">
+        <div className="border-b border-[var(--color-divider)] px-4 pt-2 pb-2 sm:px-6 sm:pt-3 sm:pb-3">
           {heroWidgets.map((widget) => (
             <WidgetErrorBoundary key={widget.id} name={widget.name} resetKey={resetKey}>
               <Suspense fallback={<Skeleton variant="hero" />}>
@@ -238,7 +238,7 @@ function WidgetGrid({ userId }: { userId: string }) {
           ))}
         </div>
       )}
-      <div className="mx-auto grid w-full max-w-6xl grid-cols-[repeat(auto-fit,minmax(320px,1fr))] items-start gap-5 sm:gap-6">
+      <div className="mx-auto grid w-full max-w-6xl grid-cols-[repeat(auto-fit,minmax(320px,1fr))] items-start gap-5 px-4 pb-4 [grid-auto-flow:dense] sm:gap-6 sm:px-6 sm:pb-6">
         {priorityWidgets.map((widget) => (
           <div key={widget.id} className={widget.size === "lg" ? LG_SPAN : undefined}>
             <WidgetCell widget={widget} userId={userId} resetKey={resetKey} />

@@ -1,19 +1,9 @@
-import { EmptyState, Metric, RADIUS, WidgetCard, WidgetMenu } from "@pulse/ui";
+import { EmptyState, Metric, WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
-import { RECENT_WEEKS_COUNT } from "./constants";
 import { Heatmap } from "./heatmap";
-import { selectRecentWeeks } from "./heatmap-layout";
 import { GitHubIcon } from "./icon";
 import { computeStreaks } from "./streaks";
 import type { GitHubData } from "./types";
-
-/** Same border-brightens-on-hover cue as `GLASS_CHIP`, minus its
- *  background-tint fill — Ken found the fill distracting specifically on
- *  this chip. Not promoted to a shared `packages/ui` token since it has
- *  exactly one caller; `GLASS_CHIP` itself is untouched so Quick Launch's
- *  tiles and other chips keep their fill. */
-const HEATMAP_CHIP =
-  "bg-transparent border border-[var(--color-divider)] transition-colors hover:border-[var(--color-accent)]";
 
 function ActivitySummaryBlock({ summary }: { summary: GitHubData["activitySummary"] }) {
   if (!summary) return null;
@@ -72,9 +62,9 @@ export function GitHubComponent({
             <Metric label="This week" value={data.totalThisWeek} />
             {streaks && <Metric label="Streak" value={streaks.current} suffix="d" />}
           </div>
-          <div className={`flex flex-col gap-4 px-4 py-3 ${RADIUS.chip} ${HEATMAP_CHIP}`}>
+          <div className="flex flex-col gap-4">
             <Heatmap
-              weeks={selectRecentWeeks(data.weeks, data.fetchedAt, RECENT_WEEKS_COUNT)}
+              weeks={data.weeks}
               totalThisYear={data.totalThisYear}
               year={new Date(data.fetchedAt).getUTCFullYear()}
             />

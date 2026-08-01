@@ -1,5 +1,5 @@
 import { useId, type ReactNode } from "react";
-import { GLASS_HOVER, glassClass } from "./glass";
+import { cardShellClass } from "./card-shell";
 import { RADIUS } from "./tokens";
 
 export type WidgetCardTagVariant = "outline" | "accent" | "neutral";
@@ -21,6 +21,9 @@ export interface WidgetCardProps {
   tag?: WidgetCardTag;
   action?: ReactNode;
   children: ReactNode;
+  /** Optional trailing region (e.g. a "View all →" link), visually
+   *  separated from the content above it — see Tasks/Notes/Notebook. */
+  footer?: ReactNode;
 }
 
 /**
@@ -49,14 +52,11 @@ const TAG_VARIANT: Record<WidgetCardTagVariant, string> = {
  * rotor), announced by its own title instead of reading as undifferentiated
  * page content.
  */
-export function WidgetCard({ title, icon, tag, action, children }: WidgetCardProps) {
+export function WidgetCard({ title, icon, tag, action, children, footer }: WidgetCardProps) {
   const titleId = useId();
 
   return (
-    <section
-      aria-labelledby={titleId}
-      className={`flex h-full min-w-0 flex-col gap-4 ${RADIUS.card} p-5 ${glassClass("light")} ${GLASS_HOVER}`}
-    >
+    <section aria-labelledby={titleId} className={cardShellClass({ hover: true })}>
       <div className="flex min-w-0 items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3 text-[var(--foreground)]">
           {icon && (
@@ -82,6 +82,9 @@ export function WidgetCard({ title, icon, tag, action, children }: WidgetCardPro
         </div>
       </div>
       <div className="min-w-0 flex-1 text-sm text-[var(--color-neutral-600)]">{children}</div>
+      {footer && (
+        <div className="border-t border-[var(--color-divider)] pt-3">{footer}</div>
+      )}
     </section>
   );
 }

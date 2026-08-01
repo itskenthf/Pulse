@@ -3030,3 +3030,105 @@ Also ran a full health check across the whole monorepo per request:
 `pnpm lint`, `pnpm typecheck`, `pnpm test` (all 16 packages), `pnpm
 build`, and `pnpm --filter @pulse/web test:e2e` all pass clean — no
 other regressions found.
+
+## 2026-08-01 — Dashboard layout architecture rebuild
+
+Ken asked to stop patching individual widgets reactively (this file's
+last several entries: heatmap window size, heatmap cell size, Steam row
+layout, Steam+Spotify pairing, Tasks/Notes/Notebook column pinning) and
+rebuild the shared layout system itself, so every widget inherits the
+same responsive behavior instead of accumulating one-off fixes.
+
+**Root cause.** `apps/web/src/app/page.tsx`'s `WidgetGrid` was never
+real CSS Grid — it was two independent flex columns (`sm:basis-2/3`/
+`sm:basis-1/3`) populated by `apps/web/src/lib/balance-columns.tsx`'s
+`balanceColumns()`, a hand-rolled JS weight-balancing heuristic
+(`WIDGET_WEIGHT: {sm:1, md:2, lg:3, hero:0}`) that had to be
+progressively special-cased as new requirements landed: a
+`PINNED_RIGHT_ORDER` list layered on top for Tasks/Notes/Notebook, a
+hand-built Steam+Spotify paired sub-grid. Every prior "fix" was really a
+special case bolted onto a system that was never a real grid to begin
+with.
+
+**Fix: switch to fluid CSS Grid, DOM order = priority.** Replaced the
+two-flex-column split with one real grid:
+`grid-cols-[repeat(auto-fit,minmax(320px,1fr))]` inside a `max-w-6xl`
+container. The browser now decides column count and reflow natively —
+there's no JS weight algorithm to keep in sync as widgets are
+added/removed. Visual priority is now just render order: Tasks → Notes
+→ Notebook (Ken's daily-input widgets, kept first) → GitHub → the
+Steam+Spotify pair → the "coming soon" placeholders last.
+`balanceColumns()`/`WIDGET_WEIGHT`/`WIDGET_WEIGHT_OVERRIDE`/
+`PINNED_RIGHT_ORDER` are all deleted (`balance-columns.tsx` and its
+test file removed entirely). **Trade-off, confirmed explicitly with
+Ken via `AskUserQuestion` before implementing:** widgets no longer have
+a guaranteed "always in this exact lane" placement — a fluid `auto-fit`
+grid has no fixed left/right column concept — in exchange for genuinely
+native responsive reflow. `lg`-sized widgets (GitHub, Notebook) get
+`lg:col-span-2` so they span two tracks on wide widths; this naturally
+clamps to the single available track on mobile with no separate
+override needed.
+
+**GitHub heatmap: removed the nested-card wrapper, restored the full
+year.** `HEATMAP_CHIP` — a hand-copied near-duplicate of the unused
+`GLASS_CHIP` token — wrapped the heatmap in its own bordered box inside
+the widget's already-bordered `WidgetCard`, the one genuine
+nested-card violation found across all seven widgets. Removed it; the
+heatmap now renders directly as `WidgetCard` content with a plain
+`flex flex-col gap-4` spacing wrapper, no border/bg/hover of its own.
+Also reverted the widget to rendering `data.weeks` (the full Jan–Dec
+year) instead of the `selectRecentWeeks(...)`-trimmed 12-week strip
+from two entries above — an explicit reversal, Ken's direct
+instruction this round ("show from jan to dec"). Removed the
+now-dead `RECENT_WEEKS_COUNT` constant and `selectRecentWeeks` function
+(plus its tests). The cell-sizing formula itself
+(`min(fillToContainerWidth, 11px)` via a `cqw` container query, from
+the entry above) is unchanged — it already scales cells to available
+width while staying square and capped at a GitHub-like size, which is
+exactly what a full 53-column year needs too.
+
+**Steam+Spotify: stopped forcing equal heights.** The paired sub-grid
+(`grid grid-cols-1 sm:grid-cols-2`) defaults to `align-items: stretch`,
+and `WidgetCard`'s root has `h-full` — so the two cards were forced to
+match heights regardless of actual content, contradicting "widgets grow
+according to their content." Added `items-start` to the pairing
+wrapper so each card sizes independently.
+
+**New shared `cardShellClass()` helper
+(`packages/ui/src/card-shell.ts`).** `WidgetCard`, `Skeleton`'s "card"
+variant, and `ErrorState` each hand-typed a near-identical root
+className (`flex flex-col gap-4`, `RADIUS.card`, `glassClass("light")`,
+`h-full`) — three copies of the same shape, with only padding/min-height/
+hover actually varying per caller. Consolidated into one parameterized
+function; all three now call it instead of re-typing the class list.
+
+**`WidgetCard` footer slot.** Tasks/Notes/Notebook's "View all →" links
+previously sat as the last child inside each widget's own content
+`flex-col` — visually similar across widgets by convention, not by
+shared structure. Added a real `footer?: ReactNode` prop to
+`WidgetCard`, rendered after the content `<div>` with a
+`border-t border-[var(--color-divider)] pt-3` separator, and migrated
+all three widgets onto it — "identical padding, header, content,
+footer structure" is now actually true structurally.
+
+**Audit of the rest.** Steam/Notes/Notebook/Spotify internals were
+already flex-based throughout with no absolute-positioning misuse and
+no other nested cards — every fixed dimension found is a legitimate
+44×44px touch target or icon/avatar size, not a layout bug. These
+didn't need internal rework beyond the footer-slot migration above.
+`/notebook` (`apps/web/src/app/notebook/page.tsx`) was suspected dead
+during the audit but turned out to already exist and work — a wrong
+finding from one exploration pass, corrected before it became wasted
+work; no changes needed there.
+
+Verified via `pnpm lint`/`typecheck`/`test`/`build` (all clean) and the
+established throwaway-preview-route technique (uncommitted, deleted
+after: `getAllWidgets()` + `widget.render()` with fixture data for
+every widget, mirroring `WidgetGrid`'s actual rendering path) —
+screenshotted at desktop (1280px), tablet (820px), and mobile (390px).
+Confirmed: the grid reflows with no fixed column count (3 columns →
+2 → 1), no horizontal overflow at any width, GitHub spans two tracks
+wide on desktop/one on mobile with the full year rendering border-free
+and square, Steam and Spotify render side-by-side with independent
+(non-stretched) heights on desktop/tablet and stack on mobile, and
+Tasks/Notes/Notebook appear first in the flow at every width.

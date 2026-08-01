@@ -6,6 +6,8 @@ import { Skeleton, SPRING_PRESS, WidgetCard, WidgetErrorBoundary } from "@pulse/
 import { HERO_WIDGET_ID } from "@pulse/widget-hero";
 import { NOTES_WIDGET_ID } from "@pulse/widget-notes";
 import { NOTEBOOK_WIDGET_ID } from "@pulse/widget-notebook";
+import { WIDGET_ID as SPOTIFY_WIDGET_ID } from "@pulse/widget-spotify";
+import { WIDGET_ID as STEAM_WIDGET_ID } from "@pulse/widget-steam";
 import { TASKS_WIDGET_ID } from "@pulse/widget-tasks";
 import { auth, signIn } from "@/auth";
 import { balanceColumns, WIDGET_WEIGHT, WIDGET_WEIGHT_OVERRIDE, type ColumnItem } from "@/lib/balance-columns";
@@ -207,13 +209,52 @@ function WidgetGrid({ userId }: { userId: string }) {
   const heroWidgets = widgets.filter((widget) => widget.size === "hero");
   const nonHeroWidgets = widgets.filter((widget) => widget.size !== "hero");
 
+  // Tasks/Notes/Notebook are Ken's own daily-input widgets — pinned to
+  // the top of the right column in this exact order, rather than left to
+  // wherever balanceColumns' weight-greedy algorithm happens to land
+  // them. That algorithm is still used for everything else below; this
+  // pin is layered on top of it, not inside it, so balanceColumns stays
+  // a simple, purely weight-driven function (see docs/DECISIONS.md).
+  const PINNED_RIGHT_ORDER = [TASKS_WIDGET_ID, NOTES_WIDGET_ID, NOTEBOOK_WIDGET_ID];
+  const pinnedWidgets = PINNED_RIGHT_ORDER.map((id) =>
+    nonHeroWidgets.find((widget) => widget.id === id),
+  ).filter((widget): widget is Widget => Boolean(widget));
+
+  // Steam and Spotify are both small, glanceable widgets that only used
+  // a fraction of their column's width on their own, leaving the rest of
+  // the card empty — paired into one side-by-side row instead. Each
+  // stays a fully independent widget (its own WidgetCell/error boundary/
+  // Suspense below); only their layout placement is combined.
+  const steamWidget = nonHeroWidgets.find((widget) => widget.id === STEAM_WIDGET_ID);
+  const spotifyWidget = nonHeroWidgets.find((widget) => widget.id === SPOTIFY_WIDGET_ID);
+
+  const excludedFromNormalFlow = new Set([...PINNED_RIGHT_ORDER, STEAM_WIDGET_ID, SPOTIFY_WIDGET_ID]);
+  const remainingWidgets = nonHeroWidgets.filter((widget) => !excludedFromNormalFlow.has(widget.id));
+
   const items: ColumnItem[] = [
-    ...nonHeroWidgets.map((widget) => ({
+    ...remainingWidgets.map((widget) => ({
       weight: WIDGET_WEIGHT_OVERRIDE[widget.id] ?? WIDGET_WEIGHT[widget.size],
       node: (
         <WidgetCell key={widget.id} widget={widget} userId={userId} resetKey={resetKey} />
       ),
     })),
+    ...(steamWidget && spotifyWidget
+      ? [
+          {
+            // Side-by-side, not stacked, so this pair now takes about as
+            // much vertical height as a single "md" widget — weighting
+            // it as the sum of both would over-weight it in
+            // balanceColumns relative to its real on-screen height.
+            weight: WIDGET_WEIGHT.md,
+            node: (
+              <div key="steam-spotify-row" className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <WidgetCell widget={steamWidget} userId={userId} resetKey={resetKey} />
+                <WidgetCell widget={spotifyWidget} userId={userId} resetKey={resetKey} />
+              </div>
+            ),
+          },
+        ]
+      : []),
     {
       weight: WIDGET_WEIGHT.sm,
       placeholder: true,
@@ -263,7 +304,14 @@ function WidgetGrid({ userId }: { userId: string }) {
       ),
     },
   ];
-  const { left, right } = balanceColumns(items);
+  const balanced = balanceColumns(items);
+  const left = balanced.left;
+  const right = [
+    ...pinnedWidgets.map((widget) => (
+      <WidgetCell key={widget.id} widget={widget} userId={userId} resetKey={resetKey} />
+    )),
+    ...balanced.right,
+  ];
 
   return (
     <>

@@ -62,10 +62,9 @@ personal/working name — revisit if this ever moves toward public release
 - Manual "refresh now" per widget for anything time-sensitive.
 - Suggested refresh intervals:
   - Weather: every 30–60 min
-  - Emails / GitHub notifications: every 5 min
-  - Calendar / Tasks: every 10–15 min
+  - GitHub notifications: every 5 min
+  - Tasks: every 10–15 min
   - Spotify top plays: every few hours
-  - YouTube watch later: every 30 min
 
 ## 5. Architecture: widget/plugin system (monorepo)
 
@@ -228,7 +227,9 @@ widget_events       (for the future event bus — not used in v1)
 memories            (id, user_id, source, title, description, metadata,
                      created_at — Memory/Timeline feature, see
                      docs/MEMORY_ROADMAP.md; distinct from widget_events)
-focus_sessions
+focus_sessions      (unused — the focus timer widget it was created for
+                     was permanently removed from scope 2026-08-01; the
+                     migration hasn't been rolled back, just unused)
 habits
 tasks
 ```
@@ -241,18 +242,21 @@ schema migration every time a new widget is added.
 
 ## 9. Core widgets (v1 / MVP)
 
+**Calendar (Google), Email (Gmail), Focus timer, and YouTube were removed
+from this list permanently on 2026-08-01** — Ken decided against ever
+building them (not a deferral; see `docs/ROADMAP.md`'s matching dated
+entry). The original numbered list included them; they're gone from the
+list below rather than kept as crossed-out placeholders, since "never
+build this" is a real scope decision, not a still-open backlog item.
+
 1. Good morning greeting (time-based, local)
-2. Today's schedule (Google Calendar API)
-3. Today's tasks (own store, or Todoist/Notion API)
-4. Unread emails (Gmail API — readonly scope)
-5. Weather (Open-Meteo or OpenWeather API)
-6. Current project from GitHub (GitHub API — commits, open PRs)
-7. Focus time (local timer/Pomodoro tracking, stored in Supabase)
-8. Quote (static/rotating list or quote API)
-9. Habit progress (own tracker)
-10. YouTube watch later list (YouTube Data API)
-11. Quick shortcut apps (local config, just launch links/icons)
-12. Spotify top plays (Spotify Web API)
+2. Today's tasks (own store)
+3. Weather (Open-Meteo or OpenWeather API)
+4. Current project from GitHub (GitHub API — commits, open PRs)
+5. Quote (static/rotating list or quote API)
+6. Habit progress (own tracker)
+7. Quick shortcut apps (local config, just launch links/icons)
+8. Spotify top plays (Spotify Web API)
 
 ### Widget development order
 
@@ -262,19 +266,15 @@ challenge whenever possible:
 1. Weather (no auth — proves the SDK/render pattern)
 2. Greeting (no data source at all)
 3. Clock (local, trivial)
-4. Calendar (first OAuth widget)
-5. GitHub (second OAuth provider, adapter reuse)
-6. Tasks
-7. Email (Gmail readonly scope)
-8. Focus timer (first write-back — local state, no external API)
-9. Habits (write-back to own table)
-10. Spotify (third OAuth provider)
-11. YouTube
-12. Quick launch (no data source, pure config)
+4. GitHub (second OAuth provider, adapter reuse)
+5. Tasks
+6. Habits (write-back to own table)
+7. Spotify (third OAuth provider)
+8. Quick launch (no data source, pure config)
 
-## 10. Wider widget backlog (post-MVP, don't build until core 12 are in daily use)
+## 10. Wider widget backlog (post-MVP, don't build until core widgets are in daily use)
 
-- **Daily:** clock, weather, calendar, tasks, email, GitHub (core, above)
+- **Daily:** clock, weather, tasks, GitHub (core, above)
 - **Productivity:** weekly goal, deep work tracker
 - **Developer:** latest git commits, open PRs, CI status, Vercel deployments,
   Claude/OpenAI API usage, Docker containers, local servers
@@ -286,13 +286,12 @@ changes — the discipline is sequencing, not capability.
 
 ## 11. APIs/integrations needed
 
-- Google Calendar API
-- Gmail API (readonly scope)
 - GitHub REST API
 - Spotify Web API
-- YouTube Data API
 - Weather API (Open-Meteo — free, no key needed — or OpenWeather)
-- Optional later: Todoist/Notion API for tasks
+- Optional later: Todoist/Notion API for tasks (Tasks already ships with
+  its own Supabase-backed store — see `docs/ROADMAP.md` — so this would
+  only matter if syncing with an external tool becomes worth it later)
 
 ## 12. Roadmap
 
@@ -301,8 +300,7 @@ changes — the discipline is sequencing, not capability.
 - Create GitHub repo, decide monorepo tool (Turborepo or Nx)
 - Set up Next.js app in `apps/web`
 - Create Supabase project (DB + auth)
-- Register OAuth apps: Google Cloud Console (Calendar + Gmail scopes), GitHub
-  OAuth App, Spotify Developer app, YouTube Data API key
+- Register OAuth apps: GitHub OAuth App, Spotify Developer app
 - Deploy an empty "hello world" Next.js app to Vercel — confirms the pipeline
   works before building features
 - **Gate to move on:** you can log in with at least one provider and see your
@@ -313,29 +311,30 @@ changes — the discipline is sequencing, not capability.
 - Week 1: Build the widget SDK interface + shell that can `registerWidget()`
   and render a grid of cards. Build one widget end to end (recommend weather
   — no OAuth needed) to prove the pattern.
-- Week 2: Add OAuth-backed widgets one at a time — calendar, GitHub, email.
-  Each one: fetch function (cron-called), cache write to `widget_cache`,
+- Week 2: Add OAuth-backed widgets one at a time — GitHub, Spotify. Each
+  one: fetch function (cron-called), cache write to `widget_cache`,
   component render. Build the widget settings/manage screen (toggle,
   reorder) alongside — forces you to keep the SDK honest.
-- Week 3: Add remaining widgets (Spotify, YouTube, focus timer stub, habit
-  stub, quote, quick launch). Wire up the responsive grid (desktop/tablet/
-  mobile breakpoints). Deploy to Vercel, install as PWA on phone, wrap with
-  Tauri for desktop.
+- Week 3: Add remaining widgets (habit stub, quote, quick launch). Wire up
+  the responsive grid (desktop/tablet/mobile breakpoints). Deploy to
+  Vercel, install as PWA on phone, wrap with Tauri for desktop.
 - **Gate to move on:** see Success gates below — do not proceed to Phase 2
   until they're met
 
 ### Phase 2 — make it actionable
 
-- Task check-off with write-back to source
-- Start/stop focus session from the dashboard, logged to `focus_sessions`
-- Habit check-ins logged to `habits`
+- Task check-off with write-back to source — **done**: the Tasks widget
+  (`packages/widgets/tasks`) writes to its own Supabase table; Notes and
+  Notebook followed the same pattern for freeform content. See
+  `docs/ROADMAP.md`.
+- Habit check-ins logged to `habits` — not started; Habits is still a
+  "Coming soon" placeholder card with no real logic behind it
 - **Gate to move on:** write-back features feel reliable, not fragile — no
   data loss, no silent failures
 
 ### Phase 3 — personal analytics
 
-- Historical views: habit streaks over time, focus time trends, weekly
-  summaries
+- Historical views: habit streaks over time, weekly summaries
 - Optional end-of-day "night mode" reflection view
 - **Gate to move on:** genuinely deciding whether to keep this personal-only
   or pursue Phase 4 — not a default next step
@@ -423,7 +422,6 @@ Maintain the following project documents alongside this reference:
 Phase 1 is complete only when:
 
 - You open Pulse every morning.
-- You no longer check Calendar separately.
 - You no longer check GitHub separately.
 - You trust the dashboard data.
 - At least one widget has become part of your daily workflow.

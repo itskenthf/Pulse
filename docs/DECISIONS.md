@@ -2806,3 +2806,116 @@ timer in `0001_core_schema.sql`) is left in place, unused — rolling back
 a migration is a real schema change with its own risk, out of scope for
 a documentation-accuracy pass. Noted as unused in
 `docs/PROJECT_REFERENCE.md` §8 rather than silently left unexplained.
+
+## 2026-08-01 — Dashboard polish: GitHub, Steam, Spotify, Notes
+
+Ken reviewed the live dashboard and asked for four changes. Two revert
+decisions that were explicitly confirmed before — legitimate changes of
+mind, not silent overwrites, so recorded here like every other decision,
+with a pointer back to what they revise. All four confirmed via
+`AskUserQuestion` before implementation.
+
+**GitHub heatmap chip: hover fill removed, hover border kept.** Not the
+whole-card hover cue (`GLASS_HOVER` on `WidgetCard`, from the 2026-07-25
+"static, non-motion hover" decision) — that's untouched and still
+applies to every widget card, GitHub included. This is specifically
+`GLASS_CHIP`'s background-tint-on-hover (`hover:bg-[color-mix(...)]`),
+which was applied to the heatmap's own wrapper chip. `GLASS_CHIP` is
+shared with Quick Launch's tiles and other chips, so rather than editing
+that shared token (which would've changed those too), the heatmap's
+wrapper now uses a small local class string in
+`packages/widgets/github/src/component.tsx` — border-brightens-on-hover,
+no fill — with everything else about `GLASS_CHIP` left alone.
+
+**GitHub "latest repo/commit" row removed** (the "Moodzic" row) — Ken
+found it cluttered, not useful. Removed the render block, the
+`fetchLatestActivity` call in `fetch.ts`, the `latestActivity` field
+from `githubDataSchema`/`GitHubData`, and the adapter module
+(`packages/adapters/github/src/activity.ts`) entirely — no other
+consumer existed. Real trade-off worth naming: `derive-memories.ts`'s
+"new commit" Memory/Timeline signal read `latestActivity`, so that
+signal is gone too (the `repositoriesCreated` signal is unaffected).
+Kept as an accepted cost rather than fetching data solely to feed an
+under-the-radar Timeline entry nobody asked to keep.
+
+**GitHub heatmap: full year → compact recent-weeks strip** (reverses
+2026-07-29's "expand to full calendar year" decision — see that entry
+and 2026-07-30's follow-up for the original reasoning). In a narrow
+dashboard card, ~53 weeks of mostly-empty grey squares buried the
+actual recent activity in a tiny sliver on the right edge — legible on
+GitHub's own wide profile page, not in a card. Fixed client-side only:
+`RECENT_WEEKS_COUNT = 12` in `constants.ts`, and `component.tsx` now
+passes `data.weeks.slice(-RECENT_WEEKS_COUNT)` to `Heatmap` instead of
+the full array. `Heatmap`'s cell-sizing (`cqw`-based, `columnCount =
+weeks.length`) and `computeMonthLabels` both already operate generically
+on whatever `weeks` they're given, so no changes needed there. The
+adapter (`packages/adapters/github/src/contributions.ts`) is untouched —
+still one full-year query per refresh, keeping the round-trip
+simplification from 2026-07-29 and the accurate `totalThisYear` count
+that still appears as header text even though the grid only renders
+recent weeks.
+
+**Steam and Spotify: compact thumbnail + text rows.** Confirmed first
+that a widget's `size` field (`sm`/`md`/`lg`) doesn't control physical
+card dimensions — layout is two weight-balanced flex columns (see the
+2026-07-26 "Layout/UX fixes" entry), not a CSS grid span — so the fix
+had to be trimming content, not the `size` prop.
+- Steam (`packages/widgets/steam/src/component.tsx`): the 2-column grid
+  of full-width 16:9 cover-art tiles became a vertical list of rows — a
+  small fixed-width (`w-16`) thumbnail beside the title, matching
+  Spotify's existing row shape. `cover-art.tsx` itself is unchanged
+  (still fills whatever width its parent gives it); it's also used at
+  full width on the Steam detail page
+  (`apps/web/src/app/steam/[appId]/page.tsx`), which this doesn't touch.
+- Spotify (`packages/widgets/spotify/src/component.tsx`,
+  `constants.ts`): `TRACK_LIMIT` 5 → 3, row/section spacing tightened
+  (`gap-4` → `gap-2`), top-artist avatar 48px → 36px with its separate
+  "TOP ARTIST" label line dropped so it reads as one compact header row
+  instead of its own section.
+
+**Notes page: inline-editable list → click-to-open modal.** The /notes
+page previously rendered every note as an always-editable inline
+title+body form — not a real way to browse history, per Ken. Now: a
+compact read-only row (title + truncated snippet, reusing the
+`snippet()` helper — extracted to `packages/widgets/notes/src/
+snippet.ts` since it's now shared between the dashboard card's
+`NoteRow` and the new `NoteListRow`) that opens a detail/edit modal on
+click; "+ New note" opens the same modal in create mode instead of an
+always-visible form taking up page space.
+
+This needed **Pulse's first modal/dialog primitive**
+(`packages/ui/src/modal.tsx`) — nothing like it existed (`WidgetMenu`'s
+dropdown is an anchored disclosure panel, not a centered overlay with a
+backdrop). Built to match Classical exactly: flat scrim backdrop (no
+blur — "no backdrop blur anywhere in the system" per
+`docs/DESIGN_SYSTEM.md`), `glassClass("heavy")` + `RADIUS.card` panel
+(the same "floats above the page" treatment `WidgetMenu`'s dropdown
+already uses), `font-heading` title. Closes on Escape or a backdrop
+click (not a click inside the panel), focuses the panel on open, and
+returns focus to whatever triggered it on close — the same bar of
+a11y effort `useDismissableMenu` already set for dropdowns, not a full
+focus-trap (nothing else in this codebase has one either). Has its own
+test suite (`modal.test.tsx`) mirroring `use-dismissable-menu.test.tsx`'s
+shape.
+
+`packages/widgets/notes/src/note-modal.tsx` is one component for both
+create and edit — `note` prop present/absent switches which server
+action it submits to (`updateNoteAction`+`deleteNoteAction` vs.
+`addNoteAction`) and whether timestamps/delete show. A successful save
+keeps the modal open (edit mode, so you can keep tweaking) or closes it
+(create mode, matching the old `AddNoteForm`'s reset-after-success
+behavior). A successful delete always closes it. `notes-page-body.tsx`
+(new, in the widget package — same "client composition component lives
+beside its widget" pattern as `notebook-card.tsx`) holds the open/closed/
+which-note state and wires it all together; `apps/web/src/app/notes/
+page.tsx` is back to a thin server shell, and `note-editor.tsx` (the old
+always-inline editor) is deleted. The dashboard card's own preview
+(`component.tsx`, `NoteRow`) is unchanged — it was already read-only +
+a delete button, so it didn't have the problem being fixed; the ask was
+specifically about the `/notes` page.
+
+Verified via the same throwaway-preview-route technique as previous
+passes (uncommitted, deleted after): screenshotted all four widgets,
+confirmed the heatmap chip's hover shows a border with no fill, opened
+the notes modal in both edit and create mode, and confirmed no
+console/hydration errors.

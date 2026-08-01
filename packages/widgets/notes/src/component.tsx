@@ -18,6 +18,14 @@ export function NotesComponent({
       title="Notes"
       icon={<Book className="h-4 w-4" aria-hidden="true" />}
       action={<WidgetMenu id="notes" actions={actions} />}
+      footer={
+        <a
+          href="/notes"
+          className="text-sm font-medium text-[var(--color-accent)] hover:underline"
+        >
+          View all →
+        </a>
+      }
     >
       <div className="flex flex-col gap-3">
         <AddNoteForm action={actions.addNote} />
@@ -30,12 +38,6 @@ export function NotesComponent({
         ) : (
           <EmptyState message="No notes yet — write one above." />
         )}
-        <a
-          href="/notes"
-          className="text-sm font-medium text-[var(--color-accent)] hover:underline"
-        >
-          View all →
-        </a>
       </div>
     </WidgetCard>
   );

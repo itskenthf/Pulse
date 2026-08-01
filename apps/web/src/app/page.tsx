@@ -10,7 +10,6 @@ import { WIDGET_ID as SPOTIFY_WIDGET_ID } from "@pulse/widget-spotify";
 import { WIDGET_ID as STEAM_WIDGET_ID } from "@pulse/widget-steam";
 import { TASKS_WIDGET_ID } from "@pulse/widget-tasks";
 import { auth, signIn } from "@/auth";
-import { balanceColumns, WIDGET_WEIGHT, WIDGET_WEIGHT_OVERRIDE, type ColumnItem } from "@/lib/balance-columns";
 import { cycleHeroQuoteAction } from "./actions/hero";
 import { addNoteAction, deleteNoteAction, updateNoteAction } from "./actions/notes";
 import { addEntryAction, updateEntryAction } from "./actions/notebook";
@@ -175,24 +174,19 @@ function WidgetCell({
 
 /**
  * "hero" renders full-width, chromeless, above everything else. Every
- * other widget splits into two independently-stacked flows rather than
- * one shared CSS Grid — a single `grid-cols-3` with GitHub spanning 2
- * columns left the remaining single-column widgets sharing GitHub's grid
- * row, and CSS Grid sizes a row's height to its tallest cell regardless
- * of `align-items` — so whenever a shorter widget (e.g. Quick Launch) sat
- * in the same row as a taller one (Steam, once it grew stacked cover
- * art), the shorter cell's card was fine, but the row underneath it sat
- * empty. That's not a hover/hydration bug, it's how CSS Grid tracks
- * work — confirmed by reproducing it at multiple widths (desktop through
- * iPad portrait) during the responsive sweep, not guessed at. Two
- * independent flex columns don't have shared row tracks, so each one's
- * cards simply stack tight regardless of what's in the other column.
+ * other widget flows into one real CSS Grid
+ * (`repeat(auto-fit, minmax(320px, 1fr))`) — the browser decides column
+ * count and reflow natively, so there's no JS weight-balancing heuristic
+ * to keep in sync as widgets are added/removed (see docs/DECISIONS.md
+ * for the rebuild that replaced the old two-flex-column
+ * `balanceColumns` split). Visual priority is now just DOM order: Tasks,
+ * Notes, and Notebook — Ken's own daily-input widgets — render first,
+ * followed by GitHub, the Steam+Spotify pair, then the "coming soon"
+ * placeholders last.
  *
- * Which widget lands in which column is decided by `balanceColumns`
- * below, not a hard "lg vs. everything else" split — that split left the
- * wide column (GitHub alone) far shorter than the rail once enough
- * widgets existed, reading as a large empty gap under GitHub instead of
- * two comparably-tall columns (see docs/DECISIONS.md).
+ * `lg`-sized widgets (GitHub, Notebook) span two grid tracks on wide
+ * widths via `lg:col-span-2`; on a single-column mobile width the span
+ * naturally clamps to the one available track.
  */
 function WidgetGrid({ userId }: { userId: string }) {
   // See WidgetCell's own resetKey comment for why this is called here —
@@ -209,109 +203,27 @@ function WidgetGrid({ userId }: { userId: string }) {
   const heroWidgets = widgets.filter((widget) => widget.size === "hero");
   const nonHeroWidgets = widgets.filter((widget) => widget.size !== "hero");
 
-  // Tasks/Notes/Notebook are Ken's own daily-input widgets — pinned to
-  // the top of the right column in this exact order, rather than left to
-  // wherever balanceColumns' weight-greedy algorithm happens to land
-  // them. That algorithm is still used for everything else below; this
-  // pin is layered on top of it, not inside it, so balanceColumns stays
-  // a simple, purely weight-driven function (see docs/DECISIONS.md).
-  const PINNED_RIGHT_ORDER = [TASKS_WIDGET_ID, NOTES_WIDGET_ID, NOTEBOOK_WIDGET_ID];
-  const pinnedWidgets = PINNED_RIGHT_ORDER.map((id) =>
+  const PRIORITY_ORDER = [TASKS_WIDGET_ID, NOTES_WIDGET_ID, NOTEBOOK_WIDGET_ID];
+  const priorityWidgets = PRIORITY_ORDER.map((id) =>
     nonHeroWidgets.find((widget) => widget.id === id),
   ).filter((widget): widget is Widget => Boolean(widget));
 
   // Steam and Spotify are both small, glanceable widgets that only used
-  // a fraction of their column's width on their own, leaving the rest of
-  // the card empty — paired into one side-by-side row instead. Each
+  // a fraction of a grid track's width on their own, leaving the rest of
+  // the card empty — paired into one side-by-side sub-grid instead. Each
   // stays a fully independent widget (its own WidgetCell/error boundary/
-  // Suspense below); only their layout placement is combined.
+  // Suspense below); only their layout placement is combined. `items-start`
+  // keeps each card sized to its own content instead of being stretched
+  // to match its neighbor's height (CSS Grid's default `align-items:
+  // stretch`, which fought "grow according to content" — see
+  // docs/DECISIONS.md).
   const steamWidget = nonHeroWidgets.find((widget) => widget.id === STEAM_WIDGET_ID);
   const spotifyWidget = nonHeroWidgets.find((widget) => widget.id === SPOTIFY_WIDGET_ID);
 
-  const excludedFromNormalFlow = new Set([...PINNED_RIGHT_ORDER, STEAM_WIDGET_ID, SPOTIFY_WIDGET_ID]);
+  const excludedFromNormalFlow = new Set([...PRIORITY_ORDER, STEAM_WIDGET_ID, SPOTIFY_WIDGET_ID]);
   const remainingWidgets = nonHeroWidgets.filter((widget) => !excludedFromNormalFlow.has(widget.id));
 
-  const items: ColumnItem[] = [
-    ...remainingWidgets.map((widget) => ({
-      weight: WIDGET_WEIGHT_OVERRIDE[widget.id] ?? WIDGET_WEIGHT[widget.size],
-      node: (
-        <WidgetCell key={widget.id} widget={widget} userId={userId} resetKey={resetKey} />
-      ),
-    })),
-    ...(steamWidget && spotifyWidget
-      ? [
-          {
-            // Side-by-side, not stacked, so this pair now takes about as
-            // much vertical height as a single "md" widget — weighting
-            // it as the sum of both would over-weight it in
-            // balanceColumns relative to its real on-screen height.
-            weight: WIDGET_WEIGHT.md,
-            node: (
-              <div key="steam-spotify-row" className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <WidgetCell widget={steamWidget} userId={userId} resetKey={resetKey} />
-                <WidgetCell widget={spotifyWidget} userId={userId} resetKey={resetKey} />
-              </div>
-            ),
-          },
-        ]
-      : []),
-    {
-      weight: WIDGET_WEIGHT.sm,
-      placeholder: true,
-      node: (
-        <div key="habits-coming-soon" className="opacity-70">
-          <WidgetCard
-            title="Habits"
-            icon={<ListChecks className="h-4 w-4" aria-hidden="true" />}
-            tag={{ label: "Coming soon", variant: "neutral" }}
-          >
-            A daily checklist — water, exercise, reading, meditation — is
-            planned for a future release.
-          </WidgetCard>
-        </div>
-      ),
-    },
-    {
-      weight: WIDGET_WEIGHT.sm,
-      placeholder: true,
-      node: (
-        <div key="reading-coming-soon" className="opacity-70">
-          <WidgetCard
-            title="Reading"
-            icon={<BookOpen className="h-4 w-4" aria-hidden="true" />}
-            tag={{ label: "Coming soon", variant: "neutral" }}
-          >
-            Track your current book and reading streak — planned for a
-            future release.
-          </WidgetCard>
-        </div>
-      ),
-    },
-    {
-      weight: WIDGET_WEIGHT.sm,
-      placeholder: true,
-      node: (
-        <div key="rss-coming-soon" className="opacity-70">
-          <WidgetCard
-            title="RSS"
-            icon={<Rss className="h-4 w-4" aria-hidden="true" />}
-            tag={{ label: "Coming soon", variant: "neutral" }}
-          >
-            Latest posts from your favorite blogs — planned for a future
-            release.
-          </WidgetCard>
-        </div>
-      ),
-    },
-  ];
-  const balanced = balanceColumns(items);
-  const left = balanced.left;
-  const right = [
-    ...pinnedWidgets.map((widget) => (
-      <WidgetCell key={widget.id} widget={widget} userId={userId} resetKey={resetKey} />
-    )),
-    ...balanced.right,
-  ];
+  const LG_SPAN = "lg:col-span-2";
 
   return (
     <>
@@ -326,12 +238,52 @@ function WidgetGrid({ userId }: { userId: string }) {
           ))}
         </div>
       )}
-      <div className="flex min-w-0 flex-col items-stretch gap-5 sm:flex-row sm:items-start sm:gap-6">
-        <div className="contents sm:flex sm:min-w-0 sm:w-full sm:flex-col sm:gap-5 sm:basis-2/3">
-          {left}
+      <div className="mx-auto grid w-full max-w-6xl grid-cols-[repeat(auto-fit,minmax(320px,1fr))] items-start gap-5 sm:gap-6">
+        {priorityWidgets.map((widget) => (
+          <div key={widget.id} className={widget.size === "lg" ? LG_SPAN : undefined}>
+            <WidgetCell widget={widget} userId={userId} resetKey={resetKey} />
+          </div>
+        ))}
+        {remainingWidgets.map((widget) => (
+          <div key={widget.id} className={widget.size === "lg" ? LG_SPAN : undefined}>
+            <WidgetCell widget={widget} userId={userId} resetKey={resetKey} />
+          </div>
+        ))}
+        {steamWidget && spotifyWidget && (
+          <div className="grid grid-cols-1 items-start gap-5 sm:grid-cols-2">
+            <WidgetCell widget={steamWidget} userId={userId} resetKey={resetKey} />
+            <WidgetCell widget={spotifyWidget} userId={userId} resetKey={resetKey} />
+          </div>
+        )}
+        <div className="opacity-70">
+          <WidgetCard
+            title="Habits"
+            icon={<ListChecks className="h-4 w-4" aria-hidden="true" />}
+            tag={{ label: "Coming soon", variant: "neutral" }}
+          >
+            A daily checklist — water, exercise, reading, meditation — is
+            planned for a future release.
+          </WidgetCard>
         </div>
-        <div className="contents sm:flex sm:min-w-0 sm:w-full sm:flex-col sm:gap-5 sm:basis-1/3">
-          {right}
+        <div className="opacity-70">
+          <WidgetCard
+            title="Reading"
+            icon={<BookOpen className="h-4 w-4" aria-hidden="true" />}
+            tag={{ label: "Coming soon", variant: "neutral" }}
+          >
+            Track your current book and reading streak — planned for a
+            future release.
+          </WidgetCard>
+        </div>
+        <div className="opacity-70">
+          <WidgetCard
+            title="RSS"
+            icon={<Rss className="h-4 w-4" aria-hidden="true" />}
+            tag={{ label: "Coming soon", variant: "neutral" }}
+          >
+            Latest posts from your favorite blogs — planned for a future
+            release.
+          </WidgetCard>
         </div>
       </div>
     </>

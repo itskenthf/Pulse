@@ -1,4 +1,4 @@
-import { glassClass } from "./glass";
+import { cardShellClass } from "./card-shell";
 import { RADIUS } from "./tokens";
 
 export interface SkeletonProps {
@@ -27,10 +27,7 @@ export function Skeleton({ variant = "card" }: SkeletonProps) {
   }
 
   return (
-    <div
-      aria-hidden="true"
-      className={`flex h-full flex-col gap-4 ${RADIUS.card} p-5 ${glassClass("light")}`}
-    >
+    <div aria-hidden="true" className={cardShellClass()}>
       <div className="flex items-center gap-3">
         <div className={`h-9 w-9 shrink-0 ${RADIUS.chip} ${PULSE_BLOCK}`} />
         <div className={`h-4 w-24 ${PULSE_BLOCK}`} />

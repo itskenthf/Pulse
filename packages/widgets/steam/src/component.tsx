@@ -1,4 +1,4 @@
-import { EmptyState, RADIUS, WidgetCard, WidgetMenu } from "@pulse/ui";
+import { EmptyState, WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
 import { CoverArt } from "./cover-art";
 import { SteamIcon } from "./icon";
@@ -6,10 +6,11 @@ import { SettingsFormFields } from "./settings-form-fields";
 import type { SteamData, SteamSettings } from "./types";
 
 /**
- * Cover art + title only — hours, last-played, and achievements moved to
- * each game's own detail page (apps/web/src/app/steam/[appId]/page.tsx),
- * reading the same cached SteamData. Keeps the card matching a
- * game-library shelf instead of a stats table.
+ * Compact rows — small thumbnail + title, not full cover art tiles —
+ * matching Spotify's glanceable row shape (see docs/DECISIONS.md).
+ * Hours, last-played, and achievements stay on each game's own detail
+ * page (apps/web/src/app/steam/[appId]/page.tsx), reading the same
+ * cached SteamData; that page still uses `CoverArt` at full width.
  */
 export function SteamComponent({
   data,
@@ -35,14 +36,16 @@ export function SteamComponent({
     >
       {data ? (
         data.games.length > 0 ? (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="flex flex-col gap-3">
             {data.games.map((game) => (
               <a
                 key={game.appId}
                 href={`/steam/${game.appId}`}
-                className={`group flex flex-col gap-2 ${RADIUS.chip}`}
+                className="group flex min-w-0 items-center gap-3"
               >
-                <CoverArt appId={game.appId} name={game.name} />
+                <div className="w-16 shrink-0">
+                  <CoverArt appId={game.appId} name={game.name} />
+                </div>
                 <span className="truncate text-sm font-medium text-[var(--foreground)]">
                   {game.name}
                 </span>

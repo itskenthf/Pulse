@@ -21,3 +21,5 @@ export { usePullToRefresh } from "./use-pull-to-refresh";
 export type { UsePullToRefreshOptions, UsePullToRefreshResult } from "./use-pull-to-refresh";
 export { EmptyState } from "./empty-state";
 export type { EmptyStateProps } from "./empty-state";
+export { Modal } from "./modal";
+export type { ModalProps } from "./modal";

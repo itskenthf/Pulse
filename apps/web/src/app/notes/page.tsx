@@ -2,11 +2,9 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { readWidgetCache } from "@pulse/database";
-import { EmptyState } from "@pulse/ui";
-import { AddNoteForm, NOTES_WIDGET_ID, noteDataSchema } from "@pulse/widget-notes";
+import { NOTES_WIDGET_ID, NotesPageBody, noteDataSchema } from "@pulse/widget-notes";
 import { auth } from "@/auth";
 import { addNoteAction, deleteNoteAction, updateNoteAction } from "@/app/actions/notes";
-import { NoteEditor } from "./note-editor";
 
 export default async function NotesPage() {
   const session = await auth();
@@ -31,22 +29,14 @@ export default async function NotesPage() {
           Notes
         </h1>
 
-        <AddNoteForm action={addNoteAction} />
-
-        {notes.length === 0 ? (
-          <EmptyState message="No notes yet — write one above." />
-        ) : (
-          <div className="flex flex-col gap-4">
-            {notes.map((note) => (
-              <NoteEditor
-                key={note.id}
-                note={note}
-                updateAction={updateNoteAction}
-                deleteAction={deleteNoteAction}
-              />
-            ))}
-          </div>
-        )}
+        <NotesPageBody
+          notes={notes}
+          actions={{
+            addNote: addNoteAction,
+            updateNote: updateNoteAction,
+            deleteNote: deleteNoteAction,
+          }}
+        />
       </main>
     </div>
   );

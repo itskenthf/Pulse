@@ -32,25 +32,22 @@ export function SpotifyComponent({
       tag={{ label: "Top tracks", variant: "accent" }}
       action={<WidgetMenu id="spotify" actions={actions} />}
     >
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
         {data.topArtist && (
-          <div className="flex min-w-0 items-center gap-3 border-b border-[var(--color-divider)] pb-4">
+          <div className="flex min-w-0 items-center gap-2 border-b border-[var(--color-divider)] pb-2">
             {data.topArtist.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={data.topArtist.imageUrl}
                 alt=""
-                width={48}
-                height={48}
-                className="h-12 w-12 shrink-0 rounded-full object-cover shadow-sm"
+                width={36}
+                height={36}
+                className="h-9 w-9 shrink-0 rounded-full object-cover shadow-sm"
               />
             ) : (
-              <span className="h-12 w-12 shrink-0 rounded-full border border-[var(--color-accent-300)] bg-[var(--color-accent-100)]" />
+              <span className="h-9 w-9 shrink-0 rounded-full border border-[var(--color-accent-300)] bg-[var(--color-accent-100)]" />
             )}
             <div className="min-w-0 flex-1">
-              <p className="text-xs tracking-wide text-[var(--color-neutral-400)] uppercase">
-                Top artist
-              </p>
               <a
                 href={data.topArtist.url}
                 target="_blank"
@@ -69,7 +66,7 @@ export function SpotifyComponent({
         )}
 
         {data.tracks.length > 0 ? (
-          <ul className="flex min-w-0 flex-col gap-4">
+          <ul className="flex min-w-0 flex-col gap-2">
             {data.tracks.map((track) => (
               <li key={track.id} className="flex min-w-0 items-center gap-3">
                 {track.imageUrl ? (

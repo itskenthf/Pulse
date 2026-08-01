@@ -3,16 +3,10 @@
 import { useActionState } from "react";
 import { Trash2 } from "lucide-react";
 import type { WidgetAction, WidgetActionState } from "@pulse/sdk";
-import { SNIPPET_LENGTH } from "./constants";
+import { snippet } from "./snippet";
 import type { Note } from "./types";
 
 const initialState: WidgetActionState = {};
-
-function snippet(body: string): string {
-  const trimmed = body.trim();
-  if (trimmed.length <= SNIPPET_LENGTH) return trimmed;
-  return `${trimmed.slice(0, SNIPPET_LENGTH)}…`;
-}
 
 export function NoteRow({ note, deleteAction }: { note: Note; deleteAction: WidgetAction }) {
   const [, deleteFormAction, isDeleting] = useActionState(deleteAction, initialState);

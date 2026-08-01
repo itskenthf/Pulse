@@ -3132,3 +3132,96 @@ wide on desktop/one on mobile with the full year rendering border-free
 and square, Steam and Spotify render side-by-side with independent
 (non-stretched) heights on desktop/tablet and stack on mobile, and
 Tasks/Notes/Notebook appear first in the flow at every width.
+
+## 2026-08-01 — Dashboard layout: targeted fixes after a second audit
+
+Ken flagged (with live screenshots) that the dashboard had regressed
+since the previous entry's rebuild and asked for a ground-up
+redesign: an audit report, a dashboard-owns-sizing layout system,
+semantic `S`/`M`/`L`/`XL` size tokens, and every widget refactored onto
+it.
+
+**Audit came back cleaner than expected.** Two parallel agents swept
+the shared layout components and every widget's internals. Headline
+finding: the architecture from the previous entry wasn't actually
+broken — no nested-card violations survived anywhere, no widget defined
+its own outer width/height fighting the grid, every widget already
+rendered through the one shared `WidgetCard` shell. The real findings
+were six narrow, concrete issues, not evidence of a fundamentally
+broken system. Surfaced this to Ken via `AskUserQuestion` rather than
+either blindly doing the full rename or silently downscoping — he chose
+targeted fixes over the full `sm/md/lg/hero` → `S/M/L/XL` rename (a
+pure rename with no behavioral difference until sizes actually map to
+different grid-span rules, which they don't yet — matches CLAUDE.md's
+"don't scaffold ahead of need").
+
+**Fixes shipped:**
+
+1. **Grid could leave holes.** `auto-fit` computes column count from
+   container width alone, blind to which items request
+   `lg:col-span-2` — a span-2 widget (GitHub, Notebook) could land at
+   a row's end and get squeezed instead of flowing to a new row. Added
+   `[grid-auto-flow:dense]` to `WidgetGrid`'s grid className
+   (`apps/web/src/app/page.tsx`) so the browser backfills earlier
+   gaps with later single-track items.
+2. **Dead `h-full` in the shared card shell.** `cardShellClass()`
+   (`packages/ui/src/card-shell.ts`) carried an `h-full` left over
+   from before the grid switched to `items-start` — inert today (no
+   ancestor has a definite height to resolve against), and would
+   silently start doing something different if `items-start` were
+   ever removed. Deleted it.
+3. **Hero's negative-margin bleed hack.** Hero cancelled `<main>`'s
+   own `p-4 sm:p-6` with `-mx-4 -mt-4 ... sm:-mx-6 sm:-mt-6` to render
+   full-width — two components had to stay numerically in sync by
+   hand. Restructured instead: `<main>` no longer carries padding at
+   all; the grid wrapper (`apps/web/src/app/page.tsx`'s `WidgetGrid`)
+   now carries its own `px-4 pb-4 sm:px-6 sm:pb-6`, and the
+   sign-out `<p>` in `page.tsx`'s `Home()` got the same padding
+   directly. Hero is full-bleed by construction now, nothing to
+   cancel.
+4. **Skeleton/real-content height mismatch.** The loading skeleton's
+   fixed placeholder-line heights didn't scale with how tall real
+   widget content (GitHub, Notebook) grows to, so the loading→loaded
+   swap could visibly jump height. Added a `min-h-64` floor and one
+   more placeholder line to `Skeleton`'s "card" variant
+   (`packages/ui/src/skeleton.tsx`) — a rough visual match, not
+   pixel-exact (skeletons are approximate by nature).
+5. **GitHub re-capped its own width.** `ActivitySummaryBlock`
+   (`packages/widgets/github/src/component.tsx`) hardcoded
+   `lg:max-w-56` on itself even though GitHub is `size: "lg"` and
+   already gets a full doubled grid track from the grid wrapper —
+   duplicated, competing sizing logic between the widget and the
+   grid. Removed the cap; the block now just uses the track width
+   it's already been given.
+6. **Number-legibility bug, the thing the screenshot actually
+   showed.** GitHub's "Today"/"This week"/"Streak" numbers rendered
+   as "IO"/"IOO" instead of "10"/"100" — traced (not guessed) to
+   Cormorant Garamond's own digit glyph design at
+   `text-3xl font-semibold`, not any CSS bug: `tabular-nums` only
+   equalizes digit width, it can't substitute glyphs, and no
+   `font-feature-settings`/ligature config exists anywhere in the
+   codebase. Fixed by dropping the `font-heading` class from
+   `Metric`'s value `<span>` (`packages/ui/src/metric.tsx`) so it
+   inherits the page's default body font (Lora, already loaded, set
+   as `body`'s `font-family` in `globals.css`) instead of opting into
+   the heading face — no new font load needed.
+
+**Left alone, confirmed legitimate in the audit**: Steam's
+`aspect-[16/9]` cover-art image (an image aspect ratio, not a
+card-layout bug), GitHub's heatmap month labels using `absolute`
+positioning with JS-computed offsets (inherent to rendering a
+calendar-heatmap grid), Hero's `max-w-2xl` quote line-length cap and
+`mt-0.5` icon optical-alignment nudge (both correctly scoped, low risk,
+left as-is rather than touched for the sake of touching them).
+
+Verified via `pnpm lint`/`typecheck`/`test`/`build`/`test:e2e` (all
+clean) and the same throwaway-preview-route technique as previous
+rounds (uncommitted, deleted after — this time including Hero, to
+verify the padding restructure, and deliberately forcing an
+odd/uneven widget count to exercise the `dense` grid-flow fix),
+screenshotted at desktop/tablet/mobile: no horizontal overflow at any
+width, no grid holes (the Steam+Spotify pair and "coming soon"
+placeholders backfill correctly instead of leaving gaps), Hero renders
+full-bleed under the navbar exactly as before, GitHub's "This month"
+block reads fine at its now-uncapped width, and "10"/"100"/"5d" render
+as clean, unambiguous digits.

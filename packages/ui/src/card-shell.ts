@@ -22,10 +22,15 @@ export interface CardShellOptions {
  * shape in one place, with the few real per-caller differences
  * (padding, a min-height floor, the hover cue) as parameters rather
  * than copy-pasted variations.
+ *
+ * No `h-full`: the dashboard grid uses `items-start` (see page.tsx's
+ * WidgetGrid), so every card already sizes to its own content — an
+ * `h-full` here would be inert dead weight that only silently changes
+ * behavior if `items-start` is ever removed (see docs/DECISIONS.md).
  */
 export function cardShellClass({ padding = "p-5", minHeight, hover = false }: CardShellOptions = {}): string {
   return [
-    "flex h-full min-w-0 flex-col gap-4",
+    "flex min-w-0 flex-col gap-4",
     RADIUS.card,
     padding,
     minHeight,

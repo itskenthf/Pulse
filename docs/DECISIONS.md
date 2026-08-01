@@ -2775,3 +2775,34 @@ next `addEntryAction` (which still does the full refresh, since it's
 infrequent — once per new entry, not once per pause). Kept the cheap
 `revalidatePath("/notebook")` so the full history page doesn't go stale
 for long. `addEntryAction` is unchanged.
+
+## 2026-08-01 — Calendar, Email, Focus timer, and YouTube permanently removed from scope
+
+A project status/bug audit surfaced real documentation drift:
+`docs/ROADMAP.md` still described Tasks as "skipped" and Phase 2 as "Not
+started," while Tasks, Notes, and Notebook (all write-back-to-own-table
+features — exactly what Phase 2 was scoped to be) were already built and
+live. Separately, Ken confirmed he will never build the Google Calendar,
+Gmail, focus timer, or YouTube widgets — these were sitting in
+`docs/PROJECT_REFERENCE.md`/`docs/ROADMAP.md` as "deferred"/"blocked,"
+which reads as still-open, not decided against.
+
+Distinct from the earlier 2026-07-22 rescoping (`docs/DECISIONS.md`,
+that date's entry) — that pass deprioritized these for *sequencing*
+reasons ("aren't useful to build next"); this one is a permanent scope
+decision ("won't ever build these"). Updated both docs throughout
+(`PROJECT_REFERENCE.md` §9-§12, §18; `ROADMAP.md`'s Phase 1 rescoped list
+and Phase 2 section) to reflect both changes — see `docs/ROADMAP.md`'s
+matching "Documentation accuracy pass" entry for the itemized list.
+
+One nuance preserved carefully: "Calendar (date display)" — a separate,
+already-built plain-local-date widget that later merged into Hero — is
+unrelated to the removed Google Calendar *integration* and happens to
+share the word "Calendar." Not affected by this removal; called out
+explicitly in both docs to avoid future confusion between the two.
+
+`focus_sessions` (the Supabase table created for the now-removed focus
+timer in `0001_core_schema.sql`) is left in place, unused — rolling back
+a migration is a real schema change with its own risk, out of scope for
+a documentation-accuracy pass. Noted as unused in
+`docs/PROJECT_REFERENCE.md` §8 rather than silently left unexplained.

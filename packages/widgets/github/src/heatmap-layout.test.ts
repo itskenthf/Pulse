@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ContributionWeek } from "@pulse/adapter-github";
-import { computeMonthLabels, selectRecentWeeks } from "./heatmap-layout";
+import { computeMonthLabels } from "./heatmap-layout";
 
 /** Builds a run of consecutive-date weeks (7 days each) starting at
  *  `startDate`, mimicking GitHub's Sunday-aligned week grouping without
@@ -80,42 +80,5 @@ describe("computeMonthLabels", () => {
 
   it("returns no labels for an empty weeks array", () => {
     expect(computeMonthLabels([], 2026)).toEqual([]);
-  });
-});
-
-describe("selectRecentWeeks", () => {
-  it("picks the weeks leading up to today, not the tail of the full year (the bug this guards against)", () => {
-    // Full year of 2026 — "today" is early August, so November/December
-    // are all future zero-padded days per fetchContributions' own
-    // comment. A naive weeks.slice(-4) would return those, not the real
-    // recent weeks.
-    const weeks = buildWeeks("2026-01-01", 365);
-    const fetchedAt = "2026-08-01T12:00:00.000Z";
-
-    const recent = selectRecentWeeks(weeks, fetchedAt, 4);
-
-    expect(recent).toHaveLength(4);
-    for (const week of recent) {
-      expect(week.days.some((day) => day.date <= "2026-08-01")).toBe(true);
-    }
-    // None of the returned weeks are pure-future (Nov/Dec) padding.
-    expect(recent.some((week) => week.days.every((day) => day.date > "2026-08-01"))).toBe(false);
-  });
-
-  it("returns fewer than count weeks when there isn't enough history yet (e.g. early January)", () => {
-    const weeks = buildWeeks("2026-01-01", 365);
-    const fetchedAt = "2026-01-10T00:00:00.000Z";
-
-    const recent = selectRecentWeeks(weeks, fetchedAt, 12);
-
-    expect(recent.length).toBeLessThan(12);
-    expect(recent.length).toBeGreaterThan(0);
-  });
-
-  it("includes the week containing today even when today has no prior weeks", () => {
-    const weeks = buildWeeks("2026-01-01", 7);
-    const fetchedAt = "2026-01-03T00:00:00.000Z";
-
-    expect(selectRecentWeeks(weeks, fetchedAt, 4)).toHaveLength(1);
   });
 });

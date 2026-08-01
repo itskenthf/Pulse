@@ -1,5 +1,7 @@
 export { WidgetCard } from "./widget-card";
 export type { WidgetCardProps, WidgetCardTag, WidgetCardTagVariant } from "./widget-card";
+export { cardShellClass } from "./card-shell";
+export type { CardShellOptions } from "./card-shell";
 export { ActionForm } from "./action-form";
 export type { ActionFormProps } from "./action-form";
 export { WidgetMenu } from "./widget-menu";

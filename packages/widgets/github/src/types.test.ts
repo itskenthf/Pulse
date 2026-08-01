@@ -7,13 +7,6 @@ const validData = {
   totalThisYear: 400,
   weeks: [{ days: [{ date: "2026-07-27", count: 3, level: 2 }] }],
   fetchedAt: "2026-07-27T00:00:00Z",
-  latestActivity: {
-    repoName: "pulse",
-    repoUrl: "https://github.com/itskenthf/Pulse",
-    commitMessage: "Fix a thing",
-    commitUrl: "https://github.com/itskenthf/Pulse/commit/abc",
-    committedAt: "2026-07-27T00:00:00Z",
-  },
   activitySummary: {
     commitCount: 85,
     repositoriesWithCommits: 4,
@@ -26,11 +19,6 @@ const validData = {
 describe("githubDataSchema", () => {
   it("accepts a well-formed cache row", () => {
     expect(githubDataSchema.safeParse(validData).success).toBe(true);
-  });
-
-  it("accepts a null latestActivity (no matching repo found)", () => {
-    const result = githubDataSchema.safeParse({ ...validData, latestActivity: null });
-    expect(result.success).toBe(true);
   });
 
   it("accepts a null activitySummary", () => {

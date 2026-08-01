@@ -9,7 +9,6 @@ function data(overrides: Partial<GitHubData> = {}): GitHubData {
     totalThisYear: 0,
     weeks: [],
     fetchedAt: "2026-07-27T00:00:00Z",
-    latestActivity: null,
     activitySummary: null,
     ...overrides,
   };
@@ -18,49 +17,6 @@ function data(overrides: Partial<GitHubData> = {}): GitHubData {
 describe("deriveGitHubMemories", () => {
   it("returns nothing when there's no previous data and nothing to report", () => {
     expect(deriveGitHubMemories(null, data())).toEqual([]);
-  });
-
-  it("emits a memory when the latest commit changes", () => {
-    const previous = data({
-      latestActivity: {
-        repoName: "Pulse",
-        repoUrl: "https://github.com/itskenthf/Pulse",
-        commitMessage: "Old commit",
-        commitUrl: "https://github.com/itskenthf/Pulse/commit/aaa",
-        committedAt: "2026-07-26T00:00:00Z",
-      },
-    });
-    const next = data({
-      latestActivity: {
-        repoName: "Pulse",
-        repoUrl: "https://github.com/itskenthf/Pulse",
-        commitMessage: "New commit",
-        commitUrl: "https://github.com/itskenthf/Pulse/commit/bbb",
-        committedAt: "2026-07-27T00:00:00Z",
-      },
-    });
-
-    expect(deriveGitHubMemories(previous, next)).toEqual([
-      {
-        title: "New commit in Pulse",
-        description: "New commit",
-        metadata: { commitUrl: "https://github.com/itskenthf/Pulse/commit/bbb" },
-      },
-    ]);
-  });
-
-  it("does not emit a memory when the latest commit is unchanged", () => {
-    const activity = {
-      repoName: "Pulse",
-      repoUrl: "https://github.com/itskenthf/Pulse",
-      commitMessage: "Same commit",
-      commitUrl: "https://github.com/itskenthf/Pulse/commit/aaa",
-      committedAt: "2026-07-26T00:00:00Z",
-    };
-
-    expect(deriveGitHubMemories(data({ latestActivity: activity }), data({ latestActivity: activity }))).toEqual(
-      [],
-    );
   });
 
   it("emits a memory when repositoriesCreated increases", () => {

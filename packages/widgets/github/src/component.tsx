@@ -1,11 +1,18 @@
-import { GitCommit } from "lucide-react";
-import { EmptyState, GLASS_CHIP, Metric, RADIUS, WidgetCard, WidgetMenu } from "@pulse/ui";
+import { EmptyState, Metric, RADIUS, WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
-import { formatRelativeDay } from "./format";
+import { RECENT_WEEKS_COUNT } from "./constants";
 import { Heatmap } from "./heatmap";
 import { GitHubIcon } from "./icon";
 import { computeStreaks } from "./streaks";
 import type { GitHubData } from "./types";
+
+/** Same border-brightens-on-hover cue as `GLASS_CHIP`, minus its
+ *  background-tint fill — Ken found the fill distracting specifically on
+ *  this chip. Not promoted to a shared `packages/ui` token since it has
+ *  exactly one caller; `GLASS_CHIP` itself is untouched so Quick Launch's
+ *  tiles and other chips keep their fill. */
+const HEATMAP_CHIP =
+  "bg-transparent border border-[var(--color-divider)] transition-colors hover:border-[var(--color-accent)]";
 
 function ActivitySummaryBlock({ summary }: { summary: GitHubData["activitySummary"] }) {
   if (!summary) return null;
@@ -64,38 +71,14 @@ export function GitHubComponent({
             <Metric label="This week" value={data.totalThisWeek} />
             {streaks && <Metric label="Streak" value={streaks.current} suffix="d" />}
           </div>
-          <div className={`flex flex-col gap-4 px-4 py-3 ${RADIUS.chip} ${GLASS_CHIP}`}>
+          <div className={`flex flex-col gap-4 px-4 py-3 ${RADIUS.chip} ${HEATMAP_CHIP}`}>
             <Heatmap
-              weeks={data.weeks}
+              weeks={data.weeks.slice(-RECENT_WEEKS_COUNT)}
               totalThisYear={data.totalThisYear}
               year={new Date(data.fetchedAt).getUTCFullYear()}
             />
             <ActivitySummaryBlock summary={data.activitySummary} />
           </div>
-          {data.latestActivity && (
-            <a
-              href={data.latestActivity.commitUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`flex items-start gap-3 ${RADIUS.chip} px-4 py-3 ${GLASS_CHIP}`}
-            >
-              <GitCommit
-                className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-neutral-400)]"
-                aria-hidden="true"
-              />
-              <div className="flex min-w-0 flex-col gap-0.5">
-                <span className="text-sm font-medium text-[var(--foreground)]">
-                  {data.latestActivity.repoName}
-                </span>
-                <span className="truncate text-sm text-[var(--color-neutral-600)]">
-                  {data.latestActivity.commitMessage}
-                </span>
-                <span className="text-xs text-[var(--color-neutral-400)]">
-                  {formatRelativeDay(data.latestActivity.committedAt)}
-                </span>
-              </div>
-            </a>
-          )}
         </div>
       ) : (
         <EmptyState message="No data yet — click refresh to load your contributions." />

@@ -5,5 +5,3 @@ export type {
   ContributionWeek,
   NormalizedContributions,
 } from "./contributions";
-export { fetchLatestActivity } from "./activity";
-export type { LatestActivity } from "./activity";

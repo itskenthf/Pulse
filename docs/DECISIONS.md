@@ -3003,3 +3003,30 @@ future-padded days confirmed the heatmap now shows genuine recent
 colored cells with correct month labels (no more blank Nov/Dec), and
 the Steam+Spotify paired-row wrapper was screenshotted at desktop and
 mobile widths — no overflow, no console/hydration errors.
+
+## 2026-08-01 — GitHub heatmap: cells too big after the recent-weeks change
+
+Real bug, found live right after the previous entry's fix shipped. The
+heatmap's cell-size formula (`packages/widgets/github/src/heatmap.tsx`)
+always filled 100% of the card's available width divided by the column
+count, with no upper bound — tuned for the original full-year grid
+(~53 columns), where dividing a card's width by 53 naturally produces
+small cells. Once the column count dropped to 12 (the recent-weeks
+strip from earlier this same day), the same width divided by far fewer
+columns produced huge cells — each one roughly 8x GitHub's own cell
+size, exactly what the live screenshot showed.
+
+Fixed by capping cell size at `MAX_CELL_PX = 11` (matching GitHub's own
+graph) via `min(fillToContainerWidth, 11px)` in the cell-size `calc()`.
+Cells now render at a normal, fixed size on wide cards, leaving
+unused width to their right rather than stretching to fill it — exactly
+how GitHub's own compact heatmap looks. The `min()` still lets cells
+shrink further on genuinely narrow viewports (mobile), so the "always
+fits with no scrolling" property from the original `cqw`-based design
+is unaffected — verified at both a wide desktop width and 390px mobile
+via the same throwaway-preview-route technique as previous passes.
+
+Also ran a full health check across the whole monorepo per request:
+`pnpm lint`, `pnpm typecheck`, `pnpm test` (all 16 packages), `pnpm
+build`, and `pnpm --filter @pulse/web test:e2e` all pass clean — no
+other regressions found.

@@ -2,6 +2,7 @@ import { EmptyState, Metric, RADIUS, WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
 import { RECENT_WEEKS_COUNT } from "./constants";
 import { Heatmap } from "./heatmap";
+import { selectRecentWeeks } from "./heatmap-layout";
 import { GitHubIcon } from "./icon";
 import { computeStreaks } from "./streaks";
 import type { GitHubData } from "./types";
@@ -73,7 +74,7 @@ export function GitHubComponent({
           </div>
           <div className={`flex flex-col gap-4 px-4 py-3 ${RADIUS.chip} ${HEATMAP_CHIP}`}>
             <Heatmap
-              weeks={data.weeks.slice(-RECENT_WEEKS_COUNT)}
+              weeks={selectRecentWeeks(data.weeks, data.fetchedAt, RECENT_WEEKS_COUNT)}
               totalThisYear={data.totalThisYear}
               year={new Date(data.fetchedAt).getUTCFullYear()}
             />

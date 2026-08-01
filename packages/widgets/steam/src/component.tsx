@@ -6,8 +6,10 @@ import { SettingsFormFields } from "./settings-form-fields";
 import type { SteamData, SteamSettings } from "./types";
 
 /**
- * Compact rows — small thumbnail + title, not full cover art tiles —
- * matching Spotify's glanceable row shape (see docs/DECISIONS.md).
+ * Compact thumbnail + title — not full cover art tiles — matching
+ * Spotify's glanceable row shape (see docs/DECISIONS.md). Both (still
+ * capped at `MAX_GAMES`) games sit side-by-side in one row rather than
+ * stacked, wrapping to a second line only if the card is too narrow.
  * Hours, last-played, and achievements stay on each game's own detail
  * page (apps/web/src/app/steam/[appId]/page.tsx), reading the same
  * cached SteamData; that page still uses `CoverArt` at full width.
@@ -36,14 +38,14 @@ export function SteamComponent({
     >
       {data ? (
         data.games.length > 0 ? (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-row flex-wrap gap-4">
             {data.games.map((game) => (
               <a
                 key={game.appId}
                 href={`/steam/${game.appId}`}
-                className="group flex min-w-0 items-center gap-3"
+                className="group flex min-w-0 flex-1 items-center gap-2"
               >
-                <div className="w-16 shrink-0">
+                <div className="w-12 shrink-0">
                   <CoverArt appId={game.appId} name={game.name} />
                 </div>
                 <span className="truncate text-sm font-medium text-[var(--foreground)]">

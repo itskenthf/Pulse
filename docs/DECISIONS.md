@@ -3451,3 +3451,99 @@ always shows the added time; `format.test.ts`'s edited-tag test case
 was removed accordingly. Recorded here rather than editing the entry
 above, so the reasoning that led to (and then reversed) the "(edited)"
 tag stays visible.
+
+## 2026-08-02 — GitHub PRs/merges tracked as Timeline memory events
+
+Ken asked whether the Timeline could track his GitHub activity beyond
+the one signal it already had ("Created a new repository") —
+specifically every PR he opens and every merge, across all his repos
+(not just Pulse; Pulse just happens to be one of them, so it's covered
+without a repo-specific filter). Pulse already had the plumbing for
+this (`docs/MEMORY_ROADMAP.md` M1: `Widget.deriveMemories` +
+`packages/database/src/memories.ts` + the Timeline page) — GitHub's
+widget just hadn't used it for anything beyond a repo-count diff.
+
+**The real risk, discussed with Ken before writing any code:** getting
+individual PR titles/repos (not just a count) needs GitHub's GraphQL
+`pullRequestContributions` connection, genuinely new territory — no
+query in this codebase has ever used it. A prior decision (this file,
+2026-07-22) deliberately kept the GitHub widget to contribution-*count*
+data specifically to avoid needing broader OAuth scope than the
+`read:user` already granted at login, and this risked reopening that
+tradeoff. This sandbox has no live GitHub token to verify scope
+requirements ahead of time. **Ken's explicit call: if it turns out to
+need broader scope/re-authorization, don't pursue it — ship it only if
+it works under the existing grant, no re-auth flow to be built either
+way.** (The Pulse repo itself is public, which removes one variant of
+this risk for that repo specifically, but the general "any repo"
+scope question for GitHub's PR-data connection is still unverified
+from here.)
+
+**What shipped, built so a scope failure degrades gracefully instead
+of breaking anything:**
+1. `packages/adapters/github/src/contributions.ts` gained
+   `fetchRecentPullRequests` — a third GraphQL query alongside
+   `fetchContributions`/`fetchActivitySummary`, over a **trailing
+   90-day window** rather than calendar-month-to-date like
+   `fetchActivitySummary`: a PR's "contribution" date is when it was
+   *opened*, so a month-to-date window would silently miss a merge
+   event for a PR opened in a prior month. Same query/error-handling
+   style as the two existing functions.
+2. `packages/widgets/github/src/types.ts`: added
+   `recentPullRequests: z.array(pullRequestSchema).optional().default([])`
+   to `githubDataSchema` — defaulted so cache rows written before this
+   shipped still parse in `readWidgetCache` (which throws on a schema
+   mismatch, not silently degrades) instead of breaking every existing
+   user's GitHub widget on the first read after deploy.
+3. `packages/widgets/github/src/fetch.ts`: the new fetch runs in the
+   same `Promise.all` as the other two calls but wrapped in its own
+   `.catch(() => [])` — today, any one of these three calls throwing
+   fails `fetchGitHubData` entirely (stale heatmap/counts, no memories
+   at all, for that user, every 30-min cron tick). Isolating just this
+   call means a permission/scope error here can only ever mean "no PR
+   memories this cycle," never a broken widget. This is the actual
+   mechanism behind "ship it only if it works" — no separate rollout
+   flag or config needed.
+4. `packages/widgets/github/src/derive-memories.ts`: extended
+   `deriveGitHubMemories` with the same list-diff idiom Tasks/Notes/
+   Notebook already use (a `Map`/`Set` of previous item ids, diffed
+   against the next snapshot) plus Steam's "detect a meaningful state
+   change" variant — a PR id absent from the previous snapshot is
+   "Opened PR #n: title"; a PR present in both snapshots whose `merged`
+   flipped false→true is "Merged PR #n: title". A PR already merged
+   the first time it's ever seen only gets the one "Opened" event, not
+   both.
+5. **Type-system wrinkle**: `Widget.dataSchema` is typed `ZodType<TData>`,
+   which requires a schema's input type to equal its output type —
+   but `.optional().default([])` intentionally makes the input
+   optional where the (always-defaulted) output isn't, so
+   `githubDataSchema` no longer satisfied that constraint structurally.
+   Fixed with a single documented cast at the one assignment site
+   (`packages/widgets/github/src/widget.ts`:
+   `githubDataSchema as ZodType<GitHubData>`) — a real zod input/output
+   variance limitation, not a logic error being suppressed; the
+   default-value behavior itself is exercised directly by
+   `types.test.ts`.
+6. No Timeline UI changes — `apps/web/src/app/timeline/page.tsx`
+   already renders any memory's `title`/`description` with no
+   per-source special-casing.
+
+**Expected one-time effect, not a bug:** the first refresh after this
+ships, every cached user's `previous.recentPullRequests` will be
+missing, so every PR currently in the trailing 90-day window looks
+"new" and backfills into the Timeline at once — the same cold-start
+behavior Tasks/Notes/Notebook's own list diffs already have whenever
+they're introduced or a user's cache is empty.
+
+Verified `pnpm lint`/`typecheck`/`test`/`test:e2e` (all clean; new
+adapter tests for `fetchRecentPullRequests`'s parsing/window/error
+handling, new `derive-memories.test.ts` cases for opened/merged/
+unchanged/cold-start, new `types.test.ts` cases for the schema
+default). **Not verified**: an actual live GraphQL call — this sandbox
+has no real GitHub token, so whether `pullRequestContributions`
+actually returns data under `read:user` alone can only be confirmed
+once deployed. If it doesn't, the isolation in `fetch.ts` means
+`recentPullRequests` just stays permanently empty and no PR memories
+ever appear — a silent no-op, not a broken widget, per Ken's explicit
+instruction not to pursue a scope upgrade if this turns out to need
+one.

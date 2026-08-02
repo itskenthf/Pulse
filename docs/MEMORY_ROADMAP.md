@@ -35,10 +35,12 @@ table. See the 2026-07-27 DECISIONS.md entry for the full reasoning.
 - Wired into `refreshWidget` (`apps/web/src/lib/refresh-widget.ts`) — the
   single choke point already shared by cron, manual refresh, and
   settings-save, so every refresh path gets memory generation for free.
-- Initial coverage: GitHub (new commits, new repos), Spotify (top artist
-  changes), Steam (new games, meaningful playtime sessions). Hero
-  deliberately has no `deriveMemories` — greeting/weather/quote aren't
-  memory-worthy content.
+- Initial coverage: GitHub (new repos, PRs opened, PRs merged — see
+  docs/DECISIONS.md's 2026-08-02 entry; a commit-count signal was
+  considered but dropped, also per DECISIONS.md), Spotify (top artist
+  changes), Steam (new games, meaningful playtime sessions), Tasks/
+  Notes/Notebook (new items). Hero deliberately has no `deriveMemories`
+  — greeting/weather/quote aren't memory-worthy content.
 - Timeline page (`apps/web/src/app/timeline/page.tsx`), grouped Today /
   Yesterday / Last Week / by month, linked from the profile menu.
 

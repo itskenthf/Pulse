@@ -10,6 +10,7 @@ function data(overrides: Partial<GitHubData> = {}): GitHubData {
     weeks: [],
     fetchedAt: "2026-07-27T00:00:00Z",
     activitySummary: null,
+    recentPullRequests: [],
     ...overrides,
   };
 }
@@ -54,5 +55,70 @@ describe("deriveGitHubMemories", () => {
     expect(
       deriveGitHubMemories(data({ activitySummary: summary }), data({ activitySummary: summary })),
     ).toEqual([]);
+  });
+
+  const pr = {
+    id: "pr_1",
+    number: 42,
+    title: "Regroup dashboard widget grid",
+    url: "https://github.com/itskenthf/Pulse/pull/42",
+    repository: "itskenthf/Pulse",
+    merged: false,
+  };
+
+  it("emits an 'Opened' memory for a PR not seen in the previous snapshot", () => {
+    const events = deriveGitHubMemories(data(), data({ recentPullRequests: [pr] }));
+
+    expect(events).toEqual([
+      {
+        title: "Opened PR #42: Regroup dashboard widget grid",
+        description: "itskenthf/Pulse",
+        metadata: { url: pr.url, repository: pr.repository, number: 42 },
+      },
+    ]);
+  });
+
+  it("emits a 'Merged' memory when an already-seen PR's merged flag flips to true", () => {
+    const previous = data({ recentPullRequests: [pr] });
+    const next = data({ recentPullRequests: [{ ...pr, merged: true }] });
+
+    expect(deriveGitHubMemories(previous, next)).toEqual([
+      {
+        title: "Merged PR #42: Regroup dashboard widget grid",
+        description: "itskenthf/Pulse",
+        metadata: { url: pr.url, repository: pr.repository, number: 42 },
+      },
+    ]);
+  });
+
+  it("emits nothing for a PR unchanged between polls", () => {
+    const previous = data({ recentPullRequests: [pr] });
+    const next = data({ recentPullRequests: [pr] });
+
+    expect(deriveGitHubMemories(previous, next)).toEqual([]);
+  });
+
+  it("emits nothing extra for a PR that was already merged the first time it's seen", () => {
+    const events = deriveGitHubMemories(data(), data({ recentPullRequests: [{ ...pr, merged: true }] }));
+
+    expect(events).toEqual([
+      {
+        title: "Opened PR #42: Regroup dashboard widget grid",
+        description: "itskenthf/Pulse",
+        metadata: { url: pr.url, repository: pr.repository, number: 42 },
+      },
+    ]);
+  });
+
+  it("treats every PR as new on cold start (previous.recentPullRequests missing)", () => {
+    const events = deriveGitHubMemories(null, data({ recentPullRequests: [pr] }));
+
+    expect(events).toEqual([
+      {
+        title: "Opened PR #42: Regroup dashboard widget grid",
+        description: "itskenthf/Pulse",
+        metadata: { url: pr.url, repository: pr.repository, number: 42 },
+      },
+    ]);
   });
 });

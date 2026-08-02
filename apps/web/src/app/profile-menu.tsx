@@ -8,8 +8,6 @@ import { signOutAction } from "./actions/sign-out";
 const NAV_LINKS = [
   { label: "Dashboard", active: true, href: undefined },
   { label: "Timeline", active: false, href: "/timeline" },
-  { label: "Tasks", active: false, href: "/tasks" },
-  { label: "Notes", active: false, href: "/notes" },
   { label: "Settings", active: false, href: undefined },
 ] as const;
 
@@ -17,8 +15,9 @@ const NAV_LINKS = [
  * Single account menu — replaces what used to be two separate header
  * controls (a "•••" nav-links menu next to the "Pulse" title, and this
  * avatar dropdown with only Sign out). Merging them removes duplicate
- * navigation surfaces and gives mobile users the same access to
- * Tasks/Notes/Settings that desktop always had, all from one place.
+ * navigation surfaces, all from one place. Tasks/Notes were dropped from
+ * this list — both already have a "View all →" link on their own
+ * dashboard card, so a second nav path here was redundant.
  *
  * Open/close state comes from `useDismissableMenu` (`@pulse/ui`) — the
  * same `pointerdown`-based dismissal, Escape-to-close, and focus-return

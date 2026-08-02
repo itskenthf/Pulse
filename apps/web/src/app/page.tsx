@@ -252,9 +252,9 @@ function WidgetGrid({ userId }: { userId: string }) {
             </div>
           )}
 
-          <div className="flex min-w-0 flex-col gap-5 sm:gap-6 lg:row-span-2">
+          <div className="flex min-w-0 flex-col gap-5 sm:gap-6 lg:row-span-2 lg:self-stretch">
             {steamWidget && <WidgetCell widget={steamWidget} userId={userId} resetKey={resetKey} />}
-            <div className="opacity-70 lg:flex-1">
+            <div className="opacity-70 lg:flex-1 lg:[&>*]:h-full">
               <WidgetCard
                 title="RSS"
                 icon={<Rss className="h-4 w-4" aria-hidden="true" />}

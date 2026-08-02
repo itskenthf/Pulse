@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatRelativeDayLabel, opacityForIndex } from "./format";
+import { formatEntryTimestamp, formatRelativeDayLabel, opacityForIndex } from "./format";
 
 const NOW = new Date(2026, 6, 31, 15, 0, 0); // July 31, 2026, 3pm local
 
@@ -26,6 +26,19 @@ describe("formatRelativeDayLabel", () => {
     expect(formatRelativeDayLabel(new Date(2026, 6, 20, 8, 0, 0).toISOString(), NOW)).toBe(
       "July 20",
     );
+  });
+});
+
+describe("formatEntryTimestamp", () => {
+  it("shows the added time for an untouched entry", () => {
+    const iso = new Date(2026, 7, 2, 10, 14, 0).toISOString();
+    expect(formatEntryTimestamp({ createdAt: iso, updatedAt: iso })).toBe("Aug 2, 10:14 AM");
+  });
+
+  it("shows the edited time with an '(edited)' tag when updatedAt differs", () => {
+    const createdAt = new Date(2026, 7, 2, 9, 0, 0).toISOString();
+    const updatedAt = new Date(2026, 7, 2, 10, 14, 0).toISOString();
+    expect(formatEntryTimestamp({ createdAt, updatedAt })).toBe("Aug 2, 10:14 AM (edited)");
   });
 });
 

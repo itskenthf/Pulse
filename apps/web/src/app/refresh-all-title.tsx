@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { RefreshCw } from "lucide-react";
 import type { WidgetActionState } from "@pulse/sdk";
 import { usePullToRefresh } from "@pulse/ui";
 import { refreshAllWidgetsAction } from "./actions/widgets";
@@ -95,15 +96,18 @@ export function RefreshAllTitle() {
 
   return (
     <form ref={formRef} action={formAction}>
-      {pullDistance > 0 && (
+      {(pullDistance > 0 || isPending) && (
         <div
           aria-hidden="true"
-          className={`pointer-events-none fixed inset-x-0 top-0 z-30 flex justify-center pt-2 text-xs transition-opacity ${
-            armed ? "text-[var(--color-accent)]" : "text-[var(--color-neutral-500)]"
+          className={`pointer-events-none fixed inset-x-0 top-0 z-30 flex justify-center pt-2 transition-opacity ${
+            armed || isPending ? "text-[var(--color-accent)]" : "text-[var(--color-neutral-500)]"
           }`}
-          style={{ opacity: Math.min(pullDistance / 70, 1) }}
+          style={{ opacity: isPending ? 1 : Math.min(pullDistance / 70, 1) }}
         >
-          {armed ? "Release to refresh" : "Pull to refresh"}
+          <RefreshCw
+            className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`}
+            style={isPending ? undefined : { transform: `rotate(${pullDistance * 3}deg)` }}
+          />
         </div>
       )}
       <h1>

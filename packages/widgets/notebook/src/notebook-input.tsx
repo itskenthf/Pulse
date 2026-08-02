@@ -105,6 +105,13 @@ export function NotebookInput({
       <textarea
         value={content}
         onChange={(event) => handleChange(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            if (timerRef.current) clearTimeout(timerRef.current);
+            if (content.trim() !== "") attemptSave(content);
+          }
+        }}
         placeholder="What's on your mind?"
         rows={2}
         maxLength={MAX_CONTENT_LENGTH}

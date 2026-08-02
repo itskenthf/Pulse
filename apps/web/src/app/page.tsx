@@ -3,10 +3,10 @@ import { BookOpen, ListChecks, Rss } from "lucide-react";
 import { getAllWidgets, type Widget, type WidgetAction } from "@pulse/sdk";
 import { readWidgetCache, readWidgetSettings } from "@pulse/database";
 import { Skeleton, SPRING_PRESS, WidgetCard, WidgetErrorBoundary } from "@pulse/ui";
+import { WIDGET_ID as GITHUB_WIDGET_ID } from "@pulse/widget-github";
 import { HERO_WIDGET_ID } from "@pulse/widget-hero";
 import { NOTES_WIDGET_ID } from "@pulse/widget-notes";
 import { NOTEBOOK_WIDGET_ID } from "@pulse/widget-notebook";
-import { WIDGET_ID as SPOTIFY_WIDGET_ID } from "@pulse/widget-spotify";
 import { WIDGET_ID as STEAM_WIDGET_ID } from "@pulse/widget-steam";
 import { TASKS_WIDGET_ID } from "@pulse/widget-tasks";
 import { auth, signIn } from "@/auth";
@@ -174,19 +174,24 @@ function WidgetCell({
 
 /**
  * "hero" renders full-width, chromeless, above everything else. Every
- * other widget flows into one real CSS Grid
- * (`repeat(auto-fit, minmax(320px, 1fr))`) — the browser decides column
- * count and reflow natively, so there's no JS weight-balancing heuristic
- * to keep in sync as widgets are added/removed (see docs/DECISIONS.md
- * for the rebuild that replaced the old two-flex-column
- * `balanceColumns` split). Visual priority is now just DOM order: Tasks,
- * Notes, and Notebook — Ken's own daily-input widgets — render first,
- * followed by GitHub, the Steam+Spotify pair, then the "coming soon"
- * placeholders last.
+ * other widget flows into two stacked, fixed-column CSS Grids (see
+ * docs/DECISIONS.md's layout-regroup entry) — 1 column on mobile, 2 at
+ * `sm`, 3 at `lg` — replacing the old single `auto-fit` grid:
  *
- * `lg`-sized widgets (GitHub, Notebook) span two grid tracks on wide
- * widths via `lg:col-span-2`; on a single-column mobile width the span
- * naturally clamps to the one available track.
+ * - Row 1: Tasks, Notes, Notebook (Ken's own daily-input widgets).
+ *   Notebook (the 3rd item) spans both columns only at the `sm` (2-col)
+ *   breakpoint, reverting to one track at `lg`.
+ * - Row 2+3: GitHub, a Steam+RSS side column, then Habits and Reading.
+ *   GitHub spans 2 of 3 columns at `lg` so its edges align with Row 1's
+ *   tracks. The side column spans both grid rows at `lg` (running the
+ *   full height of GitHub plus the Habits/Reading row below it), with
+ *   RSS stretching to fill any remaining height below Steam. Below `lg`
+ *   there's no 3rd column, so these four items just auto-flow through
+ *   the grid in DOM order.
+ *
+ * Spotify is intentionally not looked up/rendered here — see
+ * docs/DECISIONS.md. It stays registered (so its cache still refreshes
+ * on schedule) but no longer appears on the dashboard.
  */
 function WidgetGrid({ userId }: { userId: string }) {
   // See WidgetCell's own resetKey comment for why this is called here —
@@ -203,27 +208,17 @@ function WidgetGrid({ userId }: { userId: string }) {
   const heroWidgets = widgets.filter((widget) => widget.size === "hero");
   const nonHeroWidgets = widgets.filter((widget) => widget.size !== "hero");
 
-  const PRIORITY_ORDER = [TASKS_WIDGET_ID, NOTES_WIDGET_ID, NOTEBOOK_WIDGET_ID];
-  const priorityWidgets = PRIORITY_ORDER.map((id) =>
-    nonHeroWidgets.find((widget) => widget.id === id),
-  ).filter((widget): widget is Widget => Boolean(widget));
-
-  // Steam and Spotify are both small, glanceable widgets that only used
-  // a fraction of a grid track's width on their own, leaving the rest of
-  // the card empty — paired into one side-by-side sub-grid instead. Each
-  // stays a fully independent widget (its own WidgetCell/error boundary/
-  // Suspense below); only their layout placement is combined. `items-start`
-  // keeps each card sized to its own content instead of being stretched
-  // to match its neighbor's height (CSS Grid's default `align-items:
-  // stretch`, which fought "grow according to content" — see
-  // docs/DECISIONS.md).
+  const tasksWidget = nonHeroWidgets.find((widget) => widget.id === TASKS_WIDGET_ID);
+  const notesWidget = nonHeroWidgets.find((widget) => widget.id === NOTES_WIDGET_ID);
+  const notebookWidget = nonHeroWidgets.find((widget) => widget.id === NOTEBOOK_WIDGET_ID);
+  const githubWidget = nonHeroWidgets.find((widget) => widget.id === GITHUB_WIDGET_ID);
   const steamWidget = nonHeroWidgets.find((widget) => widget.id === STEAM_WIDGET_ID);
-  const spotifyWidget = nonHeroWidgets.find((widget) => widget.id === SPOTIFY_WIDGET_ID);
 
-  const excludedFromNormalFlow = new Set([...PRIORITY_ORDER, STEAM_WIDGET_ID, SPOTIFY_WIDGET_ID]);
-  const remainingWidgets = nonHeroWidgets.filter((widget) => !excludedFromNormalFlow.has(widget.id));
+  const rowTopWidgets = [tasksWidget, notesWidget, notebookWidget].filter(
+    (widget): widget is Widget => Boolean(widget),
+  );
 
-  const LG_SPAN = "lg:col-span-2";
+  const ROW_GRID = "grid grid-cols-1 items-start gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3";
 
   return (
     <>
@@ -238,52 +233,59 @@ function WidgetGrid({ userId }: { userId: string }) {
           ))}
         </div>
       )}
-      <div className="mx-auto grid w-full max-w-6xl grid-cols-[repeat(auto-fit,minmax(320px,1fr))] items-start gap-5 px-4 pb-4 [grid-auto-flow:dense] sm:gap-6 sm:px-6 sm:pb-6">
-        {priorityWidgets.map((widget) => (
-          <div key={widget.id} className={widget.size === "lg" ? LG_SPAN : undefined}>
-            <WidgetCell widget={widget} userId={userId} resetKey={resetKey} />
-          </div>
-        ))}
-        {remainingWidgets.map((widget) => (
-          <div key={widget.id} className={widget.size === "lg" ? LG_SPAN : undefined}>
-            <WidgetCell widget={widget} userId={userId} resetKey={resetKey} />
-          </div>
-        ))}
-        {steamWidget && spotifyWidget && (
-          <div className="grid grid-cols-1 items-start gap-5 sm:grid-cols-2">
-            <WidgetCell widget={steamWidget} userId={userId} resetKey={resetKey} />
-            <WidgetCell widget={spotifyWidget} userId={userId} resetKey={resetKey} />
-          </div>
-        )}
-        <div className="opacity-70">
-          <WidgetCard
-            title="Habits"
-            icon={<ListChecks className="h-4 w-4" aria-hidden="true" />}
-            tag={{ label: "Coming soon", variant: "neutral" }}
-          >
-            A daily checklist — water, exercise, reading, meditation — is
-            planned for a future release.
-          </WidgetCard>
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 pb-4 sm:gap-6 sm:px-6 sm:pb-6">
+        <div className={ROW_GRID}>
+          {rowTopWidgets.map((widget, index) => (
+            <div
+              key={widget.id}
+              className={index === rowTopWidgets.length - 1 ? "sm:col-span-2 lg:col-span-1" : undefined}
+            >
+              <WidgetCell widget={widget} userId={userId} resetKey={resetKey} />
+            </div>
+          ))}
         </div>
-        <div className="opacity-70">
-          <WidgetCard
-            title="Reading"
-            icon={<BookOpen className="h-4 w-4" aria-hidden="true" />}
-            tag={{ label: "Coming soon", variant: "neutral" }}
-          >
-            Track your current book and reading streak — planned for a
-            future release.
-          </WidgetCard>
-        </div>
-        <div className="opacity-70">
-          <WidgetCard
-            title="RSS"
-            icon={<Rss className="h-4 w-4" aria-hidden="true" />}
-            tag={{ label: "Coming soon", variant: "neutral" }}
-          >
-            Latest posts from your favorite blogs — planned for a future
-            release.
-          </WidgetCard>
+
+        <div className={ROW_GRID}>
+          {githubWidget && (
+            <div className="lg:col-span-2">
+              <WidgetCell widget={githubWidget} userId={userId} resetKey={resetKey} />
+            </div>
+          )}
+
+          <div className="flex min-w-0 flex-col gap-5 sm:gap-6 lg:row-span-2">
+            {steamWidget && <WidgetCell widget={steamWidget} userId={userId} resetKey={resetKey} />}
+            <div className="opacity-70 lg:flex-1">
+              <WidgetCard
+                title="RSS"
+                icon={<Rss className="h-4 w-4" aria-hidden="true" />}
+                tag={{ label: "Coming soon", variant: "neutral" }}
+              >
+                Latest posts from your favorite blogs — planned for a future
+                release.
+              </WidgetCard>
+            </div>
+          </div>
+
+          <div className="opacity-70">
+            <WidgetCard
+              title="Habits"
+              icon={<ListChecks className="h-4 w-4" aria-hidden="true" />}
+              tag={{ label: "Coming soon", variant: "neutral" }}
+            >
+              A daily checklist — water, exercise, reading, meditation — is
+              planned for a future release.
+            </WidgetCard>
+          </div>
+          <div className="opacity-70">
+            <WidgetCard
+              title="Reading"
+              icon={<BookOpen className="h-4 w-4" aria-hidden="true" />}
+              tag={{ label: "Coming soon", variant: "neutral" }}
+            >
+              Track your current book and reading streak — planned for a
+              future release.
+            </WidgetCard>
+          </div>
         </div>
       </div>
     </>

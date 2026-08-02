@@ -4,9 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { NotebookPen } from "lucide-react";
 import { WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { NotebookWidgetActions } from "./actions";
-import { NotebookEntryList } from "./notebook-entry-list";
 import { NotebookInput } from "./notebook-input";
-import type { NotebookEntry } from "./types";
 
 /** Fades in while a save is pending and lingers briefly after it settles,
  *  so a fast save doesn't just blink. No toast, no "Saved" text — the
@@ -14,10 +12,8 @@ import type { NotebookEntry } from "./types";
 const SAVED_LINGER_MS = 600;
 
 export function NotebookCard({
-  entries,
   actions,
 }: {
-  entries: NotebookEntry[];
   actions: NotebookWidgetActions;
 }) {
   const [dotVisible, setDotVisible] = useState(false);
@@ -55,6 +51,7 @@ export function NotebookCard({
           <WidgetMenu id="notebook" actions={actions} />
         </div>
       }
+      compact
       footer={
         <a
           href="/notebook"
@@ -64,10 +61,7 @@ export function NotebookCard({
         </a>
       }
     >
-      <div className="flex flex-col gap-4">
-        <NotebookInput actions={actions} onPendingChange={handlePendingChange} />
-        <NotebookEntryList entries={entries} />
-      </div>
+      <NotebookInput actions={actions} onPendingChange={handlePendingChange} />
     </WidgetCard>
   );
 }

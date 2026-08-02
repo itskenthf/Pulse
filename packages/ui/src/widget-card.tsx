@@ -24,6 +24,10 @@ export interface WidgetCardProps {
   /** Optional trailing region (e.g. a "View all →" link), visually
    *  separated from the content above it — see Tasks/Notes/Notebook. */
   footer?: ReactNode;
+  /** Reduced padding/gap (16px/10px vs. the default 20px/16px) and no
+   *  divider above the footer — the dashboard's Tasks/Notes/Notebook cards,
+   *  which show only a compact input and a "View all →" link. */
+  compact?: boolean;
 }
 
 /**
@@ -52,11 +56,18 @@ const TAG_VARIANT: Record<WidgetCardTagVariant, string> = {
  * rotor), announced by its own title instead of reading as undifferentiated
  * page content.
  */
-export function WidgetCard({ title, icon, tag, action, children, footer }: WidgetCardProps) {
+export function WidgetCard({ title, icon, tag, action, children, footer, compact = false }: WidgetCardProps) {
   const titleId = useId();
 
   return (
-    <section aria-labelledby={titleId} className={cardShellClass({ hover: true })}>
+    <section
+      aria-labelledby={titleId}
+      className={cardShellClass({
+        hover: true,
+        padding: compact ? "p-4" : undefined,
+        gap: compact ? "gap-2.5" : undefined,
+      })}
+    >
       <div className="flex min-w-0 items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3 text-[var(--foreground)]">
           {icon && (
@@ -83,7 +94,11 @@ export function WidgetCard({ title, icon, tag, action, children, footer }: Widge
       </div>
       <div className="min-w-0 flex-1 text-sm text-[var(--color-neutral-600)]">{children}</div>
       {footer && (
-        <div className="border-t border-[var(--color-divider)] pt-3">{footer}</div>
+        compact ? (
+          <div>{footer}</div>
+        ) : (
+          <div className="border-t border-[var(--color-divider)] pt-3">{footer}</div>
+        )
       )}
     </section>
   );

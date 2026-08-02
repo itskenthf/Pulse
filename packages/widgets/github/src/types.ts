@@ -18,6 +18,15 @@ const activitySummarySchema = z.object({
   periodStart: z.string(),
 });
 
+const pullRequestSchema = z.object({
+  id: z.string(),
+  number: z.number(),
+  title: z.string(),
+  url: z.string(),
+  repository: z.string(),
+  merged: z.boolean(),
+});
+
 /**
  * The widget's TData contract, and also its own runtime validator (see
  * `Widget.dataSchema` in @pulse/sdk) — kept in sync with
@@ -32,6 +41,11 @@ export const githubDataSchema = z.object({
   weeks: z.array(contributionWeekSchema),
   fetchedAt: z.string(),
   activitySummary: activitySummarySchema.nullable(),
+  /** Optional/defaulted so cached rows written before this field existed
+   *  still validate on read (see readWidgetCache) — a scope/permission
+   *  error fetching these also degrades to an empty array rather than
+   *  failing the whole widget (packages/widgets/github/src/fetch.ts). */
+  recentPullRequests: z.array(pullRequestSchema).optional().default([]),
 });
 
 export type GitHubData = z.infer<typeof githubDataSchema>;

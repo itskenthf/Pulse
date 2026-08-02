@@ -30,15 +30,9 @@ describe("formatRelativeDayLabel", () => {
 });
 
 describe("formatEntryTimestamp", () => {
-  it("shows the added time for an untouched entry", () => {
+  it("shows the added date and time", () => {
     const iso = new Date(2026, 7, 2, 10, 14, 0).toISOString();
-    expect(formatEntryTimestamp({ createdAt: iso, updatedAt: iso })).toBe("Aug 2, 10:14 AM");
-  });
-
-  it("shows the edited time with an '(edited)' tag when updatedAt differs", () => {
-    const createdAt = new Date(2026, 7, 2, 9, 0, 0).toISOString();
-    const updatedAt = new Date(2026, 7, 2, 10, 14, 0).toISOString();
-    expect(formatEntryTimestamp({ createdAt, updatedAt })).toBe("Aug 2, 10:14 AM (edited)");
+    expect(formatEntryTimestamp(iso)).toBe("Aug 2, 10:14 AM");
   });
 });
 

@@ -35,4 +35,27 @@ describe("githubDataSchema", () => {
     const result = githubDataSchema.safeParse({ ...validData, totalToday: "3" });
     expect(result.success).toBe(false);
   });
+
+  it("defaults recentPullRequests to [] for a cache row written before that field existed", () => {
+    const result = githubDataSchema.safeParse(validData);
+    expect(result.success).toBe(true);
+    expect(result.success && result.data.recentPullRequests).toEqual([]);
+  });
+
+  it("accepts a row with recentPullRequests populated", () => {
+    const result = githubDataSchema.safeParse({
+      ...validData,
+      recentPullRequests: [
+        {
+          id: "pr_1",
+          number: 42,
+          title: "Regroup dashboard widget grid",
+          url: "https://github.com/itskenthf/Pulse/pull/42",
+          repository: "itskenthf/Pulse",
+          merged: true,
+        },
+      ],
+    });
+    expect(result.success).toBe(true);
+  });
 });

@@ -34,6 +34,7 @@ export function NoteModal({
   deleteAction: WidgetAction;
 }) {
   const isEdit = Boolean(note);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const [addState, addFormAction, addPending] = useActionState(addAction, initialState);
   const [updateState, updateFormAction, updatePending] = useActionState(updateAction, initialState);
@@ -60,7 +61,7 @@ export function NoteModal({
   return (
     <Modal open={open} onClose={onClose} title={isEdit ? "Edit note" : "New note"}>
       <div className="flex flex-col gap-3">
-        <form action={saveFormAction} className="flex flex-col gap-3">
+        <form ref={formRef} action={saveFormAction} className="flex flex-col gap-3">
           {isEdit && <input type="hidden" name="noteId" value={note!.id} />}
           <input
             name="title"
@@ -76,6 +77,12 @@ export function NoteModal({
             defaultValue={note?.body}
             rows={6}
             disabled={isSaving}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                formRef.current?.requestSubmit();
+              }
+            }}
             className="rounded-[4px] border border-[var(--color-divider)] bg-transparent px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--color-neutral-400)] focus-visible:border-[var(--color-accent)] focus-visible:outline-none"
           />
           {note && (

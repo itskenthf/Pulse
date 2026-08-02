@@ -3341,3 +3341,102 @@ Re-verified `pnpm lint`/`typecheck`/`test`/`test:e2e` after the change
 (all clean) — `typecheck` needed a `rm -rf apps/web/.next` first, since
 Next's dev-mode type validator had cached a reference to the deleted
 preview route from a still-running `next dev` server.
+
+## 2026-08-02 — Six bug-fix pass from live feedback round 2
+
+Ken reported six more issues after checking the live dashboard again.
+Bug-fix only, each root-caused before fixing (via three parallel
+read-only Explore agents), then verified interactively (not just
+screenshotted) through the throwaway-preview-route technique.
+
+1. **Notes dashboard-card modal never visibly closed after Save — a
+   focus-return reopen loop, not a state bug.** `notes-card.tsx`'s
+   trigger was a `readOnly` `<input onFocus={() => setOpen(true)}>`.
+   `Modal`'s close effect (`packages/ui/src/modal.tsx`) always returns
+   focus to whatever triggered it. Closing the modal refocused that
+   same input, which re-fired `onFocus`, which reopened it — the modal
+   closed and instantly reopened, every time. `/notes`'s `NotesPageBody`
+   never had this bug because its trigger is a `<button onClick>`, and
+   returning focus to a button after close is a no-op. Fixed by
+   switching `notes-card.tsx`'s trigger to a `<button type="button"
+   onClick>`, styled identically — same fix pattern `/notes` already
+   proved out, not a new one. Verified with a real Playwright click +
+   type + Enter + close-check, not just a screenshot, since this bug
+   was inherently about a state transition a static screenshot can't
+   show.
+2. **Enter now saves instead of inserting a newline, Shift+Enter still
+   makes one** — added `onKeyDown` to both
+   `packages/widgets/notes/src/note-modal.tsx`'s body `<textarea>`
+   (via a new `formRef` + `requestSubmit()`, reusing the existing save
+   action — no new save path) and
+   `packages/widgets/notebook/src/notebook-input.tsx`'s `<textarea>`
+   (clears the pending autosave debounce timer and calls the existing
+   `attemptSave(content)` immediately). Notebook has no save/add button
+   at all (pure autosave) — Ken found that confusing without an
+   explicit trigger, so Enter is now that trigger, without changing the
+   underlying autosave behavior for anyone who just keeps typing.
+3. **Notebook entries show a subtle added/edited timestamp on the
+   left.** Previously `notebook-entry.tsx` only showed a day-granularity
+   relative label ("Yesterday") above the content, and `updatedAt` was
+   read nowhere. Added `formatEntryTimestamp` to `format.ts` (one line:
+   the edited time + "(edited)" if `updatedAt` differs from
+   `createdAt`, otherwise just the added time — Ken's choice over a
+   two-line always-both-times layout, to keep it "not obvious").
+   Restructured the entry from `flex-col` to `flex-row` with a narrow
+   muted-text left column. Applies to both the dashboard card and
+   `/notebook` automatically — `NotebookEntryList`/`NotebookEntry` are
+   already the single shared rendering path (confirmed: the dashboard
+   card itself doesn't render the entry list at all anymore, per this
+   file's Dashboard-layout-regroup entry above — this fix's visible
+   surface is `/notebook`).
+4. **RSS card now fills down to the Habits/Reading row's bottom edge.**
+   Root cause: `apps/web/src/app/page.tsx`'s `ROW_GRID` sets
+   `items-start` on the grid container (needed so GitHub/Habits/Reading
+   each size to their own content, not stretch to match a neighbor) —
+   but that same `items-start` also stopped the `lg:row-span-2`
+   side-column div from stretching to its full two-row span in the
+   first place, so it was only ever as tall as Steam+RSS's own content,
+   leaving RSS's `lg:flex-1` nothing to grow into. Fixed with two
+   additions, both `lg`-scoped only: `lg:self-stretch` on the
+   side-column div (makes *it* fill its spanned rows), and
+   `lg:[&>*]:h-full` on the RSS wrapper (makes `WidgetCard`'s root
+   actually consume that height — `WidgetCard`'s body div already has
+   `flex-1` internally, it just never had a real parent height to grow
+   into before). No change to `card-shell.ts`'s deliberate no-`h-full`
+   stance — this stretch is scoped to one specific grid item via
+   `self-stretch`+a child selector, not a global default.
+5. **Pull-to-refresh indicator is now an animated `RefreshCw` icon,
+   not text.** Investigated the "doesn't work on iPad" report first:
+   `use-pull-to-refresh.ts` has no width/viewport gating anywhere —
+   it's purely `TouchEvent`-driven, so the gesture itself should
+   already fire on any touch-capable device including iPad Safari.
+   Nothing here to "enable" for tablets. What's fixed:
+   `refresh-all-title.tsx` rendered literal text ("Pull to refresh" /
+   "Release to refresh") that also disappeared immediately on release
+   (`pullDistance` resets to 0 in the hook before `isPending` even
+   flips true), so a refresh-in-progress was never actually shown.
+   Replaced the text with `RefreshCw` (already `WidgetMenu`'s Refresh
+   icon and `ActionForm`'s icon-variant spinner — reused for
+   consistency, not a new icon), rotating proportionally to
+   `pullDistance` while dragging and continuously spinning
+   (`animate-spin`, the same pattern `action-form.tsx` already uses)
+   while pending — and widened the display condition to
+   `pullDistance > 0 || isPending` so the spinning icon now stays
+   visible through the actual refresh, which the old text never did
+   either.
+6. **Profile dropdown: removed Tasks and Notes.** Both already have a
+   "View all →" link on their own dashboard card, so the dropdown copy
+   was redundant navigation — 2-line removal from `NAV_LINKS` in
+   `profile-menu.tsx`, plus its stale doc comment.
+
+Verified `pnpm lint`/`typecheck`/`test`/`test:e2e` (all clean) and,
+via the throwaway-preview-route technique, both screenshots (mobile/
+iPad/desktop) and real Playwright interaction (click the Notes
+trigger, type, Shift+Enter vs. Enter, confirm the modal actually
+disappears; type into the Notebook box and confirm Enter doesn't leave
+a newline; confirm the RSS card's rendered height now matches
+Habits/Reading's row bottom). Pull-to-refresh's gesture itself
+couldn't be interaction-tested (touch-only, and Playwright's default
+driver is mouse-based) — its existing test suite
+(`use-pull-to-refresh.test.tsx`) stayed green, and the icon swap was
+confirmed by reading the render logic, not by simulating a touch drag.

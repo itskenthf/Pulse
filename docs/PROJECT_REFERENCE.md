@@ -458,6 +458,13 @@ background) are superseded by `docs/DESIGN_SYSTEM.md` v2.0:
   the icon and title, not a color; every widget's icon badge shares the
   same outlined accent treatment (superseded 2026-07-26: previously a
   per-widget colored glow — blue/green/indigo — see docs/DECISIONS.md).
+  Superseded 2026-08-02: the grid is now two explicit stacked rows, not
+  one `auto-fit` flow — Row 1 (Tasks/Notes/Notebook) above Row 2+3
+  (GitHub, a Steam+RSS side column spanning both rows, then
+  Habits/Reading); see docs/DECISIONS.md's layout-regroup entry and
+  `apps/web/src/app/page.tsx`'s `WidgetGrid`. Spotify no longer renders
+  on the dashboard (still registered, still refreshes in the background)
+  — Steam now pairs with RSS instead.
 - **Hero is one flowing "assistant" panel**, not floating text or stat
   chips (2026-07-25, superseding the "row of today chips" version below):
   a greeting headline, then one sentence combining date/time and weather

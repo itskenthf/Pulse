@@ -3225,3 +3225,73 @@ placeholders backfill correctly instead of leaving gaps), Hero renders
 full-bleed under the navbar exactly as before, GitHub's "This month"
 block reads fine at its now-uncapped width, and "10"/"100"/"5d" render
 as clean, unambiguous digits.
+
+## 2026-08-02 — Dashboard layout regroup from design handoff, Spotify removed from grid, Notes gets a create-note modal
+
+Ken supplied a high-fidelity handoff (`design_handoff_dashboard_layout/`)
+regrouping the dashboard grid. Implemented as specified, layout-only —
+no new colors/type/radii/shadows.
+
+1. **Single `auto-fit` grid replaced with two fixed-column grids.**
+   `apps/web/src/app/page.tsx`'s `WidgetGrid` previously flowed every
+   non-hero widget through one `grid-cols-[repeat(auto-fit,minmax(320px,1fr))]`
+   grid with `[grid-auto-flow:dense]`, using a `PRIORITY_ORDER` array
+   and an exclusion `Set` to force Tasks/Notes/Notebook first and pair
+   Steam+Spotify into a sub-grid. Replaced with two explicit
+   `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3` grids: Row 1 (Tasks,
+   Notes, Notebook — the 3rd item spans both columns only at the `sm`
+   2-col breakpoint) and Row 2+3 (GitHub spanning 2 of 3 columns at
+   `lg`, a new flex `side-col` div holding Steam+RSS that spans both
+   grid rows at `lg` via `lg:row-span-2` with RSS stretching via
+   `lg:flex-1`, then Habits/Reading). Below `lg` there's no 3rd column,
+   so Row 2+3's four items just auto-flow in DOM order — no `dense`
+   needed anymore, since nothing is being backfilled into earlier gaps.
+2. **Spotify removed from the dashboard, not deregistered.** `page.tsx`
+   no longer looks up or renders `spotifyWidget` — but
+   `apps/web/src/lib/register-widgets.ts` still registers it, since
+   `getAllWidgets()` also feeds the refresh cron
+   (`apps/web/src/app/api/cron/route.ts`) and `actions/widgets.ts`;
+   deregistering would have silently stopped Spotify's background
+   cache refresh too. The handoff only asked to stop *rendering* it.
+3. **New `compact` variant on `WidgetCard`/`cardShellClass`.**
+   Tasks/Notes/Notebook's dashboard cards now show only a compact
+   input + "View all →", with reduced chrome: 16px padding / 10px
+   internal gap (vs. the default 20px/16px) and no divider above the
+   footer. `cardShellClass` (`packages/ui/src/card-shell.ts`) gained a
+   `gap` option (default `gap-4`, still used by `Skeleton`/`ErrorState`)
+   so `WidgetCard`'s new `compact` prop could pass `gap-2.5` without a
+   parallel copy-pasted class string.
+4. **Tasks/Notebook cards drop their inline list/entries**, keeping
+   only the compact input. The list/entry-rendering components
+   (`TaskRow`, `NotebookEntryList`) stay in their packages — both are
+   still used by `/tasks` and `/notebook`'s full pages.
+5. **Notes reuses the existing `NoteModal`/`Modal` instead of a new
+   component.** The dashboard card's always-inline title input +
+   textarea + "New note" button + inline list was replaced with a
+   single read-only `<input>` ("Write a note...") that opens
+   `NoteModal` in create mode on focus — the same modal `/notes`
+   already uses for creating and editing, which already had a "New
+   note" title, Cancel/Save buttons, and Save wired to the real
+   `addNote` server action. No new modal chrome was built. The
+   card-local `AddNoteForm` and `NoteRow` components became fully
+   unused once removed from `component.tsx` (not used by `/notes`,
+   which uses `NotesPageBody`/`NoteListRow`/`NoteModal` instead) and
+   were deleted rather than left as dead exports.
+6. **Steam's game row became two full-width banners.** Previously a
+   `w-12` thumbnail beside the game name; `CoverArt` already rendered a
+   full-width 16:9 bordered tile, so this was a layout change only
+   (name below instead of beside, two side by side via `flex flex-row
+   gap-3` + `flex-col` per item) — no changes to `CoverArt` itself.
+
+Verified via `pnpm lint`/`typecheck`/`test`/`test:e2e` (all clean).
+`pnpm build` fails at the "Collecting page data" step on this
+branch exactly as it does on `main` — `Error: supabaseUrl is
+required.`, a pre-existing gap from this sandbox having no Supabase
+credentials configured, not a regression (confirmed by stashing this
+change and reproducing the identical failure on `main`). The live
+authenticated dashboard was not screenshotted end-to-end: `/`'s
+widget grid requires a signed-in session with real GitHub OAuth
+credentials, which this environment doesn't have — `test:e2e` only
+covers the signed-out homepage per its own config comment. The new
+grid's Tailwind classes were instead cross-checked line by line
+against the handoff's exact breakpoints/spans.

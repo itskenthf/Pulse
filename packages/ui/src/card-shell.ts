@@ -5,6 +5,10 @@ export interface CardShellOptions {
   /** Defaults to WidgetCard's own `p-5`; ErrorState uses `p-6` for extra
    *  breathing room since it fully replaces a widget's content. */
   padding?: string;
+  /** Internal vertical gap between header/body/footer. Defaults to `gap-4`
+   *  (16px); WidgetCard's `compact` variant (Tasks/Notes/Notebook's
+   *  dashboard cards) passes `gap-2.5` (10px) instead. */
+  gap?: string;
   /** EmptyState/ErrorState's floor height so a near-empty state still
    *  reads as an intentional block, not a sliver. */
   minHeight?: string;
@@ -28,9 +32,15 @@ export interface CardShellOptions {
  * `h-full` here would be inert dead weight that only silently changes
  * behavior if `items-start` is ever removed (see docs/DECISIONS.md).
  */
-export function cardShellClass({ padding = "p-5", minHeight, hover = false }: CardShellOptions = {}): string {
+export function cardShellClass({
+  padding = "p-5",
+  gap = "gap-4",
+  minHeight,
+  hover = false,
+}: CardShellOptions = {}): string {
   return [
-    "flex min-w-0 flex-col gap-4",
+    "flex min-w-0 flex-col",
+    gap,
     RADIUS.card,
     padding,
     minHeight,

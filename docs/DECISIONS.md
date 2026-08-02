@@ -3295,3 +3295,49 @@ credentials, which this environment doesn't have — `test:e2e` only
 covers the signed-out homepage per its own config comment. The new
 grid's Tailwind classes were instead cross-checked line by line
 against the handoff's exact breakpoints/spans.
+
+## 2026-08-02 — Follow-up from live feedback: desktop grid width-fill, iPad text-size false alarm
+
+Ken checked the merged layout live on `[redacted-old-domain]` (Safari,
+iPad and desktop) and reported two things: iPad text looked smaller
+than expected, and desktop cards didn't fill the page. This sandbox
+can't reach that deployment (`AUTH_URL`/GitHub OAuth aren't configured
+here — see prior entries), so verification used the established
+throwaway-preview-route technique: a temporary route rendering every
+real widget's `render()` with mock data (bypassing Supabase/GitHub/
+Steam), screenshotted with real Playwright viewports, deleted before
+commit.
+
+**iPad text-size: investigated, not a code defect.** Measured
+`getComputedStyle` font sizes at 1024px and 1180px (the range of
+plausible iPad-landscape logical widths) against 1920px/2560px
+desktop widths: `h1` is 48px, body text 16px, and card input text
+14px — byte-identical across every one of those widths (all
+`≥768px`, so `md:text-5xl` etc. are already active everywhere). The
+Tailwind breakpoint math in `packages/widgets/hero/src/component.tsx`
+and elsewhere matches the design spec exactly; nothing in this
+codebase makes iPad render smaller text than desktop. Left uninvestigated
+further since there's no code-level lead to chase — most likely
+explanation is the iPad's physically smaller screen or a per-site
+Safari zoom setting, not a layout bug.
+
+**Desktop width-fill: confirmed and fixed.** `apps/web/src/app/page.tsx`'s
+grid wrapper was capped at `max-w-6xl` (1152px) regardless of viewport
+— at 1024–1180px (iPad) that's barely a cap at all, so the grid used
+nearly full width ("fits properly," per Ken), but at 1920px+ (desktop)
+it left ~650px+ of unused margin on wide monitors. This cap was a
+deliberate, Ken-confirmed decision from the "Dashboard layout
+architecture rebuild" entry above — not a regression from the layout
+regroup — but seeing it live changed the call. Widened to
+`max-w-[1600px]`: noticeably fills more of a 1920–2560px display while
+still capping card/line width on ultra-wide monitors rather than
+stretching content edge-to-edge (an uncapped grid would fight the
+"calm, editorial" positioning in `docs/PROJECT_REFERENCE.md`'s §19).
+Confirmed via the preview route that `1024px`/`1180px` widths are
+unaffected (still below the new cap) and `1920px`/`2560px` widths now
+measure a `1600px` grid instead of `1152px`.
+
+Re-verified `pnpm lint`/`typecheck`/`test`/`test:e2e` after the change
+(all clean) — `typecheck` needed a `rm -rf apps/web/.next` first, since
+Next's dev-mode type validator had cached a reference to the deleted
+preview route from a still-running `next dev` server.

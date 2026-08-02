@@ -3440,3 +3440,14 @@ couldn't be interaction-tested (touch-only, and Playwright's default
 driver is mouse-based) — its existing test suite
 (`use-pull-to-refresh.test.tsx`) stayed green, and the icon swap was
 confirmed by reading the render logic, not by simulating a touch drag.
+
+**Correction, same day:** item 3's "(edited)" tag was removed almost
+immediately after Ken pointed out there's no entry-edit UI at all —
+the only way `updatedAt` ever differs from `createdAt` is the
+autosave upsert re-saving the same still-open draft while the user
+keeps typing, which isn't something a person perceives as "editing" a
+past entry. `formatEntryTimestamp` now takes just `createdAt` and
+always shows the added time; `format.test.ts`'s edited-tag test case
+was removed accordingly. Recorded here rather than editing the entry
+above, so the reasoning that led to (and then reversed) the "(edited)"
+tag stays visible.

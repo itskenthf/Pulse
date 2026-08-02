@@ -27,17 +27,15 @@ export function formatRelativeDayLabel(isoDate: string, now: Date = new Date()):
   return DATE_FORMATTER.format(startOfEntryDay);
 }
 
-/** A single subtle timestamp per entry — the edited time (with an
- *  "(edited)" tag) if the entry was ever changed after creation,
- *  otherwise the added time. One line, not two, per the spec: an
- *  edited entry's "added" time isn't shown alongside it. Absolute
- *  time, so (unlike `formatRelativeDayLabel`) there's no `now` to
- *  compare against. */
-export function formatEntryTimestamp(entry: { createdAt: string; updatedAt: string }): string {
-  const edited = entry.updatedAt !== entry.createdAt;
-  const source = edited ? entry.updatedAt : entry.createdAt;
-  const formatted = TIMESTAMP_FORMATTER.format(new Date(source));
-  return edited ? `${formatted} (edited)` : formatted;
+/** A single subtle added-time timestamp per entry. No "edited" state:
+ *  entries have no edit UI — the only way `updatedAt` ever differs
+ *  from `createdAt` is the autosave upsert re-saving the same still-
+ *  open draft while the user keeps typing, which isn't something a
+ *  person would perceive as "editing" a past entry, so it isn't
+ *  surfaced. Absolute time, so (unlike `formatRelativeDayLabel`)
+ *  there's no `now` to compare against. */
+export function formatEntryTimestamp(isoDate: string): string {
+  return TIMESTAMP_FORMATTER.format(new Date(isoDate));
 }
 
 /** Newest entry reads at full strength, then steps down as entries

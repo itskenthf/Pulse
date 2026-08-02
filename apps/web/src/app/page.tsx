@@ -233,7 +233,7 @@ function WidgetGrid({ userId }: { userId: string }) {
           ))}
         </div>
       )}
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 pb-4 sm:gap-6 sm:px-6 sm:pb-6">
+      <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-5 px-4 pb-4 sm:gap-6 sm:px-6 sm:pb-6">
         <div className={ROW_GRID}>
           {rowTopWidgets.map((widget, index) => (
             <div

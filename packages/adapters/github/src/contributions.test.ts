@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fetchContributions } from "./contributions";
+import { fetchContributions, fetchRecentPullRequests } from "./contributions";
 
 const LEVEL_NAMES = ["NONE", "FIRST_QUARTILE", "SECOND_QUARTILE", "THIRD_QUARTILE", "FOURTH_QUARTILE"];
 
@@ -119,5 +119,107 @@ describe("fetchContributions", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(fetchContributions("token")).rejects.toThrow("GitHub GraphQL request failed: 502");
+  });
+});
+
+function mockPullRequestsResponse(nodes: unknown[]) {
+  return {
+    ok: true,
+    json: async () => ({
+      data: {
+        viewer: {
+          contributionsCollection: {
+            pullRequestContributions: { nodes },
+          },
+        },
+      },
+    }),
+  };
+}
+
+describe("fetchRecentPullRequests", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-02T12:00:00Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("normalizes each PR node into a flat summary", async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      mockPullRequestsResponse([
+        {
+          pullRequest: {
+            id: "pr_1",
+            number: 42,
+            title: "Regroup dashboard widget grid",
+            url: "https://github.com/itskenthf/Pulse/pull/42",
+            merged: true,
+            repository: { nameWithOwner: "itskenthf/Pulse" },
+          },
+        },
+      ]),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await fetchRecentPullRequests("token");
+
+    expect(result).toEqual([
+      {
+        id: "pr_1",
+        number: 42,
+        title: "Regroup dashboard widget grid",
+        url: "https://github.com/itskenthf/Pulse/pull/42",
+        repository: "itskenthf/Pulse",
+        merged: true,
+      },
+    ]);
+  });
+
+  it("queries a trailing 90-day window, not calendar month-to-date", async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(mockPullRequestsResponse([]));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await fetchRecentPullRequests("token");
+
+    const now = new Date("2026-08-02T12:00:00Z");
+    const expectedFrom = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
+    expect(body.variables.to).toBe(now.toISOString());
+    expect(body.variables.from).toBe(expectedFrom.toISOString());
+  });
+
+  it("skips a node missing required fields instead of throwing", async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      mockPullRequestsResponse([
+        { pullRequest: { id: "pr_1", title: "Missing repository", url: "https://x", merged: false } },
+        {
+          pullRequest: {
+            id: "pr_2",
+            number: 7,
+            title: "Complete PR",
+            url: "https://github.com/itskenthf/Pulse/pull/7",
+            merged: false,
+            repository: { nameWithOwner: "itskenthf/Pulse" },
+          },
+        },
+      ]),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await fetchRecentPullRequests("token");
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.id).toBe("pr_2");
+  });
+
+  it("throws a descriptive error when the request itself fails", async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce({ ok: false, status: 403 });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(fetchRecentPullRequests("token")).rejects.toThrow("GitHub GraphQL request failed: 403");
   });
 });

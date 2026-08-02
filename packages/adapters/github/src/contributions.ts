@@ -84,6 +84,65 @@ const LEVELS: Record<string, number> = {
   FOURTH_QUARTILE: 4,
 };
 
+export interface PullRequestSummary {
+  id: string;
+  number: number;
+  title: string;
+  url: string;
+  /** "owner/name", e.g. "itskenthf/Pulse". */
+  repository: string;
+  merged: boolean;
+}
+
+interface PullRequestGraphQLResponse {
+  data?: {
+    viewer?: {
+      contributionsCollection?: {
+        pullRequestContributions?: {
+          nodes?: {
+            pullRequest?: {
+              id?: string;
+              number?: number;
+              title?: string;
+              url?: string;
+              merged?: boolean;
+              repository?: { nameWithOwner?: string };
+            };
+          }[];
+        };
+      };
+    };
+  };
+  errors?: { message?: string }[];
+}
+
+const PULL_REQUESTS_QUERY = `
+  query($from: DateTime!, $to: DateTime!) {
+    viewer {
+      contributionsCollection(from: $from, to: $to) {
+        pullRequestContributions(first: 50) {
+          nodes {
+            pullRequest {
+              id
+              number
+              title
+              url
+              merged
+              repository {
+                nameWithOwner
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+/** How far back to look for PRs to track (see fetchRecentPullRequests'
+ *  own doc comment for why this can't just be month-to-date). */
+const PULL_REQUEST_WINDOW_DAYS = 90;
+
 const CONTRIBUTIONS_QUERY = `
   query($from: DateTime!, $to: DateTime!) {
     viewer {
@@ -242,4 +301,73 @@ export async function fetchActivitySummary(
     repositoriesCreated: collection?.totalRepositoryContributions ?? 0,
     periodStart: periodStart.toISOString(),
   };
+}
+
+/**
+ * Individual PRs (title, repo, merged status) rather than just a count —
+ * feeds the Timeline's per-PR "opened"/"merged" memory events
+ * (packages/widgets/github/src/derive-memories.ts), which a plain count
+ * can't support. Windowed on a trailing 90 days from now, not calendar
+ * month-to-date like fetchActivitySummary: a PR's "contribution" date is
+ * when it was *opened*, so a month-to-date window would silently miss a
+ * merge event for a PR opened in a prior month whose merged status just
+ * changed.
+ *
+ * `pullRequestContributions` is new territory for this codebase — every
+ * other query here only ever needed aggregate counts specifically to
+ * avoid requiring more OAuth scope than `read:user` (see docs/DECISIONS.md,
+ * 2026-07-22). Whether GitHub exposes PR title/repo/merged-state under
+ * that same scope for this endpoint hasn't been verified against a live
+ * token from within this codebase before — the caller
+ * (packages/widgets/github/src/fetch.ts) isolates failures from this
+ * function specifically so a scope/permission error here can't break the
+ * rest of the widget.
+ */
+export async function fetchRecentPullRequests(
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<PullRequestSummary[]> {
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - PULL_REQUEST_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+
+  const response = await fetch("https://api.github.com/graphql", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      query: PULL_REQUESTS_QUERY,
+      variables: { from: windowStart.toISOString(), to: now.toISOString() },
+    }),
+    cache: "no-store",
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new Error(`GitHub GraphQL request failed: ${response.status}`);
+  }
+
+  const body = (await response.json()) as PullRequestGraphQLResponse;
+  if (body.errors?.length) {
+    throw new Error(`GitHub GraphQL error: ${body.errors[0]?.message ?? "unknown"}`);
+  }
+
+  const nodes = body.data?.viewer?.contributionsCollection?.pullRequestContributions?.nodes ?? [];
+
+  const summaries: PullRequestSummary[] = [];
+  for (const node of nodes) {
+    const pr = node.pullRequest;
+    const repository = pr?.repository?.nameWithOwner;
+    if (!pr?.id || !pr.title || !pr.url || !repository) continue;
+    summaries.push({
+      id: pr.id,
+      number: pr.number ?? 0,
+      title: pr.title,
+      url: pr.url,
+      repository,
+      merged: pr.merged ?? false,
+    });
+  }
+  return summaries;
 }

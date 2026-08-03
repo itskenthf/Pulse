@@ -3,3 +3,11 @@ packages:
   - "packages/*"
   - "packages/widgets/*"
   - "packages/adapters/*"
+
+# Next.js pins vulnerable transitive versions of these internally
+# (postcss for its CSS build pipeline, sharp for next/image); pnpm can't
+# fix them by bumping next alone since they're next's own dependency
+# declarations, not ours. See docs/DECISIONS.md.
+overrides:
+  postcss: ">=8.5.18"
+  sharp: ">=0.35.0"

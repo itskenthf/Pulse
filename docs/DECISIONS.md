@@ -3612,3 +3612,24 @@ state. The manual SQL Editor path still works as a fallback (nothing
 about the migration files themselves changed), but the CLI is now the
 intended path — it removes the exact "committed but never run" gap the
 2026-07-31 entry hit.
+
+## 2026-08-03 — CI workflow renamed test.yml → ci.yml, push trigger dropped
+
+Requested as a fresh `ci.yml` (install → lint → typecheck → test → build
+on every PR). `.github/workflows/test.yml` already did exactly that (plus
+Playwright e2e), so a new file alongside it would have run the same
+checks twice on every PR for no benefit — renamed/repurposed the existing
+workflow instead of duplicating it.
+
+Two real changes beyond the rename:
+- **Trigger narrowed to `pull_request: branches: [main]`, dropping
+  `push: branches: [main]`.** Every change reaches `main` through a PR,
+  so the post-merge push re-ran a check that had already passed against
+  the same commit — pure redundancy.
+- **`actions/setup-node` now reads `node-version-file: package.json`**
+  (parses the `engines.node` field) instead of the hardcoded `node-version:
+  22` it had before, so the workflow can't silently drift from the
+  version the repo itself declares as its requirement.
+
+`refresh-widgets.yml` is untouched — it's an unrelated cron job, not part
+of this consolidation.

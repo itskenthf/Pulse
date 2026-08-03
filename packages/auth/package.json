@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@auth/supabase-adapter": "^1.11.2",
+    "@auth/supabase-adapter": "^1.11.3",
     "next-auth": "5.0.0-beta.32"
   },
   "devDependencies": {

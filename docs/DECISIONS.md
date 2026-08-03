@@ -3547,3 +3547,68 @@ once deployed. If it doesn't, the isolation in `fetch.ts` means
 ever appear — a silent no-op, not a broken widget, per explicit
 instruction not to pursue a scope upgrade if this turns out to need
 one.
+
+## 2026-08-03 — Pre-publication audit fixes: license, CI permissions, RLS, personal-info scrub
+
+Ahead of making the repo public, a full security/hygiene audit found no
+leaked secrets (checked against the entire git history) and no
+critical/blocking issues, but several warning-level gaps worth closing
+before going public:
+
+- **`LICENSE` added** (MIT) — previously completely absent, which would
+  have legally blocked any reuse/forking once public.
+- **GitHub Actions token permissions restricted** — neither workflow
+  declared a `permissions:` block, so both ran with default (unscoped)
+  token permissions. `refresh-widgets.yml` now declares `permissions:
+  {}` (it only issues an outbound `curl`, needs zero GitHub API access);
+  `test.yml` declares `permissions: contents: read`.
+- **Supabase RLS enabled** — `0006_enable_rls.sql` turns on Row-Level
+  Security with default-deny (no policies) on every `public` schema
+  table. Not exploitable before this — all access went exclusively
+  through the server-only service-role client, which bypasses RLS by
+  design, and `anon` had zero grants — but `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  plumbing already existed unused end-to-end (env, `turbo.json`, CI).
+  This closes the gap before any browser-side client is ever
+  introduced.
+- **Personal information scrubbed from docs and test fixtures** — the
+  maintainer's real first name (~171 mentions across this file and
+  related docs), the real GitHub handle baked into GitHub adapter/widget
+  test fixtures, and a live production URL were reworded to
+  passive/impersonal voice or redacted. A privacy/tone call, not a
+  security fix — none of this was ever an access-control issue.
+- **`docs/redesign-reference/` removed** — a stale raw AI design-tool
+  export: referenced the already-deleted `quick-launch` widget, loaded
+  third-party CDN scripts (unpkg React/Babel, Unsplash), embedded the
+  real repo slug. Nothing in code or docs depended on it besides
+  `CLAUDE.md`'s own pointer, updated to treat `docs/DESIGN_SYSTEM.md` as
+  the sole design source of truth.
+- **Dependency/config alignment**: `apps/web`'s `@types/node` was `^20`
+  against root's `^22`/`engines.node: ">=22"` — aligned. `trustHost:
+  true` set explicitly in the Auth.js config rather than relying on
+  framework inference (Pulse deploys on Vercel). `next-auth` bumped
+  `5.0.0-beta.31` → `beta.32`, the latest available — no stable v5
+  exists upstream yet, so this remains a known, accepted risk rather
+  than something fully resolvable right now.
+
+`README.md` was explicitly left untouched — flagged by the audit as
+missing setup/install instructions, but reserved as the maintainer's own
+edit, not touched by this pass.
+
+## 2026-08-03 — Supabase CLI linked; migrations no longer applied by hand
+
+The 2026-07-31 "manual-migration gotcha" entry above documented that this
+repo had no automated migration pipeline — no `supabase/config.toml`
+linking a project, every migration pasted by hand into the Dashboard's
+SQL Editor in filename order. That's now superseded: `supabase` (the
+CLI) is added as a root devDependency, and the project is linked locally
+via `pnpm exec supabase link --project-ref <ref>` (run once, per
+developer — the resulting `supabase/config.toml` is safe to commit, it's
+just the project ref, no secrets).
+
+Going forward, apply migrations with `pnpm exec supabase db push`
+instead of copy-pasting into the SQL Editor. `.gitignore` gained
+`/supabase/.branches` and `/supabase/.temp` for the CLI's local link
+state. The manual SQL Editor path still works as a fallback (nothing
+about the migration files themselves changed), but the CLI is now the
+intended path — it removes the exact "committed but never run" gap the
+2026-07-31 entry hit.

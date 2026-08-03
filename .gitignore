@@ -150,3 +150,8 @@ vite.config.ts.timestamp-*
 /apps/web/playwright-report/
 /apps/web/blob-report/
 /apps/web/playwright/.cache/
+
+# Supabase CLI local state (project ref config in supabase/config.toml
+# is fine to commit — this is just local link/session state)
+/supabase/.branches
+/supabase/.temp

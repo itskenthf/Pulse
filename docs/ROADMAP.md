@@ -17,7 +17,7 @@ independent of the Phase 0-4 numbering below — see
 - [x] Core DB schema migrations written (`supabase/migrations/`)
 - [x] Supabase project created
 - [x] GitHub OAuth App registered
-- [x] Deployed to Vercel (`https://[redacted-old-domain]` — renamed
+- [x] Deployed to Vercel (custom subdomain — renamed
       2026-07-24 from `[redacted-old-domain]`; requires `AUTH_URL`
       and the GitHub OAuth App / Spotify app callback URLs to match, see
       docs/DECISIONS.md)
@@ -29,8 +29,8 @@ independent of the Phase 0-4 numbering below — see
 
 **Widget-build scope is complete.** Every widget on the active target list
 (§9) is built and live; the only remaining Phase 1 item is the personal-
-usage gate in §18 (two consecutive weeks of daily use), which is Ken's own
-call to confirm, not something tracked here. In practice the project has
+usage gate in §18 (two consecutive weeks of daily use), which is a
+manual call to confirm, not something tracked here. In practice the project has
 already moved into Phase 2 territory in parallel — see that section below.
 
 Per the reference doc's original widget development order (§9):
@@ -57,7 +57,7 @@ Per the reference doc's original widget development order (§9):
    a no-op; the real per-widget state is the timezone/12h-24h setting.
 4. [removed] Calendar (first OAuth widget — Google) — originally deferred
    pending Google Cloud Console setup time; **permanently removed from
-   scope 2026-08-01** — Ken decided against ever building it. Skipped
+   scope 2026-08-01** — a decision against ever building it. Skipped
    ahead to GitHub at the time; see the "Documentation accuracy pass"
    entry below for the full removal.
 5. [x] GitHub — `packages/widgets/github` + `packages/adapters/github`:
@@ -66,13 +66,13 @@ Per the reference doc's original widget development order (§9):
    legend, hover/tap day popovers — expanded 2026-07-29 from an initial
    compact 20-week window, see `docs/DECISIONS.md`), via GitHub's GraphQL
    `contributionsCollection`. Scoped down from the original "commits +
-   open PRs" concept at Ken's request — kept deliberately simple. Reuses
+   open PRs" concept by explicit request — kept deliberately simple. Reuses
    the login token from `next_auth.accounts` (`readProviderAccessToken`
    in `packages/database`) — no scope change, no second OAuth flow, no
    settings. Establishes the "widget using the login provider's token"
    pattern that Spotify/Google widgets will follow.
 
-Also shipped, pulled forward from the §10 backlog at Ken's request:
+Also shipped, pulled forward from the §10 backlog by explicit request:
 
 - [x] Steam (recently played) — `packages/widgets/steam` +
   `packages/adapters/steam`: top 5 games from the last 2 weeks via
@@ -122,8 +122,8 @@ min without manual clicks — confirmed working):
 
 ### Phase 1 rescoped (2026-07-22)
 
-Ken reviewed the remaining build order and decided the following aren't
-useful to him long-term — dropped from active scope, not deleted from the
+The remaining build order was reviewed and the following judged not
+useful long-term — dropped from active scope, not deleted from the
 plan; trivial to revive later since nothing about the architecture depends
 on building them in order:
 
@@ -131,25 +131,25 @@ on building them in order:
   later built anyway (own Supabase-backed store, `packages/widgets/tasks`,
   `/tasks` page) — see the Phase 2 section below.
 - [removed] Email (Gmail readonly) — **permanently removed from scope
-  2026-08-01**, not just deferred; Ken decided against ever building it.
+  2026-08-01**, not just deferred; a decision against ever building it.
 - [removed] Focus timer — **permanently removed from scope 2026-08-01**,
-  not just dropped-for-now; Ken decided against ever building it.
+  not just dropped-for-now; a decision against ever building it.
 - [~] Habits — dropped (reopened 2026-07-26 as a "Coming soon" placeholder
   only, not a real widget yet — see `docs/DECISIONS.md`)
 - [removed] YouTube — **permanently removed from scope 2026-08-01**, not
-  just blocked; Ken decided against ever building it.
+  just blocked; a decision against ever building it.
 - [removed] Calendar (Google) — **permanently removed from scope
-  2026-08-01**, not just deferred; Ken decided against ever building it.
+  2026-08-01**, not just deferred; a decision against ever building it.
   (The unrelated "Calendar (date display)" widget further below, a plain
   local date string, was already built and later merged into Hero — this
   removal is only about the Google Calendar integration.)
 
-**Remaining active target for Phase 1**, in the order Ken wants them:
+**Remaining active target for Phase 1**, in priority order:
 
 1. [x] Quote — `packages/widgets/quote`: ~40 hand-curated quotes across 7
-   themes Ken picked (coffee, dev humor, gaming, minimalism, relationship,
+   themes (coffee, dev humor, gaming, minimalism, relationship,
    programming, stoicism) — deliberately not generic motivational quotes,
-   and no attribution shown (kept minimal per Ken's request; see
+   and no attribution shown (kept minimal by explicit request; see
    `docs/DECISIONS.md` for sourcing notes on the ones with real quotes
    behind them). No adapter — static local data. Picks a random quote on
    every `fetchData()` call (cron *and* manual refresh both rotate it,
@@ -158,7 +158,7 @@ on building them in order:
    A second clean confirmation of the normal fetch → cache → render
    pattern, alongside Clock's deliberate exception to it.
 2. [x] Quick launch — `packages/widgets/quick-launch`: up to 6
-   label+URL shortcut links, plain text (no favicons, per Ken's minimal
+   label+URL shortcut links, plain text (no favicons, per the minimal
    preference — matches Quote's no-attribution stance), open in a new
    tab. Fixed-slot settings form (6 label/URL field pairs, blank = unused)
    rather than a dynamic add/remove list — same plain-form-fields pattern
@@ -177,7 +177,7 @@ on building them in order:
 
 **Phase 1's rescoped target is now fully built: 8/8.**
 
-**Also added, beyond the rescoped 8, at Ken's request:**
+**Also added, beyond the rescoped 8, by explicit request:**
 
 - [x] Calendar (date display) — `packages/widgets/calendar-date`: plain
   text "today's date" (e.g. "Thursday, July 24, 2026"), no grid, no
@@ -191,8 +191,8 @@ on building them in order:
 
 ### Redesign (2026-07-24): Greeting/Weather/Quote merged into Hero
 
-Following the two-tone card redesign, Ken asked for the Greeting, Weather,
-and Quote cards to become one full-width hero banner above the grid
+Following the two-tone card redesign, the Greeting, Weather,
+and Quote cards were requested to become one full-width hero banner above the grid
 (`packages/widgets/hero`) instead of three separate cards — see
 `docs/DECISIONS.md`. `packages/widgets/greeting`, `packages/widgets/weather`,
 and `packages/widgets/quote` were deleted (their logic now lives inside
@@ -202,7 +202,7 @@ panel at all.)
 
 ### Redesign v2 (2026-07-24): light-blue theme, Clock/Calendar into Hero, graphs, icon refresh
 
-Same-day follow-up after Ken reviewed the live redesign above. Changes:
+Same-day follow-up after the live redesign above was reviewed. Changes:
 
 - **Theme:** reverted the two-tone black/white cards to a light-blue theme
   (gradient page background, white cards, colored icon badges) matching a
@@ -217,7 +217,7 @@ Same-day follow-up after Ken reviewed the live redesign above. Changes:
 - **No settings anywhere in Hero**: name comes automatically from the
   GitHub login profile (`readUserName` in `packages/database`), time zone
   and weather location are fixed constants (`Asia/Kuching`) rather than a
-  setting — Ken asked for this to "just work" with no configuration step.
+  setting — requested to "just work" with no configuration step.
   This is a real, deliberate scope-down from reference doc §7's normal
   "settings support" requirement — amended there with the exception noted.
 - **Graphs**: Steam's recently-played list now shows a horizontal bar per
@@ -231,10 +231,10 @@ Same-day follow-up after Ken reviewed the live redesign above. Changes:
 
 ### Redesign (2026-07-24): Liquid Glass — full visual system replacement
 
-Ken reviewed the light-blue redesign live and judged it "functional but
+The light-blue redesign was reviewed live and judged "functional but
 not achieving the intended experience" — an admin-panel feel, flat, weak
-hierarchy, unfinished-looking. He provided a full authored design system
-doc (now `docs/DESIGN_SYSTEM.md` in its entirety) and asked for a genuine
+hierarchy, unfinished-looking. A full authored design system
+doc was provided (now `docs/DESIGN_SYSTEM.md` in its entirety) along with a request for a genuine
 redesign against it, not a polish pass. Full critique/proposal/rationale
 and every implementation decision recorded in `docs/DECISIONS.md`. Summary:
 
@@ -266,7 +266,7 @@ and every implementation decision recorded in `docs/DECISIONS.md`. Summary:
 
 ### Refinement pass (2026-07-24): glass fix, real widget polish, overflow menus
 
-Ken judged the Liquid Glass redesign "a major improvement" but flagged
+The Liquid Glass redesign was judged "a major improvement" but flagged
 specific gaps: the glass looked solid white, Steam's bars looked
 Material-Design, GitHub (the largest widget) under-used its space, and the
 sidebar "still feels disconnected." Explicit instruction: polish/consistency
@@ -295,17 +295,17 @@ decision in `docs/DECISIONS.md`. Summary:
   ancestor breaking `position: fixed` backdrops (see docs/DECISIONS.md).
   Switched both to CSS `:focus-within`, no client JS.
 - **Desktop navigation**: the pinned sidebar rail replaced with a floating
-  bottom-center glass dock — Ken's explicit ask after judging the rail
+  bottom-center glass dock — an explicit ask after judging the rail
   "disconnected." Tablet drawer and mobile bottom nav unchanged.
 - Radius/motion consistency audit across nav chrome (a couple of
   `rounded-lg` outliers bumped to the same `rounded-xl` used everywhere
   else).
 - Spotify's "now playing" emphasis treatment and the commit-signature stop
-  hook were explicitly out of scope for this pass, per Ken's instruction.
+  hook were explicitly out of scope for this pass, per instruction.
 
 ### Follow-up polish (2026-07-24): reference-matched gradient, denser cards, Steam achievements, icon-only Quick Launch
 
-Ken shared a reference screenshot and asked for the background/cards to
+A reference screenshot was shared with a request for the background/cards to
 match it, cards to feel fuller, Quick Launch to go icon-only, and Steam to
 show more per-game detail — with explicit instruction to ask clarifying
 questions first (four real open decisions, all resolved via
@@ -336,7 +336,7 @@ reasoning behind each):
 
 ### Follow-up polish (2026-07-25): mobile click fix, nav removal, GitHub/Steam/Hero content passes
 
-Ken tested on real mobile/iPad devices and reported the overflow/profile
+Testing on real mobile/iPad devices found the overflow/profile
 menus couldn't be opened by tap at all — a real, device-confirmed bug, not
 a hypothetical. Combined with a further redesign list; all four open
 decisions resolved via `AskUserQuestion` before writing code (nav removal,
@@ -357,8 +357,8 @@ GitHub content, Steam detail-page split, Hero intelligence style — see
   container — `ProfileMenu`'s dropdown already had this, `WidgetMenu`'s
   didn't).
 - **Navigation removed entirely**: Sidebar, Dock, and BottomNav (and the
-  drawer-toggle checkbox plumbing) deleted from `page.tsx` — Ken reported
-  never using it, wants "just cards." Search and Notification icon buttons
+  drawer-toggle checkbox plumbing) deleted from `page.tsx` — never used
+  in practice, "just cards" preferred. Search and Notification icon buttons
   (both permanently disabled placeholders) removed from the navbar too.
 - **GitHub card filled out**: new `fetchLatestActivity` in
   `packages/adapters/github` (GraphQL `viewer.repositories(first: 1,
@@ -379,7 +379,7 @@ GitHub content, Steam detail-page split, Hero intelligence style — see
   sentence, plus a deterministic weather tip
   (`packages/widgets/hero/src/weather-tip.ts`, rule-based on the adapter's
   `weatherCode` — e.g. rain codes → "Take an umbrella") — explicitly *not*
-  an LLM call, per Ken's stated preference. Cross-widget insights (GitHub
+  an LLM call, per stated preference. Cross-widget insights (GitHub
   streak / Steam playtime referenced from Hero) were considered but left
   out of this pass to keep scope to what was actually asked for.
 - Quick Launch's icon tiles shrunk from large `aspect-square` grid cells
@@ -392,7 +392,7 @@ replacing a separately-checked tool.
 
 ### Follow-up polish (2026-07-25): grid-stretch card sizing, static hover, cover-art fallback
 
-Ken reported the GitHub and Quick Launch cards looked oversized (a CSS
+The GitHub and Quick Launch cards were reported oversized (a CSS
 Grid `stretch` default making them match the tallest card in their row —
 fixed with `items-start` on the grid, see `docs/DECISIONS.md`), asked for
 card hover to stop moving/scaling (replaced with a static border/ring
@@ -403,14 +403,14 @@ bug). Also did a cleanup pass: dead `.pulse-bar-fill` CSS left over from
 the deleted `playtime-bar.tsx` removed from `globals.css`, and a fresh
 touch-simulated Playwright audit re-confirming the mobile click fix
 (GitHub/Steam/profile menus, Steam link, Quick Launch link all verified
-working) with no hydration errors found — Ken's "can't click any button"
+working) with no hydration errors found — the "can't click any button"
 report is most likely against the still-deployed `main`, which doesn't
 yet include the previous entry's click-fix PR.
 
 ### Hardening pass (2026-07-25 onward): quality over features
 
-Ken confirmed the visual direction/layout are final — "do NOT redesign
-the application" — and reframed the work going forward as a senior-
+The visual direction/layout was confirmed final — "do NOT redesign
+the application" — reframing the work going forward as a senior-
 engineer quality pass across the whole app: consistency, responsiveness,
 accessibility, maintainability, performance, error handling, no
 shortcuts. Given the scope, agreed to work in reviewable stages rather
@@ -519,7 +519,7 @@ test:e2e`).
 
 ### "Classical" redesign (2026-07-26): full visual system replacement
 
-Ken supplied a design-tool export proposing a full visual replacement of
+A design-tool export was supplied proposing a full visual replacement of
 Liquid Glass — serif type (Cormorant Garamond/Lora), a flat paper
 background, a single gold accent used only as strokes/borders, and
 hairline dividers in place of blur/glow. This reverses the Hardening
@@ -565,7 +565,7 @@ upsert needed.
 A status/bug audit found this doc and `docs/PROJECT_REFERENCE.md` had
 drifted from actual shipped code — most notably still describing Tasks
 as "skipped" and Phase 2 as "Not started" when Tasks/Notes/Notebook
-write-back functionality was already live. Also, per Ken's explicit
+write-back functionality was already live. Also, per explicit
 instruction, **Calendar (Google), Email (Gmail), Focus timer, and
 YouTube are permanently removed from Pulse's scope** — not deferred,
 not backlog, never being built. Updated throughout both docs:
@@ -583,8 +583,8 @@ separate thing; see that entry above.
 
 ## Phase 2 — make it actionable
 
-**Partially shipped already, ahead of the formal Phase 1 gate** — Ken
-asked for Tasks, Notes, and Notebook (all write-back-to-own-table
+**Partially shipped already, ahead of the formal Phase 1 gate** — a
+request for Tasks, Notes, and Notebook (all write-back-to-own-table
 features) directly, rather than waiting for two weeks of confirmed daily
 Phase 1 usage first. Real status:
 

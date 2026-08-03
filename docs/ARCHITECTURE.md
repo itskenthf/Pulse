@@ -44,8 +44,8 @@ dependency graph (`turbo.json`'s `dependsOn: ["^build"]`).
   route. Never imports a specific widget's internals — only `@pulse/sdk`'s
   `registerWidget` / `getAllWidgets`, plus each widget's single top-level
   export (e.g. `heroWidget` from `@pulse/widget-hero`). No navigation chrome
-  beyond the navbar (Sidebar/Dock/BottomNav were deleted 2026-07-25, per
-  Ken's request — see docs/DECISIONS.md); the widget grid
+  beyond the navbar (Sidebar/Dock/BottomNav were deleted 2026-07-25, by
+  explicit request — see docs/DECISIONS.md); the widget grid
   (`grid ... items-start`) intentionally doesn't stretch cards to match
   their row's tallest neighbor — each card sizes to its own content.
 - `packages/sdk` — the `Widget` interface (see below) and the in-memory

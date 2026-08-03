@@ -7,7 +7,7 @@ is about how to work in the codebase day to day.
 ## Project vision
 
 Pulse is a **Personal Operating System** — a calm, considered surface that
-brings the tools and information Ken checks every morning into one screen.
+brings the tools and information checked every morning into one screen.
 
 Pulse is **not**:
 
@@ -28,24 +28,21 @@ delete abstractions rather than add them.
 
 ## Design source of truth
 
-`docs/redesign-reference/` holds the raw exported mockup the current
-("Classical") redesign is built from — the actual HTML/CSS, not just a
-prose description. `docs/DESIGN_SYSTEM.md` is the canonical, kept-current
-description derived from it.
-
-Whenever a redesign reference exists (currently: `docs/redesign-reference/`):
+`docs/DESIGN_SYSTEM.md` is the canonical, kept-current description of the
+current ("Classical") redesign — the source of truth for spacing, type,
+color, and component structure.
 
 - Reproduce it as accurately as possible.
 - Do not reinterpret layouts, simplify spacing, remove sections, redesign
-  widgets, or invent alternative layouts not shown in the reference.
-- If the live implementation differs from the reference, that's a bug to
+  widgets, or invent alternative layouts not shown in the doc.
+- If the live implementation differs from the doc, that's a bug to
   close, not a style choice to defend.
-- If a technical constraint makes exact reproduction impossible (e.g. the
-  reference's static mock data vs. real fetched data, or a piece of chrome
-  the reference doesn't specify), explain the limitation **before**
-  changing anything, and default to the reference wherever the constraint
+- If a technical constraint makes exact reproduction impossible (e.g.
+  static mock data vs. real fetched data, or a piece of chrome
+  the doc doesn't specify), explain the limitation **before**
+  changing anything, and default to the doc wherever the constraint
   allows a choice.
-- Never silently deviate from the reference. If unsure whether a gap
+- Never silently deviate from the doc. If unsure whether a gap
   matters, ask first — don't guess.
 
 ## Design philosophy ("Classical")
@@ -85,7 +82,7 @@ background, per-widget glow colors) — see `docs/DECISIONS.md`'s
 - Widgets occupy space intentionally — real content, not invented filler,
   but also not sparse layouts with large unused areas.
 - No navigation chrome beyond the navbar itself (no sidebar, dock, or
-  bottom nav — deleted outright per Ken's request, see
+  bottom nav — deleted outright by explicit request, see
   `docs/PROJECT_REFERENCE.md` §19). Don't reintroduce these without an
   explicit new request.
 - Avoid layouts that force unnecessary scrolling — a widget's content
@@ -200,9 +197,9 @@ If unsure whether something matches — ask first, don't guess.
 - Record real architectural decisions in `docs/DECISIONS.md` as they're
   made, with the reasoning — not just the conclusion.
 - Keep `docs/ROADMAP.md` current when a phase item is completed.
-- Keep `docs/DESIGN_SYSTEM.md` in sync with `docs/redesign-reference/` —
-  if they disagree, the reference wins; update the prose doc, don't trust
-  it blindly.
+- Keep `docs/DESIGN_SYSTEM.md` in sync with the live implementation —
+  if they disagree, treat it as a bug to close, not a doc to silently
+  update.
 
 ## Development workflow
 
@@ -211,8 +208,7 @@ Before implementing any request:
 1. Understand the task.
 2. Read the existing implementation.
 3. Compare against `docs/PROJECT_REFERENCE.md` / `docs/ARCHITECTURE.md`.
-4. Compare against `docs/DESIGN_SYSTEM.md` and `docs/redesign-reference/`
-   for anything UI-facing.
+4. Compare against `docs/DESIGN_SYSTEM.md` for anything UI-facing.
 5. Implement.
 6. Verify responsiveness (real widths, not assumption).
 7. Verify visual consistency against the shared primitives.

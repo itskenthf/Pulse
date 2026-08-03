@@ -7,7 +7,7 @@ is about how to work in the codebase day to day.
 ## Project vision
 
 Pulse is a **Personal Operating System** — a calm, considered surface that
-brings the tools and information Ken checks every morning into one screen.
+brings the tools and information checked every morning into one screen.
 
 Pulse is **not**:
 
@@ -85,7 +85,7 @@ background, per-widget glow colors) — see `docs/DECISIONS.md`'s
 - Widgets occupy space intentionally — real content, not invented filler,
   but also not sparse layouts with large unused areas.
 - No navigation chrome beyond the navbar itself (no sidebar, dock, or
-  bottom nav — deleted outright per Ken's request, see
+  bottom nav — deleted outright by explicit request, see
   `docs/PROJECT_REFERENCE.md` §19). Don't reintroduce these without an
   explicit new request.
 - Avoid layouts that force unnecessary scrolling — a widget's content

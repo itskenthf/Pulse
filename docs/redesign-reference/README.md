@@ -1,6 +1,6 @@
 # Redesign reference
 
-Raw export from the design tool Ken used to produce the "Classical"
+Raw export from the design tool used to produce the "Classical"
 redesign (2026-07-26) — committed here so future sessions can re-check
 pixel fidelity against the original mockup instead of relying only on
 its prose description in `docs/DESIGN_SYSTEM.md`.

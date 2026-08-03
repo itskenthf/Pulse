@@ -1,4 +1,4 @@
-repo: itskenthf/Pulse
+repo: octocat/example-repo
 branch: main
 path: (whole repo)
 

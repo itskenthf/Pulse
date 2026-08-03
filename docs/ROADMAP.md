@@ -511,7 +511,7 @@ this sandbox; it stays a real, named limitation (see `docs/DECISIONS.md`).
 ### Automated test suite (2026-07-27)
 
 A committed Vitest + Playwright suite now runs in CI
-(`.github/workflows/test.yml`) on every push/PR, alongside lint/typecheck/
+(`.github/workflows/ci.yml`) on every PR, alongside lint/typecheck/
 build — see `docs/DECISIONS.md` for scope and reasoning. Unit/component
 tests live next to the code they cover in each package (`pnpm test`);
 end-to-end tests live in `apps/web/e2e` (`pnpm --filter @pulse/web

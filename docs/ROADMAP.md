@@ -17,10 +17,9 @@ independent of the Phase 0-4 numbering below — see
 - [x] Core DB schema migrations written (`supabase/migrations/`)
 - [x] Supabase project created
 - [x] GitHub OAuth App registered
-- [x] Deployed to Vercel (custom subdomain — renamed
-      2026-07-24 from `[redacted-old-domain]`; requires `AUTH_URL`
-      and the GitHub OAuth App / Spotify app callback URLs to match, see
-      docs/DECISIONS.md)
+- [x] Deployed to Vercel (custom subdomain — renamed away from the
+      auto-generated one; requires `AUTH_URL` and the GitHub OAuth App /
+      Spotify app callback URLs to match, see docs/DECISIONS.md)
 - [x] **Gate:** log in with GitHub, see your own name echoed back — confirmed
 
 **Phase 0 is complete.**

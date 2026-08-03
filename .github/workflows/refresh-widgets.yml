@@ -17,10 +17,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Call /api/cron
+        # -L: without this, curl doesn't follow a redirect, and --fail
+        # only fails on 4xx/5xx — a stale PULSE_URL pointing at an old
+        # Vercel domain alias would "succeed" on the redirect response
+        # itself without ever reaching /api/cron. PULSE_URL is a secret,
+        # not a variable, so it's masked in logs: unlike variables,
+        # GitHub Actions doesn't redact variables, and this repo is
+        # public, so a variable's value is plaintext-visible to anyone
+        # in every run's log.
         run: |
-          curl --fail --silent --show-error \
+          curl --fail --silent --show-error -L \
             -H "Authorization: Bearer ${CRON_SECRET}" \
             "${PULSE_URL}/api/cron"
         env:
-          PULSE_URL: ${{ vars.PULSE_URL }}
+          PULSE_URL: ${{ secrets.PULSE_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}

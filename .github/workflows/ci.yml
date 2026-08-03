@@ -1,13 +1,16 @@
-name: Test
+name: CI
 
 # Closes the "no automated tests" gap: this is what actually makes past
 # fixes stay fixed — a regression in a pushed change fails here instead of
 # only being caught by a human happening to re-check the same thing.
+#
+# pull_request-only (not push) since every change reaches main through a
+# PR — running this again on the post-merge push would just repeat a
+# check that already passed on the same commit.
 
 on:
-  push:
-    branches: [main]
   pull_request:
+    branches: [main]
 
 permissions:
   contents: read
@@ -38,9 +41,13 @@ jobs:
       # of confirming it.
       - uses: pnpm/action-setup@v4
 
+      # Reads the version from package.json's "engines.node" field
+      # (currently ">=22") instead of hardcoding it here, so this
+      # workflow can't silently drift from the version the repo itself
+      # requires.
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: package.json
           cache: pnpm
 
       - name: Install dependencies

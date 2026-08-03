@@ -3672,3 +3672,82 @@ placeholder env vars, same pattern as `ci.yml`) all still pass — this
 was a same-major/patch-level bump for `next`, a patch bump for the auth
 adapter, and forced-but-compatible transitive bumps for `postcss`/
 `sharp`, so no app code changes were needed.
+
+## 2026-08-03 — Post-merge security/bug review: four real fixes, two flagged
+
+A full pass (two parallel read-only reviews — one security-focused, one
+correctness-focused — plus manual verification of every finding before
+acting) turned up four fixable issues and two worth flagging without a
+blind fix. `pnpm audit` findings are recorded separately.
+
+**Fixed:**
+
+1. **`/api/cron` bearer-token comparison switched to `crypto.timingSafeEqual`**
+   (`apps/web/src/app/api/cron/route.ts`). Was a plain `!==` string
+   comparison — a theoretical timing side-channel on `CRON_SECRET`. Low
+   real-world risk (no rate limiting exists to support the huge number of
+   timed requests such an attack would need — see the flagged item
+   below), but cheap to close properly.
+2. **GitHub PR-fetch failure no longer manufactures duplicate Timeline
+   events** (`packages/widgets/github/src/fetch.ts`). A transient
+   `pullRequestContributions` GraphQL failure was caught and degraded to
+   `[]`, which got cached as truth — the *next* successful refresh then
+   diffed the real open PRs against that empty snapshot and re-emitted
+   "Opened PR" events for PRs that had already been recorded days/weeks
+   earlier. Now falls back to the last known-good `recentPullRequests`
+   from the widget's own cache on failure, so a transient error freezes
+   state instead of wiping it.
+3. **GitHub "today"/streak calculation now uses a fixed reference
+   timezone instead of UTC** (`packages/adapters/github/src/contributions.ts`,
+   `packages/widgets/github/src/streaks.ts`). `contributions.ts` already
+   had a comment explicitly warning that GitHub buckets contribution days
+   by profile timezone, not UTC — but the code right below it computed
+   "today" via `now.toISOString()` anyway. For a positive UTC offset
+   (matching `@pulse/widget-hero`'s `HERO_TIME_ZONE = "Asia/Kuching"`,
+   UTC+8), this meant "Today"/streak-extension silently used yesterday's
+   data for the first ~8 hours of every local day. Both files now compute
+   "today" via `Intl.DateTimeFormat` pinned to `Asia/Kuching` (duplicated
+   as a literal in each file rather than imported across the
+   adapter/widget boundary — see each file's own comment).
+4. **`repositoriesCreated` month-boundary false-negative fixed**
+   (`packages/widgets/github/src/derive-memories.ts`). It's a
+   month-to-date counter; comparing it directly across a month boundary
+   (e.g. 4 repos created in July vs. 1 so far in August) meant a real new
+   repo could go unreported on the first refresh of a new month, since
+   `1 > 4` is false. Now treats `activitySummary.periodStart` changing as
+   the counter having reset to 0, not compared against last month's
+   stale total.
+
+**Flagged, not fixed:**
+
+- **`upsertProviderAccount`'s upsert conflict target is `(provider,
+  providerAccountId)`, not `(userId, provider)`**
+  (`packages/database/src/accounts.ts`). If the same external OAuth
+  account (e.g. the same real Spotify account) is ever connected under
+  two different Pulse `userId`s, the upsert silently re-homes that row's
+  `userId` to whichever user connects it most recently — the first
+  user's Spotify widget would then read as disconnected. This is
+  standard Auth.js/NextAuth schema behavior, not a Pulse-specific bug:
+  `next_auth.accounts`' only unique constraint is `provider_unique
+  unique (provider, "providerAccountId")` (`0000_next_auth_schema.sql`),
+  shared with Auth.js's own adapter writes for the GitHub login provider
+  — there's no `(userId, provider)` constraint to upsert against without
+  a schema migration that also touches Auth.js's account-linking
+  behavior. Given this is a single-user-per-deployment personal app
+  (see `widgets.ts`'s own "single-user app" framing), the realistic
+  exposure is narrow (requires a second person sharing the same deployed
+  instance and the same real Spotify account) — left as a known,
+  documented limitation rather than a rushed schema change.
+- **No rate limiting anywhere** — `/api/cron`, `/api/connect/spotify`,
+  and authenticated server actions (create note/task, refresh-all) have
+  no throttling. Bounded in practice by `CRON_SECRET` secrecy and
+  per-user `user_id` scoping (an abusive authenticated session can only
+  burn its own write/upstream-API budget, not another user's), but worth
+  addressing with real rate limiting (e.g. Upstash/Vercel Edge Config) if
+  this ever moves beyond single-user-per-deployment.
+
+Every `packages/database/src/*.ts` read/write function was independently
+re-verified to filter by `user_id`/`userId` — this is the actual
+authorization boundary today, since RLS is enabled with no policies (see
+the earlier RLS entry) and everything goes through the service-role
+client. No missing `user_id` filter was found on any per-user query.

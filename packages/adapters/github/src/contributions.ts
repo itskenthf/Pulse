@@ -1,3 +1,19 @@
+// Matches @pulse/widget-hero's HERO_TIME_ZONE — duplicated as a literal
+// rather than imported, since adapters sit below widgets in the
+// dependency graph. Used only to compute "today" much closer to this
+// single-user app's real-world timezone than UTC would be; see
+// todayDateString's call site below for why this matters.
+const REFERENCE_TIME_ZONE = "Asia/Kuching";
+
+function todayDateString(now: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: REFERENCE_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+}
+
 export interface ContributionDay {
   date: string;
   count: number;
@@ -232,13 +248,17 @@ export async function fetchContributions(
 
   // "Today" comes from GitHub's own data, not a UTC date string computed
   // here — GitHub buckets contribution days by the viewer's *profile*
-  // timezone, not UTC, so matching against now.toISOString()'s UTC date
-  // could miss/misattribute "today" for several hours around midnight
-  // depending on the offset. `allDays` now runs through Dec 31 (future
-  // days included as zero-count placeholders), so the real "today" is
-  // the last entry whose date isn't in the future, not simply the
-  // array's last element.
-  const todayStr = now.toISOString().slice(0, 10);
+  // timezone, not UTC, so matching against a UTC date could miss/
+  // misattribute "today" for several hours around midnight depending on
+  // the offset (e.g. UTC+8 still shows "yesterday" in UTC for the first
+  // 8 hours of the local day). `todayDateString` uses the same reference
+  // timezone as the rest of Pulse (see @pulse/widget-hero's
+  // HERO_TIME_ZONE) instead, which is much closer to a real GitHub
+  // profile's offset than UTC for this single-user app. `allDays` now
+  // runs through Dec 31 (future days included as zero-count
+  // placeholders), so the real "today" is the last entry whose date
+  // isn't in the future, not simply the array's last element.
+  const todayStr = todayDateString(now);
   const pastOrTodayDays = allDays.filter((day) => day.date <= todayStr);
   const totalToday = pastOrTodayDays.at(-1)?.count ?? 0;
 

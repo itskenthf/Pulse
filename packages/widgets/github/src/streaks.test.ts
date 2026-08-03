@@ -78,4 +78,18 @@ describe("computeStreaks", () => {
 
     expect(computeStreaks(withFuturePadding, TODAY)).toEqual({ current: 0, longest: 7 });
   });
+
+  it("treats 'today' by the reference timezone (UTC+8), not UTC", () => {
+    // 2026-07-30T02:00:00Z is still 2026-07-29 in UTC, but already
+    // 2026-07-30 in Asia/Kuching (UTC+8) — a naive UTC date string would
+    // wrongly filter out the 07-30 row as "in the future" and silently
+    // operate on the previous day's data for the whole 8-hour window.
+    const earlyUtcButNextDayLocally = new Date("2026-07-30T02:00:00Z");
+    const weeks = [week("2026-07-27", [1, 1, 1, 1])]; // 07-27..07-30, all active
+
+    expect(computeStreaks(weeks, earlyUtcButNextDayLocally)).toEqual({
+      current: 4,
+      longest: 4,
+    });
+  });
 });

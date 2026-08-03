@@ -935,9 +935,9 @@ questions before implementing — four real open decisions, resolved via
 ## 2026-07-24 — Renamed Vercel domain to a custom subdomain
 
 The Vercel project's domain was renamed from the auto-generated
-`[redacted-old-domain]` to a custom subdomain (free rename via
-Vercel's project settings, not a purchased custom domain — Vercel keeps
-the old domain as a 307 redirect to the new one, so nothing broke
+`*.vercel.app` alias to a custom subdomain (free rename via Vercel's
+project settings, not a purchased custom domain — Vercel keeps the old
+domain as a 307 redirect to the new one, so nothing broke
 mid-transition). Three things had to match the new domain for auth to
 keep working, all external-dashboard changes made directly (not
 reachable from this environment):
@@ -3751,3 +3751,43 @@ re-verified to filter by `user_id`/`userId` — this is the actual
 authorization boundary today, since RLS is enabled with no policies (see
 the earlier RLS entry) and everything goes through the service-role
 client. No missing `user_id` filter was found on any per-user query.
+
+## 2026-08-03 — Live URL leak in public Actions logs; PULSE_URL moved to a secret
+
+Once the repo went public, `refresh-widgets.yml`'s `PULSE_URL` — passed
+as a GitHub Actions *variable*, not a *secret* — turned out to be
+plaintext-visible in every one of that workflow's run logs (variables
+aren't masked the way secrets are; `CRON_SECRET` in the same log showed
+as `***`, `PULSE_URL` showed its real value). Since the workflow runs
+every 30 minutes, this was live in dozens of public logs by the time it
+was caught.
+
+**Compounding bug found in the same log line**: the value was the *old*,
+pre-2026-07-24-rename Vercel domain, and the logged response body was
+`"Redirecting..."` — the 307 Vercel keeps as a courtesy on the old alias
+(see the domain-rename entry above). `curl --fail` only fails on
+4xx/5xx, and the command had no `-L`, so every run was "succeeding" on
+the redirect response itself without ever reaching `/api/cron`. Cron
+refreshes have likely been silently broken since the rename.
+
+**Fixes**:
+- `PULSE_URL` moved from a repo Variable to a repo Secret
+  (`${{ secrets.PULSE_URL }}` instead of `${{ vars.PULSE_URL }}`) —
+  masked in logs going forward.
+- Added `-L` to the curl call so a redirect (stale URL, domain migration
+  mid-flight, etc.) is actually followed instead of silently
+  "succeeding" against the redirect page.
+- The Vercel project's old domain aliases were removed and a fresh one
+  issued (external, not reachable from this environment) — this is what
+  actually neutralizes every already-leaked copy of the old URL
+  (git history, deleted-but-possibly-cached Action logs, this doc's own
+  earlier prose), since the old hostname now resolves nowhere.
+- The remaining `[redacted-old-domain]` literal mentions in
+  `docs/ROADMAP.md` and this file's domain-rename entry were genericized.
+- The ~30 existing Action run logs that showed the old `PULSE_URL` in
+  plaintext were deleted via the GitHub API.
+- Git history was rewritten to scrub the old domain string from past
+  commits too (see the follow-up entry below) — a heavier step than the
+  domain rotation strictly requires, since a rotated/removed domain is
+  already a dead URL wherever it's found, but done at explicit request
+  for full removal.

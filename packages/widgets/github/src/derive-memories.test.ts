@@ -61,8 +61,8 @@ describe("deriveGitHubMemories", () => {
     id: "pr_1",
     number: 42,
     title: "Regroup dashboard widget grid",
-    url: "https://github.com/itskenthf/Pulse/pull/42",
-    repository: "itskenthf/Pulse",
+    url: "https://github.com/octocat/example-repo/pull/42",
+    repository: "octocat/example-repo",
     merged: false,
   };
 
@@ -72,7 +72,7 @@ describe("deriveGitHubMemories", () => {
     expect(events).toEqual([
       {
         title: "Opened PR #42: Regroup dashboard widget grid",
-        description: "itskenthf/Pulse",
+        description: "octocat/example-repo",
         metadata: { url: pr.url, repository: pr.repository, number: 42 },
       },
     ]);
@@ -85,7 +85,7 @@ describe("deriveGitHubMemories", () => {
     expect(deriveGitHubMemories(previous, next)).toEqual([
       {
         title: "Merged PR #42: Regroup dashboard widget grid",
-        description: "itskenthf/Pulse",
+        description: "octocat/example-repo",
         metadata: { url: pr.url, repository: pr.repository, number: 42 },
       },
     ]);
@@ -104,7 +104,7 @@ describe("deriveGitHubMemories", () => {
     expect(events).toEqual([
       {
         title: "Opened PR #42: Regroup dashboard widget grid",
-        description: "itskenthf/Pulse",
+        description: "octocat/example-repo",
         metadata: { url: pr.url, repository: pr.repository, number: 42 },
       },
     ]);
@@ -116,7 +116,7 @@ describe("deriveGitHubMemories", () => {
     expect(events).toEqual([
       {
         title: "Opened PR #42: Regroup dashboard widget grid",
-        description: "itskenthf/Pulse",
+        description: "octocat/example-repo",
         metadata: { url: pr.url, repository: pr.repository, number: 42 },
       },
     ]);

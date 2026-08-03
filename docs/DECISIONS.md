@@ -191,7 +191,7 @@ have needed the `repo` OAuth scope (broad — "full control of private
 repositories" on the consent screen) and a re-authorization prompt at next
 login, since the login provider's default scope only covers profile/email.
 
-**Decision, at Ken's request:** scope it down to contribution counts
+**Decision, by explicit request:** scope it down to contribution counts
 (today/this-week/this-year) plus a 12-week mini heatmap via GitHub's
 GraphQL `contributionsCollection` instead. This needs only `read:user`,
 which the existing login token already has — no scope change, no
@@ -205,23 +205,23 @@ plumbing where the login provider's token already covers it.
 ## 2026-07-22 — Steam widget pulled forward from the §10 backlog
 
 The reference doc's own sequencing note (§10, §20) says not to build
-backlog widgets until the core 12 are in daily use. Ken asked for Steam
+backlog widgets until the core 12 are in daily use. Steam was requested
 specifically (recently played games) ahead of that. Judged as a
 reasonable exception rather than a process break: Steam requires no OAuth
 (API key + a public SteamID64), so it doesn't compete for scarce
 OAuth/consent-screen effort the way Calendar/Spotify do, and the doc's own
 principle (§13: "every new feature must justify its maintenance cost")
 is about avoiding low-value scope creep, not about rigid ordering — a
-widget Ken will actually use daily clears that bar regardless of its
+widget that will actually see daily use clears that bar regardless of its
 position in §9's list. `packages/adapters/steam` + `packages/widgets/steam`
 follow the exact weather-widget shape (adapter owns the HTTP call, widget
 owns fetch/cache/settings/render).
 
 ## 2026-07-22 — Phase 1 rescoped: Tasks, Focus timer, Habits, Email, YouTube dropped
 
-After 5 widgets shipped, Ken reviewed the remaining build order (§9) and
-concluded several of the planned widgets don't fit how he actually wants
-to use Pulse long-term: Tasks (doesn't use any task tool), Focus timer,
+After 5 widgets shipped, the remaining build order (§9) was reviewed and
+several of the planned widgets were concluded not to fit actual long-term
+use of Pulse: Tasks (doesn't use any task tool), Focus timer,
 Habits, Email, and YouTube. Calendar stays in its existing deferred state.
 
 **Decision:** these are dropped from *active* scope, not removed from the
@@ -238,9 +238,9 @@ See `docs/ROADMAP.md` for the full rationale per dropped widget.
 
 ## 2026-07-23 — Quote widget: curated themes, no attribution, no quote API
 
-Ken explicitly rejected generic motivational quotes and a live quote API,
-picking 7 specific themes instead (coffee, dev humor, gaming, minimalism,
-relationship, programming, stoicism) and asking for no author names shown
+Generic motivational quotes and a live quote API were explicitly rejected,
+in favor of 7 specific themes instead (coffee, dev humor, gaming, minimalism,
+relationship, programming, stoicism), with no author names shown
 at all — kept deliberately minimal.
 
 **Sourcing, for the record** (not shown in the UI, but worth documenting
@@ -409,7 +409,7 @@ reference (a light-blue admin dashboard mockup) and asked for two changes:
 (1) all cards white instead of the black "accent" tone, with the reference's
 light-blue gradient background and card style; (2) Greeting, Weather, and
 Quote combined into a single hero paragraph above the grid instead of three
-separate cards, e.g. "Good Morning Ken / Today / 29°C Cloudy / Continue
+separate cards, e.g. "Good Morning / Today / 29°C Cloudy / Continue
 working on Pulse / Quote / '...'".
 
 **Color/background decision:** straightforward — reverted `WidgetCard`'s
@@ -462,10 +462,10 @@ original Weather widget setup) to minimize the reconfiguration needed.
 
 ## 2026-07-24 — Redesign v3: light-blue only, Hero absorbs Clock/Calendar, real graphs, icon refresh
 
-**Context:** after redesign v2 shipped (previous entry), Ken asked for
-several further changes, each with a real tradeoff worth recording:
+**Context:** after redesign v2 shipped (previous entry), several further
+changes were requested, each with a real tradeoff worth recording:
 
-**1. Dark mode.** Ken wants light-blue only, matching the design reference
+**1. Dark mode.** Light-blue only was requested, matching the design reference
 exactly. This is a direct exception to reference doc §7's "dark mode
 support" line in the definition of done. Flagged this before touching
 anything, since CLAUDE.md requires explaining + explicit approval before
@@ -473,7 +473,7 @@ contradicting the reference doc. Given the choice between deleting all
 `dark:` classes (matches the ask exactly, but throws away something already
 working and correctly styled) versus keeping them as an unmaintained
 fallback (costs nothing to leave in place, protects anyone who hits Pulse
-in OS/device dark mode from a broken/blinding page), Ken chose to keep the
+in OS/device dark mode from a broken/blinding page), the decision was to keep the
 fallback. §7 amended: dark mode support means "doesn't break," not
 "equally designed" — light-blue is the only theme that gets actual design
 attention going forward.
@@ -498,7 +498,7 @@ merged concerns internally" pattern in the previous entry.
   permission prompt (geolocation — not silent) or a new IP-geolocation
   adapter (silent, but only city-accurate, and net-new external dependency
   for a problem that doesn't really exist for a single, fixed-location
-  user). Presented these tradeoffs to Ken; he chose the simplest option:
+  user). These tradeoffs led to the simplest option being chosen:
   hardcoded constants in `packages/widgets/hero/src/constants.ts`
   (`Asia/Kuching`, and Kuching's lat/long — matching what was already
   configured on the old Weather widget). This is a deliberate, scoped
@@ -518,7 +518,7 @@ ramp (the "meter" pattern). GitHub's contribution heatmap was already the
 right form for that data — just recolored from green to the same blue
 ramp for theme consistency, no structural change.
 
-Investigated Spotify for the same treatment (Ken's original ask mentioned
+Investigated Spotify for the same treatment (the original ask mentioned
 "any widget with numbers") and confirmed via the adapter code that
 Spotify's public Web API doesn't expose play counts or cumulative listening
 time on the top-tracks endpoint — that data only exists inside
@@ -536,7 +536,7 @@ user takes after filling out a form and benefits from a clear label.
 
 ## 2026-07-24 — Redesign v4: masonry layout, sidebar returns, card accents, warmer copy
 
-**Context:** Ken reviewed the live deploy and reported two things beyond
+**Context:** the live deploy was reviewed and two things reported beyond
 the specific asks below: the Hero banner appeared to be missing, and the
 page felt too empty. On investigation, Hero itself is correctly registered
 and shipped (PR #17) — the most likely explanation is that `hero` is a
@@ -558,8 +558,8 @@ the practical choice.)
 
 **2. Sidebar reverses an earlier decision.** The 2026-07-24 redesign-v3
 entry (and reference doc §19) explicitly ruled out a sidebar nav, reasoning
-Pulse is a single-page app with nothing to navigate between. Ken directly
-asked for one back, as a placeholder for future sections — this is new,
+Pulse is a single-page app with nothing to navigate between. A direct
+request came in for one back, as a placeholder for future sections — this is new,
 explicit direction, not a silent contradiction, so implemented without
 further back-and-forth (still flagged as a reversal here per CLAUDE.md's
 spirit of recording real architectural decisions with reasoning). Built as
@@ -567,17 +567,17 @@ a 64px icon rail: "Dashboard" is the only real, active item; "Tasks" and
 "Habits" are visibly disabled with a "coming soon" title and no `href` —
 UI signposting, not scaffolded feature infrastructure (no new routes, no
 new DB tables, no backend logic) — keeps faith with the project's
-"don't scaffold future features ahead of need" rule while still giving Ken
-the visual placeholder he asked for.
+"don't scaffold future features ahead of need" rule while still delivering
+the requested visual placeholder.
 
 **3. Card accents.** "Every widget is white" — added `WidgetCard`'s
 `accent?: "blue" | "green" | "indigo" | "none"` prop, a `border-l-4` colored
 left border rather than recoloring the whole card (keeps the light-blue
-theme's restraint). Assigned by feel where Ken didn't specify exactly:
+theme's restraint). Assigned by feel where not specified exactly:
 GitHub blue (matches its existing icon badge), Spotify green (nods to
 Spotify's own brand color), Steam indigo (a distinct darker blue). Left
 Quick Launch unaccented rather than inventing a color with no rationale.
-Ken's list also named "Weather" (sky gradient) and "Calendar" (purple) —
+The original list also named "Weather" (sky gradient) and "Calendar" (purple) —
 both no longer exist as separate cards, having been folded into Hero in
 the v3 redesign. Rather than resurrecting them as cards (which would undo
 that merge), applied the same "give it a color" intent to Hero's internal
@@ -592,14 +592,14 @@ addresses the specific "feels like an admin dashboard" critique. Built as
 `<details>`, not a `useState` client component, so the header stays a
 server component. Hero's date line shortened from the full
 "Friday, July 24, 2026" to "Friday · 24 July," and the flat tagline
-"Continue working on Pulse" became "Continue where you left off." — Ken
-gave two alternative greeting styles as examples; this keeps the first
+"Continue working on Pulse" became "Continue where you left off." — two
+alternative greeting styles were given as examples; this keeps the first
 one's headline+date structure (already in place) and borrows the second
 one's warmer tagline phrase, rather than picking one wholesale.
 
 ## 2026-07-24 — New design system spec adopted: Liquid Glass, not light-blue flat
 
-Ken provided a complete, authored `docs/DESIGN_SYSTEM.md` replacing the
+A complete, authored `docs/DESIGN_SYSTEM.md` was provided, replacing the
 incrementally-built one from the four redesign passes earlier today. It's a
 real direction change, not an extension: glass materials (light/medium/heavy
 blur variants), a soft-neutral (never pure white) background instead of the
@@ -616,7 +616,7 @@ redesign passes (see the four entries above) built a light-blue flat theme
 with `backdrop-blur-sm` used sparingly, not the systematic
 light/medium/heavy glass hierarchy this doc specifies, and `PROJECT_REFERENCE.md`
 §19 still describes that light-blue direction. This is intentional,
-temporary drift: Ken said the actual redesign implementation will follow in
+temporary drift: the actual redesign implementation is expected to follow in
 a separate prompt — this commit is scoped to landing the spec doc itself so
 it's the source of truth to build against, not to also rewriting the app in
 the same pass. `PROJECT_REFERENCE.md` §19 and the rest of `DESIGN_SYSTEM.md`'s
@@ -626,17 +626,17 @@ happens, not before — recording the gap here so it isn't mistaken for
 
 ## 2026-07-24 — Full redesign: Liquid Glass, replacing the light-blue flat theme
 
-**Context:** Ken reviewed the live V4 (light-blue, masonry grid, sidebar,
-colored left borders) and rejected it as a redesign target — "functional,
-but not achieving the intended experience." His words: it feels like an
+**Context:** the live V4 (light-blue, masonry grid, sidebar,
+colored left borders) was reviewed and rejected as a redesign target — "functional,
+but not achieving the intended experience." In review: it feels like an
 admin panel, a collection of white cards, unfinished, visually flat, too
 much unused whitespace, poor visual hierarchy, weak component identity.
-He asked for a critique-then-redesign against the newly adopted
+A request came for a critique-then-redesign against the newly adopted
 `docs/DESIGN_SYSTEM.md` spec (previous entry), explicitly authorizing
 structural change ("challenge the existing layout if necessary... the
 current implementation is only a prototype").
 
-**Critique of V4** (given in full to Ken before implementing, summarized
+**Critique of V4** (given in full before implementing, summarized
 here): every widget was the same white rectangle at the same size class
 with the same shadow — nothing signaled what mattered most. The colored
 left borders read as a tagging system, not personality. `bg-white/90` +
@@ -674,7 +674,7 @@ was four floating text blocks sharing a container, not a designed unit.
    content-driven height, is the more robust choice for dynamic widget data.
 
 4. **Removed the colored left borders entirely**, per the spec's explicit
-   "avoid thick colored stripes" and Ken's "outdated" callout. Identity now
+   "avoid thick colored stripes" and the "outdated" callout it drew. Identity now
    comes from a soft colored glow behind each widget's icon badge
    (`WidgetCard`'s `accent` prop, `box-shadow` glow + tinted badge, not a
    border) — GitHub blue, Spotify green (Spotify's own brand color), Steam
@@ -685,14 +685,14 @@ was four floating text blocks sharing a container, not a designed unit.
    greeting, then a row of three distinct "today" chips (date/time,
    weather, quote) — each its own small glass surface, read as related but
    individually legible, addressing "orphaned facts under a headline."
-   Did **not** add an "Upcoming focus" field Ken's brief mentioned as
+   Did **not** add an "Upcoming focus" field the brief mentioned as
    optional — there's no real task data behind it (no Tasks widget exists
    yet), and Pulse's established pattern (Spotify's play-count decision) is
    to never fabricate a fact that isn't real. Left a clean gap for it once
    a real Tasks widget exists rather than inventing placeholder content.
 
 6. **Adaptive navigation, not responsive resizing** (this section came
-   from a follow-up message Ken sent while implementation was already
+   from a follow-up message sent while implementation was already
    starting — folded in before continuing rather than building a
    non-adaptive nav and reworking it after):
    - **Desktop** (`lg:` 1024px+): sidebar permanently visible, compact
@@ -714,7 +714,7 @@ was four floating text blocks sharing a container, not a designed unit.
      since a bottom bar is reachable one-handed and always visible, where
      a drawer requires an extra tap to even see navigation exists.
    Chose the sidebar (not a floating dock) for desktop/tablet, decisively,
-   per Ken's "either is acceptable, don't leave it as placeholder" —
+   per the "either is acceptable, don't leave it as placeholder" guidance —
    reasoning: a dock (macOS-style, icons-only, implies "click to launch
    something elsewhere") fits an app-launcher metaphor, while a dashboard
    benefits from a persistent, always-present sense of place, which a
@@ -748,8 +748,8 @@ redesign scoped to what could be verified end-to-end in one pass.
 
 ## 2026-07-24 — Refinement pass: glass render bug, widget polish, overflow menus, dock nav
 
-**Context:** Ken confirmed the Liquid Glass redesign was "a major
-improvement... much closer to the intended direction" and explicitly said
+**Context:** the Liquid Glass redesign was confirmed as "a major
+improvement... much closer to the intended direction" with explicit direction
 not to redesign again — this pass is refinement/consistency only. Specific
 issues flagged: the glass cards "still appear mostly like solid white
 surfaces," Steam's bars "feel like Material Design," GitHub (the largest
@@ -793,7 +793,7 @@ genuinely real numbers. Explicitly **did not** add "latest repository" or
 "latest commit" from the brief's suggestion list: the current GitHub
 adapter only fetches contribution counts via one GraphQL query; showing a
 real latest-repo/commit would need a second, different API call — a real
-feature addition, not polish, and out of scope for a pass Ken explicitly
+feature addition, not polish, and out of scope for a pass explicitly
 scoped to refinement.
 
 **4. Overflow menu.** Added `WidgetMenu` (`packages/ui/src/widget-menu.tsx`)
@@ -836,12 +836,12 @@ receive focus on mouse click unless "Full Keyboard Access" is enabled —
 keyboard/tab access and mobile Safari taps are unaffected). A fully
 robust cross-browser fix would need a React portal (rendering the backdrop
 outside the blurred ancestor's DOM subtree), which requires a client
-component — judged not worth it for Ken's personal-use dashboard on a
+component — judged not worth it for a personal-use dashboard on a
 Chrome/Firefox/Edge-first assumption; flagged here in case it's ever worth
 revisiting.
 
-**6. Desktop navigation: dock, not rail.** Ken flagged the pinned sidebar
-rail as "still feels disconnected" and asked to explore a bottom-center
+**6. Desktop navigation: dock, not rail.** The pinned sidebar
+rail was flagged as "still feels disconnected," with a request to explore a bottom-center
 floating dock as an alternative, explicitly leaving the choice open.
 Replaced the `lg:`+ permanent sidebar rail with `Dock` in
 `apps/web/src/app/page.tsx` — a floating glass pill, bottom-center,
@@ -858,18 +858,18 @@ links, action buttons) — bumped both to `rounded-xl`. Motion
 (`GLASS_HOVER`/`SPRING_PRESS`) was already consistently applied from the
 previous pass; no changes needed there.
 
-**Explicitly out of scope for this pass, per Ken's instruction:** Spotify's
+**Explicitly out of scope for this pass, per instruction:** Spotify's
 "now playing" emphasis treatment, and the git commit-signature stop-hook
 warning (those are GitHub's own web-UI merge-commit attribution, not
-something to rewrite history over — explained to Ken twice already,
+something to rewrite history over — already explained previously,
 not revisited here).
 
 ## 2026-07-24 — Reference-matched gradient, Steam achievements, icon-only Quick Launch
 
-**Context:** Ken shared a reference screenshot (a mockup with broken image
+**Context:** a reference screenshot was shared (a mockup with broken image
 placeholders — "Game art or browse", "Cover or browse" — showing the
 *intent* was real cover art / track art / service icons, not that the
-placeholders themselves were the design) and asked for: the background and
+placeholders themselves were the design) with a request for: the background and
 cards to match it, cards to feel fuller instead of sparse, Quick Launch to
 become icon-only with no text, and Steam to show more per-game detail
 (last played, achievements). Explicitly asked to be asked clarifying
@@ -881,17 +881,17 @@ questions before implementing — four real open decisions, resolved via
    via-cyan-100 to-violet-200`, dark equivalents), replacing the three-blob
    ambient-lighting approach from the previous redesign pass entirely.
 2. **Hero contextual action buttons** ("Continue Palworld", "Play liked
-   songs" in the reference) — Ken chose to skip this. Correctly so: it's a
+   songs" in the reference) — the decision was to skip this. Correctly so: it's a
    real, nontrivial feature (deriving "what to resume" from live Steam/
    Spotify state, plus real deep-link behavior like `steam://run/<appid>`)
    that would have expanded this pass well beyond "polish," and skipping it
    was offered as an explicit option rather than assumed.
-3. **Quick Launch icons.** Ken chose fetching each link's own
+3. **Quick Launch icons.** The choice was fetching each link's own
    `favicon.ico` directly over a third-party favicon proxy (e.g. Google's
    service) or a manual icon picker — no new dependency on a third party
    knowing every domain the user links to, same trust boundary as visiting
    the site.
-4. **Steam depth.** Ken chose to add real achievement data *and* reduce
+4. **Steam depth.** The decision was to add real achievement data *and* reduce
    the shown game count (5 → 2) so each game has room for the extra
    detail, rather than keeping 5 games and cramming achievements into a
    denser list.
@@ -932,21 +932,21 @@ questions before implementing — four real open decisions, resolved via
 - `apps/web/src/app/page.tsx`: background switched from the layered-blob
   `<div>`s to a single `bg-gradient-to-br` on the root container.
 
-## 2026-07-24 — Renamed Vercel domain to my-pulse-os.vercel.app
+## 2026-07-24 — Renamed Vercel domain to a custom subdomain
 
-Ken renamed the Vercel project's domain from the auto-generated
-`pulse-plum-seven.vercel.app` to `my-pulse-os.vercel.app` (free rename via
+The Vercel project's domain was renamed from the auto-generated
+`pulse-plum-seven.vercel.app` to a custom subdomain (free rename via
 Vercel's project settings, not a purchased custom domain — Vercel keeps
 the old domain as a 307 redirect to the new one, so nothing broke
 mid-transition). Three things had to match the new domain for auth to
-keep working, all external-dashboard changes Ken made himself (not
+keep working, all external-dashboard changes made directly (not
 reachable from this environment):
 
-- Vercel env var `AUTH_URL` → `https://my-pulse-os.vercel.app`
+- Vercel env var `AUTH_URL` → the new domain
 - GitHub OAuth App's Authorization callback URL →
-  `https://my-pulse-os.vercel.app/api/auth/callback/github`
+  `<new-domain>/api/auth/callback/github`
 - Spotify app's Redirect URI →
-  `https://my-pulse-os.vercel.app/api/auth/callback/spotify`
+  `<new-domain>/api/auth/callback/spotify`
 
 No app code hardcodes the domain (`AUTH_URL` env var is the single source
 used to build callback URLs — see `apps/web/src/app/api/auth/callback/spotify/route.ts`
@@ -955,7 +955,7 @@ and `packages/auth`), so this was a docs-only fix on the repo side —
 
 ## 2026-07-25 — Mobile click bug fix, nav removal, GitHub/Steam/Hero content pass
 
-Ken tested the previous redesign on real mobile/iPad hardware and reported
+Testing the previous redesign on real mobile/iPad hardware found
 the "⋯" overflow menus and the profile menu couldn't be tapped open at
 all — confirming a risk I'd explicitly flagged when the `:focus-within`
 dropdown fix landed (see the 2026-07-24 "Refinement pass" entry above):
@@ -981,7 +981,7 @@ Playwright touch-simulated tap (`hasTouch: true` context, `.tap()`),
 asserting the dropdown's computed `visibility` before/after, not just a
 screenshot. `WidgetMenu`'s dropdown also gained `overflow-hidden` (it was
 missing — `ProfileMenu`'s already had it), fixing a second, unrelated bug
-Ken reported in the same message: square per-item hover backgrounds poking
+reported in the same message: square per-item hover backgrounds poking
 past the dropdown's rounded corners.
 
 `ActionForm` (`packages/ui/src/action-form.tsx`) gained an optional
@@ -990,12 +990,12 @@ without error (tracked via a `wasPending` ref across renders) — used by
 `WidgetMenu` to close the dropdown after a successful Refresh click,
 otherwise the menu stayed open over the fresh content.
 
-**Navigation removed entirely, not just hidden.** Ken said he never uses
-the sidebar/dock/bottom-nav ("all i need is just to see cards") —
+**Navigation removed entirely, not just hidden.** The sidebar/dock/bottom-nav
+was reported as never used ("all i need is just to see cards") —
 confirmed via `AskUserQuestion` that this meant deleting `Sidebar`, `Dock`,
 `BottomNav`, and the `DRAWER_ID` checkbox-drawer plumbing from `page.tsx`
 outright, not just hiding them behind a flag. The disabled Search and
-Notification `NavIconButton`s were removed from the navbar too (Ken: "i
+Notification `NavIconButton`s were removed from the navbar too ("i
 dont use it"). This also let `main`'s bottom padding shrink back to a flat
 `p-4 sm:p-6` — it no longer needs clearance for a fixed bottom nav or dock.
 
@@ -1014,7 +1014,7 @@ linked row beneath the heatmap.
 **Steam split into card + detail page**, confirmed via `AskUserQuestion`
 ("real data we already fetch" over a placeholder page): the card now shows
 only large cover art and the game title, matching the reference
-game-library-shelf screenshot Ken provided. Cover art uses Steam's CDN
+game-library-shelf screenshot provided as reference. Cover art uses Steam's CDN
 convention `https://cdn.akamai.steamstatic.com/steam/apps/{appId}/library_600x900.jpg`
 — constructible directly from `appId`, no extra API call — via a new
 `CoverArt` client component (`packages/widgets/steam/src/cover-art.tsx`)
@@ -1046,13 +1046,13 @@ every render. Cross-widget insights (e.g. referencing GitHub's streak or
 Steam's playtime from inside Hero, via `readWidgetCache` reads of another
 widget's cache — technically legal since `readWidgetCache` is already
 generic/public and this is a widget-level choice, not shell-level coupling)
-were considered but deliberately left out of this pass: Ken's answer
+were considered but deliberately left out of this pass: the answer
 confirmed the *style* (rule-based) but not this specific scope, and the
 rest of this batch was already large enough without adding an
 under-specified feature.
 
 **Quick Launch**: tiles shrunk from `grid grid-cols-3` `aspect-square`
-cells to `flex flex-wrap` with a fixed `h-11 w-11` per tile — Ken: "make it
+cells to `flex flex-wrap` with a fixed `h-11 w-11` per tile — "make it
 small and follow icon size... must always take less space." `LinkIcon`
 itself (the favicon-fetch + SSR-race-safe fallback) was untouched, only
 its container sizing changed.
@@ -1072,9 +1072,9 @@ per the established pattern.
 
 ## 2026-07-25 — Steam cover art switched from portrait to horizontal
 
-Ken caught that the Steam card's cover art rendered portrait
+The Steam card's cover art was caught rendering portrait
 (`library_600x900.jpg`) rather than the horizontal art from the reference
-image he'd shared earlier. Switched `CoverArt`
+image shared earlier. Switched `CoverArt`
 (`packages/widgets/steam/src/cover-art.tsx`) to Steam's CDN "header"
 convention — `https://cdn.akamai.steamstatic.com/steam/apps/{appId}/header.jpg`,
 same "just the appId, no extra API call" property as before, aspect
@@ -1090,12 +1090,12 @@ to a narrow column would render tiny.
 
 ## 2026-07-25 — Grid-stretch card sizing, static (non-motion) hover cue, cover-art fallback chain
 
-Ken flagged the GitHub and Quick Launch cards as "too big" from a
-production screenshot, wanted card hover to stop moving/scaling and
-instead just lightly indicate cursor position, wanted Steam's cover art
-hover to light up the border rather than animate, asked why cover art
-wasn't loading for one game, and reported being unable to tap any button
-at all on mobile — asked for a proper review pass and cleanup alongside.
+The GitHub and Quick Launch cards were flagged as "too big" from a
+production screenshot, with requests for card hover to stop moving/scaling and
+instead just lightly indicate cursor position, for Steam's cover art
+hover to light up the border rather than animate, a question about why cover art
+wasn't loading for one game, and a report of being unable to tap any button
+at all on mobile — plus a request for a proper review pass and cleanup alongside.
 
 **Root cause of "too big" cards**: `apps/web/src/app/page.tsx`'s bento
 grid (`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`) never set
@@ -1114,7 +1114,7 @@ Launch now end right after their content instead of extending into empty
 space.
 
 **Hover motion removed from cards, replaced with a static color cue**:
-Ken's ask was specific — no movement or scale on card hover, just "less
+the ask was specific — no movement or scale on card hover, just "less
 obvious" acknowledgment that the cursor is over the card. `GLASS_HOVER`
 (`packages/ui/src/glass.ts`) changed from `motion-safe:hover:-translate-y-0.5`
 (a lift) to `hover:border-white/80 dark:hover:border-white/25
@@ -1126,14 +1126,14 @@ a transform. Verified via a Playwright hover + `getComputedStyle` check:
 `transform` stays `"none"` before and after hover; `border-color` alpha
 goes from `0.5` to `0.8`. `SPRING_PRESS` (scale-on-hover/press) is
 unchanged and still used for actual buttons (refresh, settings, profile,
-sign-in) — Ken's ask was about cards and cover art specifically, not
+sign-in) — the ask was about cards and cover art specifically, not
 button press feedback, which is a different, expected interaction pattern.
 
 **Steam cover art**: the `<a>` tile wrapping each game's `CoverArt` lost
 `SPRING_PRESS` (was scaling the whole tile on hover) and gained `group`;
 `CoverArt` (`packages/widgets/steam/src/cover-art.tsx`) now renders a
 `ring-1 ring-transparent` that turns `group-hover:ring-sky-400/70` via
-`transition-colors` — a border light-up with no scale, matching Ken's
+`transition-colors` — a border light-up with no scale, matching the
 ask, applied to both the loaded-image state and the placeholder fallback
 state so the affordance is consistent either way.
 
@@ -1169,8 +1169,8 @@ entry but its global keyframe was missed at the time.
 
 ## 2026-07-25 — Hardening pass, Stage 1: per-widget error isolation + streaming
 
-Ken approved the visual direction as final ("do NOT redesign the
-application") and asked for a senior-engineer quality pass instead:
+The visual direction was approved as final ("do NOT redesign the
+application") with a request for a senior-engineer quality pass instead:
 eliminate bugs/inconsistencies, harden the architecture, no new features.
 Given the scope (a 14-point checklist covering UI consistency,
 responsiveness, accessibility, components, tokens, performance, error
@@ -1397,7 +1397,7 @@ reader can jump between (e.g. VoiceOver's rotor) instead of
 undifferentiated page content. `Hero`'s existing `<section>` got the
 same treatment, labelled by its `<h1>` greeting. Verified via
 `document.querySelectorAll('section[aria-labelledby]')` resolving each
-one's label correctly: "Good afternoon, Ken", "GitHub", "Steam", "Quick
+one's label correctly: "Good afternoon", "GitHub", "Steam", "Quick
 Launch".
 
 Deferred to later stages, still not forgotten: consistent `EmptyState`
@@ -1511,7 +1511,7 @@ scroll at all seven widths, including with the long test string still
 in place.
 
 **What wasn't touched**: no per-breakpoint bespoke layouts were built —
-per Ken's confirmed preference, the fix targets the actual reproduced
+per confirmed preference, the fix targets the actual reproduced
 problems (the grid row-height trap, the truncation-in-flex trap), not a
 ground-up redesign of the responsive system. The existing `sm:`/`lg:`
 breakpoint structure stays; only the *card-widgets* section changed
@@ -1536,7 +1536,7 @@ that gap is the dev-server tax, not a real regression). Final scores:
 | Best Practices | 96 |
 | SEO | 100 |
 
-All four meet the ≥95 target from Ken's original brief. The one
+All four meet the ≥95 target from the original brief. The one
 Best Practices point below 100 is `errors-in-console`, and every
 logged error is `net::ERR_TUNNEL_CONNECTION_FAILED` against external
 domains (Steam's CDN, YouTube/Google/Spotify/Notion favicons) — this
@@ -1556,7 +1556,7 @@ that Hero no longer needs it standalone, `GLASS_HOVER`/`ErrorState`
 used inside `WidgetCard`/`WidgetErrorBoundary`) — nothing exported and
 orphaned.
 
-**Self-review**, against Ken's own closing questions:
+**Self-review**, against the original closing questions:
 
 - *Would this pass a professional design review?* The visual direction
   was already approved and untouched by this pass — what changed is
@@ -1602,12 +1602,12 @@ Playwright pattern established earlier in the project, each route
 deleted before commit) and literal cross-browser testing on Safari/
 Firefox/real iOS/Android hardware (this sandbox only has Chromium).
 Both are real gaps worth naming plainly rather than glossing over — if
-Ken wants either pursued, that's a new, explicit scope decision, not
+either is pursued later, that's a new, explicit scope decision, not
 something this pass silently assumed.
 
 ## 2026-07-26 — "Classical" redesign: full visual system replacement
 
-Ken supplied a design-tool export (`Personal_OS_layout_redesign.zip`)
+A design-tool export (`Personal_OS_layout_redesign.zip`) was supplied,
 proposing a full visual replacement of Liquid Glass with "Classical": an
 editorial system on a flat near-white paper ground — Cormorant Garamond
 headings over Lora body, hairline dividers, a single muted-gold accent
@@ -1615,11 +1615,11 @@ applied only as strokes/borders (never a fill), and outlined buttons/icon
 badges instead of glow/blur.
 
 This directly reverses the 2026-07-25 Hardening-pass entry above, where
-Ken said "do NOT redesign the application" and approved Liquid Glass as
+"do NOT redesign the application" was said and Liquid Glass approved as
 final. Per CLAUDE.md's ground rule against contradicting recorded
 decisions without flagging it, this was raised explicitly via
-`AskUserQuestion` before any code changed; Ken confirmed proceeding, and
-asked for the docs (this entry, `docs/DESIGN_SYSTEM.md`,
+`AskUserQuestion` before any code changed; proceeding was confirmed, with
+a request for the docs (this entry, `docs/DESIGN_SYSTEM.md`,
 `docs/PROJECT_REFERENCE.md` §19, `docs/ROADMAP.md`) to be updated so
 Classical becomes the recorded canon rather than a silent drift from what
 was written.
@@ -1666,7 +1666,7 @@ doc §7 treating dark mode as a fallback, not an actively designed theme.
 
 ## 2026-07-26 — Fix Hero's production crash, close remaining redesign fidelity gaps
 
-Ken reported the live deployment showed "Hero is unavailable" (every other
+The live deployment was reported showing "Hero is unavailable" (every other
 widget rendered fine) and that several details still didn't match
 `docs/redesign-reference/Pulse Dashboard - Redesign.dc.html`. Two Explore
 agents investigated read-only before any code changed — root cause and
@@ -1721,7 +1721,7 @@ eyeballed):
   content matching the mockup). This reverses the "leave these out"
   decision from the original redesign pass, which had explicitly flagged
   it as needing confirmation before scaffolding UI for features that don't
-  exist — Ken confirmed twice, wanting exact reference fidelity, so this
+  exist — confirmed twice, with exact reference fidelity wanted, so this
   is the confirmed reversal, not a silent one.
 
 **One deviation kept, deliberately**: the mockup uses one uniform 3-column
@@ -1729,7 +1729,7 @@ CSS grid; the live layout uses two independent flex columns (wide `"lg"`
 column + a rail) instead. This is the Hardening pass Stage 5 fix for a
 real CSS Grid row-stretch bug (a shared grid track sizes to its tallest
 cell regardless of `align-items`, leaving dead gaps under shorter cards).
-Ken confirmed keeping the flex-split fix rather than reverting to a
+The flex-split fix was confirmed as the direction, rather than reverting to a
 literal uniform grid and reintroducing that bug — recorded here per
 CLAUDE.md's design-fidelity section, which requires explaining a
 constraint-driven deviation rather than silently deviating.
@@ -1744,8 +1744,8 @@ against the mockup side by side.
 
 ## 2026-07-26 — Layout/UX fixes from real-device screenshots
 
-Ken sent real desktop/iPad/mobile screenshots of the live production
-site and listed 9 concrete problems. Two shared one root cause; the rest
+Real desktop/iPad/mobile screenshots of the live production
+site were sent, listing 9 concrete problems. Two shared one root cause; the rest
 were independent, well-scoped fixes — all verified against real
 screenshots and computed layout metrics, not guessed at.
 
@@ -1797,7 +1797,7 @@ the profile control on mobile.
 `document.documentElement.scrollWidth` vs `clientWidth` at a 390px
 viewport: no overflow found (both exactly 390) after the other fixes
 (the overflow-x-hidden removal and wrapper-div collapse above). Recorded
-as resolved pending Ken's confirmation against the real site, since a
+as resolved pending confirmation against the real site, since a
 sandbox mock can't rule out something specific to real fetched data.
 
 **6. Steam cover-art fallback looked broken** — the failure-state
@@ -1824,15 +1824,15 @@ per not-yet-built feature, not two.
 preview route (deleted before commit) that temporarily re-exported
 `Navbar`/`balanceColumns` from `page.tsx` so the preview exercised the
 actual production code paths rather than a re-implementation —
-screenshotted at desktop (1280px), iPad (1180×820, matching Ken's own
-devtools test), and mobile (390px), plus the scroll/overflow checks
-above. Screenshots sent to Ken for review before opening a PR, per his
+screenshotted at desktop (1280px), iPad (1180×820, matching the
+devtools test used), and mobile (390px), plus the scroll/overflow checks
+above. Screenshots sent for review before opening a PR, per
 explicit request this round — not merged sight-unseen like earlier
 passes.
 
 ## 2026-07-26 — Installable PWA shell (manifest + minimal service worker)
 
-Ken asked for Pulse to be installable to a phone home screen and to open
+A request came in for Pulse to be installable to a phone home screen and to open
 without browser UI. This is dashboard-shell chrome, not a widget, so it
 lives in `apps/web` directly rather than through the widget/adapter layer.
 
@@ -1850,15 +1850,15 @@ Service worker registration lives in a small client component
 exists client-side.
 
 Icon files themselves (`icon-192.png`, `icon-512.png`, `icon-180.png` in
-`apps/web/public/icons/`) are not committed — Ken is providing the actual
-image assets.
+`apps/web/public/icons/`) are not committed — the actual
+image assets are provided separately.
 
-Production is served via Vercel (`my-pulse-os.vercel.app`), which is
+Production is served via Vercel, which is
 HTTPS by default, satisfying the service-worker HTTPS requirement.
 
 ## 2026-07-26 — Spotify widget: top artist + genre now, Recently Played/Weekly Minutes/Streak/Mood deferred
 
-Ken asked to swap Spotify's "Top Tracks" widget for a richer set: Recently
+A request came in to swap Spotify's "Top Tracks" widget for a richer set: Recently
 Played, Weekly Minutes, Top Genre, Top Artist, Listening Streak, Today's
 Mood. Built what's directly supported by the already-authorized
 `user-top-read` OAuth scope; the rest needs real follow-up work, not just a
@@ -1888,7 +1888,7 @@ new API call, so it's deferred and recorded here rather than attempted.
 
 ## 2026-07-26 — Removed Quick Launch widget
 
-Ken asked to remove Quick Launch entirely. It had no external
+A request came in to remove Quick Launch entirely. It had no external
 API/adapter and no per-widget database tables (settings/cache are
 generic, keyed by `widget_id`), so removal is purely a code/registration
 change:
@@ -1905,20 +1905,20 @@ needed, the generic tables don't reference widget code.
 
 ## 2026-07-26 — Habits/Reading/RSS placeholders: reopening Habits, adding two new backlog items
 
-Ken asked for Habits, Reading, and RSS widgets. This conflicts with two
+A request came in for Habits, Reading, and RSS widgets. This conflicts with two
 things already on record, so per this repo's CLAUDE.md ("don't contradict
 `docs/PROJECT_REFERENCE.md` without explaining why first and getting
-explicit approval") this was flagged to Ken directly before proceeding:
+explicit approval") this was flagged directly before proceeding:
 
 - **Habits** was explicitly reviewed and dropped from active scope on
-  2026-07-22 ("doesn't fit how Ken actually wants to use Pulse long-term" —
+  2026-07-22 ("doesn't fit actual long-term use of Pulse" —
   see `docs/ROADMAP.md`'s Phase 1 rescoped section).
 - **Finance** is filed under `docs/PROJECT_REFERENCE.md` §10's post-MVP
   backlog ("don't build until the core widgets are in daily use").
 - **RSS** wasn't on the roadmap or in `docs/PROJECT_REFERENCE.md` at all —
   a net-new addition, not a resurrection.
 
-**Ken's decision:** reopen Habits, and add Reading and RSS, as placeholder-
+**Decision:** reopen Habits, and add Reading and RSS, as placeholder-
 only "Coming soon" cards for now — the same static pattern already used for
 Tasks/Notes in `apps/web/src/app/page.tsx`'s `WidgetGrid` (a `WidgetCard`
 with `tag={{ label: "Coming soon", variant: "neutral" }}`, `opacity-70`
@@ -1927,11 +1927,11 @@ deliberately **not** real `registerWidget()`-based `Widget` objects yet —
 building the actual fetch/cache/registration machinery for something with
 no real data source behind it would itself violate
 `docs/PROJECT_REFERENCE.md` §7 ("fetches real data") and the "don't
-scaffold ahead of need" rule. **Finance stays excluded** — Ken confirmed
-it's "later," with no placeholder added yet either.
+scaffold ahead of need" rule. **Finance stays excluded** — confirmed
+as "later," with no placeholder added yet either.
 
 When each of these becomes a real widget:
-- **Habits**: Ken asked for it to "feel alive" — proposed direction (not
+- **Habits**: the request was for it to "feel alive" — proposed direction (not
   built yet): large circular tap-target checkboxes (44×44px minimum touch
   target) with `motion-safe:` scale/spring feedback on toggle (reusing
   `SPRING_PRESS` from `packages/ui/src/glass.ts`), a small streak indicator
@@ -1939,18 +1939,18 @@ When each of these becomes a real widget:
   existing `HERO_TIME_ZONE` handling), and no "you failed" error styling on
   a missed day — encouragement over guilt, matching the calm "Classical"
   design philosophy.
-- **Reading**: Ken wants it empty/minimal for now by his own request. The
+- **Reading**: kept empty/minimal for now by explicit request. The
   Steam per-game detail page (`apps/web/src/app/steam/[appId]/page.tsx`) is
   the established template for a "click through to a detail page" pattern
   once there's a real "current book" concept to build against.
-- **RSS**: sources Ken mentioned as examples — GitHub Blog, OpenAI, Apple,
+- **RSS**: sources mentioned as examples — GitHub Blog, OpenAI, Apple,
   Steam.
 
 ## 2026-07-27 — Replaced the "Pulse" wordmark with a logo mark; scoped hover-glow exception
 
-Ken provided his own artwork (a hand-drawn swash "P" signature mark, two
-crops: a full "Pulse" lockup on a cream backdrop, and the mark alone) and
-asked for the header text to be replaced by it everywhere, and for the
+Original artwork was provided (a hand-drawn swash "P" signature mark, two
+crops: a full "Pulse" lockup on a cream backdrop, and the mark alone) along with
+a request for the header text to be replaced by it everywhere, and for the
 same mark to become the mobile home-screen icon.
 
 - The cream backdrop was chroma-keyed out of the full lockup crop (uniform
@@ -1966,11 +1966,11 @@ same mark to become the mobile home-screen icon.
   against Pulse's dark background, satisfying "dark mode still functions
   as a fallback" without needing a second hand-authored asset.
 - The mark-alone crop was used as-is (cream backdrop kept, since it's
-  Ken's own reference art and a fixed exported asset rather than a live
+  original reference art and a fixed exported asset rather than a live
   themed surface) to regenerate `apps/web/public/icons/icon-{192,512,180}.png`
   and `apps/web/src/app/favicon.ico`.
 - **Hover/focus glow exception**: `docs/DESIGN_SYSTEM.md` bans blurred/
-  colored shadows and backdrop blur as a general rule. Ken explicitly asked
+  colored shadows and backdrop blur as a general rule. An explicit request came
   for a subtle glow on this mark since it doubles as the global-refresh
   button and needed its own "this is clickable" cue beyond the existing
   opacity dip. Implemented as a small, low-opacity gold `drop-shadow`
@@ -1980,7 +1980,7 @@ same mark to become the mobile home-screen icon.
 
 ## 2026-07-27 — Fetch timeouts and runtime widget-cache validation
 
-Ken asked to close out two structural gaps flagged in a status review
+A request came in to close out two structural gaps flagged in a status review
 before moving on to anything else: no timeout on widget `fetchData()`
 calls, and no runtime validation on data read back out of `widget_cache`.
 
@@ -2033,7 +2033,7 @@ cached widget *data*.
 
 The Hardening pass (2026-07-25) named "no committed automated test suite"
 as an honest gap — every verification pass up to that point was ad hoc
-Playwright against a temporary route, never saved, never re-run. Ken asked
+Playwright against a temporary route, never saved, never re-run. A request came
 to close this before adding more widgets, with two decisions confirmed
 first: cover both unit-level logic and real browser interaction (not just
 one), and wire it into GitHub Actions so it runs on every push/PR — not
@@ -2088,7 +2088,7 @@ a named gap rather than a false "done."
 
 ## 2026-07-27 — Logo size, sparkle hover, header/hero gap, clickable profile menu
 
-Four small polish requests from Ken, each with a real fork resolved via
+Four small polish requests, each with a real fork resolved via
 `AskUserQuestion` before writing code:
 
 - **Logo size**: `h-8` (32px) → `h-9` (36px), +12.5%, uniformly across
@@ -2119,7 +2119,7 @@ Four small polish requests from Ken, each with a real fork resolved via
   added `apps/web/src/app/profile/page.tsx` — deliberately minimal (just
   the same name/email/avatar the menu already showed, on their own page),
   matching the Steam detail page's back-link + card pattern. The
-  Preferences/Appearance/Connected Services/API Keys sections Ken
+  Preferences/Appearance/Connected Services/API Keys sections
   mentioned are an explicit "later" — building them now would be
   scaffolding ahead of need, not what was asked for this round. The
   existing disabled "Settings" nav item in the menu was left untouched;
@@ -2128,7 +2128,7 @@ Four small polish requests from Ken, each with a real fork resolved via
 
 ## 2026-07-27 — Logo hover redone (mask-recolor, no glow/sparkle), bigger at every breakpoint
 
-Ken tried the sparkle/glow treatment live and asked for something simpler:
+The sparkle/glow treatment was tried live, with a request for something simpler:
 the wordmark itself should light up gold on hover, not glow behind it —
 and the logo still read as too small on desktop even after the previous
 +12.5% bump, so it needed to grow further at every breakpoint, most of all
@@ -2156,20 +2156,20 @@ on desktop.
 
 ## 2026-07-27 — Header/logo shrunk back to icon size, GitHub monthly summary, auto-refresh on return, quote variety
 
-Four independent, Ken-requested changes made in the same pass.
+Four independent requested changes made in the same pass.
 
 - **Header/logo reverted to icon size**: the two prior size bumps above
   (`h-8` → `h-9` → `h-10 sm:h-12 lg:h-16`) had made the header noticeably
   taller, since `Navbar` (`apps/web/src/app/page.tsx`) has no fixed
-  height — it's just padding around whatever's tallest inside it. Ken
-  asked for the header back to a slim, icon-sized bar. Logo shrunk to
+  height — it's just padding around whatever's tallest inside it. A request
+  came for the header back to a slim, icon-sized bar. Logo shrunk to
   `h-6 sm:h-7` (24px/28px, dropping the `lg` bump) at both render sites
   (`page.tsx`'s signed-out `<img>`, `refresh-all-title.tsx`'s signed-in
   masked `<span>`), and the header's own `py-3` reduced to `py-2`. If a
   future request wants the logo bigger again, this entry is why it was
   taken back down — not an oversight to "fix."
-- **GitHub widget: condensed monthly activity summary**: Ken referenced
-  GitHub's profile "Contribution activity" feed and asked whether Pulse
+- **GitHub widget: condensed monthly activity summary**: GitHub's profile
+  "Contribution activity" feed was referenced, with a question of whether Pulse
   could show something similar. Rather than reproducing GitHub's dense
   itemized timeline (per-repo commit breakdowns, PR cards with comment
   counts, expandable "N other pull requests" sections) — which would
@@ -2210,13 +2210,13 @@ Four independent, Ken-requested changes made in the same pass.
   to the last 5 shown quotes (`recentQuotes` added to `HeroData`, tracked
   in the cache; selection logic extracted to `pick-quote.ts`, shared by
   the normal 15-minute refresh and the new click handler below). Also
-  made the quote itself clickable to cycle on demand. Ken asked whether a
+  made the quote itself clickable to cycle on demand. A question came up whether a
   quote-only refresh would be faster than reusing the widget's full
   refresh action — yes: `actions.refresh` re-runs all of `fetchHeroData`,
   including a weather API call, on every click, while a dedicated
   `cycleQuote` (`packages/widgets/hero/src/cycle-quote.ts`) only rewrites
-  the cached `quote`/`recentQuotes` fields, no weather call. Ken chose the
-  dedicated action for responsiveness on repeated clicks. This needed a
+  the cached `quote`/`recentQuotes` fields, no weather call. The
+  dedicated action was chosen for responsiveness on repeated clicks. This needed a
   new optional `cycleQuote` field on the SDK's `WidgetActions` interface
   (`packages/sdk/src/widget.ts`) — Hero is the only widget that populates
   or reads it (wired in `apps/web/src/app/page.tsx`'s `WidgetSlot`,
@@ -2225,7 +2225,7 @@ Four independent, Ken-requested changes made in the same pass.
 
 ## 2026-07-27 — Hero gap fix, GitHub layout/accuracy, Steam grid, profile card, instant quote
 
-Ken reviewed the previous round live and flagged five more issues from
+The previous round was reviewed live, flagging five more issues from
 screenshots. Each root-caused before fixing:
 
 - **Hero whitespace**: the huge gap before the widget grid wasn't one
@@ -2233,8 +2233,8 @@ screenshots. Each root-caused before fixing:
   (`apps/web/src/app/page.tsx`) was *additionally* stacking with `<main>`'s
   `gap-6`, since both are direct flex children of the same `<main>`.
   Reduced to `pb-2 sm:pb-3`, mirroring the top-side fix from the prior
-  header→hero gap entry (roughly halved, not flush). Ken explicitly chose
-  this over adding calendar/focus/AI-summary/"continue where you left
+  header→hero gap entry (roughly halved, not flush). This was explicitly chosen
+  over adding calendar/focus/AI-summary/"continue where you left
   off" content — none of that data exists in Pulse yet (no tasks/notes/AI
   adapter), and building one now would be scaffolding ahead of need.
 - **Quote/icon misalignment**: `quote-button.tsx`'s `min-h-11` touch
@@ -2293,7 +2293,7 @@ screenshots. Each root-caused before fixing:
 
 ## 2026-07-27 — Memory/Timeline feature, Milestone 1
 
-Ken pitched a "memory" system: widgets log meaningful changes as small
+A "memory" system was pitched: widgets log meaningful changes as small
 events, powering a Timeline now and, much later, retrieval for an "Ask
 Pulse" AI assistant — memory built first, assistant built last. Full
 milestone breakdown lives in the new `docs/MEMORY_ROADMAP.md` (its own
@@ -2314,7 +2314,7 @@ just records the two decisions made before building M1:
   is separate on purpose. This doesn't conflict with §16's "AI assistant"
   Phase-1 non-goal — only the assistant itself (M4) is excluded, not the
   underlying event log.
-- **Diffing, not logging every fetch.** Ken's original write-up implied
+- **Diffing, not logging every fetch.** The original write-up implied
   writing an event on every widget fetch. GitHub refreshes every 30
   minutes, Spotify/Steam every 3 hours (cron-driven, `docs/DECISIONS.md`'s
   2026-07-20 entry) — logging unconditionally would flood the table with
@@ -2340,7 +2340,7 @@ greeting/weather/quote aren't memory-worthy content.
 The 2026-07-24 entry ("Dark mode.") deliberately kept a `dark:` fallback
 (a straight tonal inversion via `prefers-color-scheme`, amending
 reference doc §7 to mean "doesn't break," not "actively designed") rather
-than deleting it outright. Ken has now asked for it to be removed
+than deleting it outright. A request has now come in for it to be removed
 completely — that earlier decision is superseded, not an oversight if a
 future reader finds no dark-mode code left.
 
@@ -2361,10 +2361,10 @@ deliberate, actively-designed second theme, not a resurrected fallback.
 
 ## 2026-07-29 — Pull-to-refresh, refresh-all latency, and a widget_cache race
 
-Ken reported the app feeling laggy (refresh-all and the `/tasks`/`/notes`
+The app was reported feeling laggy (refresh-all and the `/tasks`/`/notes`
 "view all" pages taking a few seconds) plus newly-added tasks/notes
 occasionally disappearing and reappearing after a reload, and separately
-asked for mobile pull-to-refresh. Traced all three:
+a request for mobile pull-to-refresh. Traced all three:
 
 - **Pull-to-refresh**: no gesture library existed anywhere in the
   monorepo, and the touch math needed (track `touchstart` Y only from
@@ -2454,17 +2454,17 @@ e2e suite.
 
 ## 2026-07-29 — GitHub heatmap expanded to a full calendar year
 
-Ken asked whether the GitHub widget's contribution heatmap could match
+A question came up whether the GitHub widget's contribution heatmap could match
 GitHub's own profile graph: full Jan–Dec, month/weekday labels, a
 Less→More legend, an annual total, hover tooltips, and a mobile tap
 popup. This is a deliberate departure from `docs/redesign-reference/`,
 whose own mockup JS generates exactly the previous compact 20-week grid
-with none of the above — confirmed with Ken first, per CLAUDE.md's
+with none of the above — confirmed first, per CLAUDE.md's
 design-fidelity rule, before building. Detail level for the hover/tap
 popup was also decided explicitly: **count only** (`"N contributions on
 Month Day"`), not a commits/PRs/issues breakdown — the latter would need
 a live per-tap GraphQL call with its own latency/failure surface, for a
-benefit the reference screenshots Ken provided don't even show.
+benefit the reference screenshots don't even show.
 
 **Adapter simplification, not just a feature add.**
 `packages/adapters/github/src/contributions.ts`'s `fetchContributions`
@@ -2479,7 +2479,7 @@ exactly), and needs no OAuth scope beyond the already-granted
 two, removing a whole request/response round trip and API rate-limit
 unit per refresh. GitHub returns future dates as zero-count/level-0 days
 directly (no client-side padding needed) — exactly the "blank Aug–Dec"
-behavior in Ken's own reference screenshots for a year still in
+behavior in the reference screenshots used for a year still in
 progress. `totalToday`/`totalThisWeek` now derive from the real "today"
 entry in that array (filtering to `date <= today` first) rather than
 simply the array's last element, which is now Dec 31, not today.
@@ -2530,13 +2530,13 @@ smoke test covering the total line, legend, and hover/tap popover text).
 
 ## 2026-07-30 — GitHub heatmap: no-scroll layout, click-only popover
 
-Ken caught real bugs in the first pass above by looking at it live: a
+Real bugs were caught in the first pass above by looking at it live: a
 horizontal *and* vertical scrollbar appeared (the horizontal-scroll
-choice from 2026-07-29 was wrong — his reference expects the full year
+choice from 2026-07-29 was wrong — the reference expects the full year
 visible with no scrolling at all, cells shrinking instead), the hover
 popover was invisible in practice (clipped by that same scroll
 container), its background was transparent instead of opaque, and it
-duplicated the native `title` tooltip. He also explicitly asked for
+duplicated the native `title` tooltip. There was also an explicit request for
 "no hover effects... follow previous heatmaps," i.e. drop the
 custom hover-triggered popover entirely — the original 20-week heatmap's
 only hover hint was the bare native `title` attribute.
@@ -2626,8 +2626,8 @@ The spec's "do not auto-append to the most recent existing entry" could
 be read two ways: (a) every debounced pause creates a new entry and
 clears the box, or (b) the input box is a single "living draft" —
 pausing updates that same entry in place, and only clearing the box (or
-never having typed yet) starts a new one. Went with (b), confirmed with
-Ken before building: typing a paragraph with natural mid-sentence pauses
+never having typed yet) starts a new one. Went with (b), confirmed
+before building: typing a paragraph with natural mid-sentence pauses
 should stay one entry, not fragment into several. "Do not auto-append to
 the most recent existing entry" refers to *old, already-closed* entries
 from a previous session — not the entry currently being composed.
@@ -2651,8 +2651,8 @@ reading the code, since the failure is silent otherwise).
 
 **No settings, no full-page view — both deliberate scope calls, not
 oversights.** Notebook is the second widget (after Hero) to claim
-CLAUDE.md §7's "no per-user configuration" exemption — confirmed with
-Ken first, since only one other widget had ever claimed it. It also
+CLAUDE.md §7's "no per-user configuration" exemption — confirmed
+first, since only one other widget had ever claimed it. It also
 skips the `/notes`-style full-page "view all" route Notes has: the spec
 caps rendering at the last 10 entries with older ones simply not shown
 (still stored, not a browsable archive), and nothing in the spec asked
@@ -2664,7 +2664,7 @@ what was requested.
 contentless card), so the "quiet italic serif line" the spec asks for
 lives on the textarea's `placeholder` attribute (`font-body italic`,
 muted) rather than the shared `EmptyState` component rendered
-underneath it. Confirmed with Ken as the intended reading of "empty/
+underneath it. Confirmed as the intended reading of "empty/
 prompt state" for this specific widget shape, rather than assumed.
 
 **Verified without live Supabase/OAuth credentials**, same technique as
@@ -2782,8 +2782,8 @@ A project status/bug audit surfaced real documentation drift:
 `docs/ROADMAP.md` still described Tasks as "skipped" and Phase 2 as "Not
 started," while Tasks, Notes, and Notebook (all write-back-to-own-table
 features — exactly what Phase 2 was scoped to be) were already built and
-live. Separately, Ken confirmed he will never build the Google Calendar,
-Gmail, focus timer, or YouTube widgets — these were sitting in
+live. Separately, it was confirmed the Google Calendar,
+Gmail, focus timer, or YouTube widgets will never be built — these were sitting in
 `docs/PROJECT_REFERENCE.md`/`docs/ROADMAP.md` as "deferred"/"blocked,"
 which reads as still-open, not decided against.
 
@@ -2809,7 +2809,7 @@ a documentation-accuracy pass. Noted as unused in
 
 ## 2026-08-01 — Dashboard polish: GitHub, Steam, Spotify, Notes
 
-Ken reviewed the live dashboard and asked for four changes. Two revert
+The live dashboard was reviewed with four changes requested. Two revert
 decisions that were explicitly confirmed before — legitimate changes of
 mind, not silent overwrites, so recorded here like every other decision,
 with a pointer back to what they revise. All four confirmed via
@@ -2827,8 +2827,8 @@ wrapper now uses a small local class string in
 `packages/widgets/github/src/component.tsx` — border-brightens-on-hover,
 no fill — with everything else about `GLASS_CHIP` left alone.
 
-**GitHub "latest repo/commit" row removed** (the "Moodzic" row) — Ken
-found it cluttered, not useful. Removed the render block, the
+**GitHub "latest repo/commit" row removed** (the "Moodzic" row) — it
+was found cluttered, not useful. Removed the render block, the
 `fetchLatestActivity` call in `fetch.ts`, the `latestActivity` field
 from `githubDataSchema`/`GitHubData`, and the adapter module
 (`packages/adapters/github/src/activity.ts`) entirely — no other
@@ -2875,7 +2875,7 @@ had to be trimming content, not the `size` prop.
 
 **Notes page: inline-editable list → click-to-open modal.** The /notes
 page previously rendered every note as an always-editable inline
-title+body form — not a real way to browse history, per Ken. Now: a
+title+body form — not a real way to browse history. Now: a
 compact read-only row (title + truncated snippet, reusing the
 `snippet()` helper — extracted to `packages/widgets/notes/src/
 snippet.ts` since it's now shared between the dashboard card's
@@ -2923,7 +2923,7 @@ console/hydration errors.
 ## 2026-08-01 — Dashboard polish round 2: heatmap bug, Steam row, paired widgets, pinning
 
 Follow-up to the same day's earlier "Dashboard polish" entry (PR #73).
-Ken's live screenshots surfaced a real bug and three more layout
+Live screenshots surfaced a real bug and three more layout
 requests, all confirmed via `AskUserQuestion` before implementation.
 
 **GitHub heatmap bug, root cause and fix.** The compact-recent-weeks
@@ -2939,7 +2939,7 @@ today isn't late in the year — exactly why the live card showed "Nov"/
 `selectRecentWeeks(weeks, fetchedAt, count)` in
 `packages/widgets/github/src/heatmap-layout.ts` (alongside the existing
 `computeMonthLabels`): filters to weeks containing at least one
-past-or-today day *before* slicing the last N. Confirmed with Ken this
+past-or-today day *before* slicing the last N. Confirmed this
 keeps the compact-strip approach rather than reverting to the full year.
 
 **Steam: one row instead of stacked.** `packages/widgets/steam/src/
@@ -2976,8 +2976,8 @@ boundary/`WidgetCell`); only their layout placement is shared.
 **Tasks/Notes/Notebook pinned to the top of the right column.** The
 left/right split comes from `balanceColumns`
 (`apps/web/src/lib/balance-columns.tsx`), a greedy weight-balancer with
-no concept of "this widget matters more, put it first" — Ken wanted
-Tasks (his most-checked widget) reliably at the top of the right column,
+no concept of "this widget matters more, put it first" — the goal was
+Tasks (the most-checked widget) reliably at the top of the right column,
 followed by Notes then Notebook, not wherever the weight math happened
 to land it (today: Tasks was actually the *last* item in the left
 column, since it was the widget that tipped the running weight just
@@ -2991,7 +2991,7 @@ placeholders) and stays a simple, purely weight-driven function with
 its existing unit tests intact — pinning is layered on top in
 `page.tsx`, not inside the balancer. With current widget sizes this
 settles into left = GitHub + the Steam/Spotify pair, right = Tasks,
-Notes, Notebook, then Habits/Reading/RSS — matching what Ken described.
+Notes, Notebook, then Habits/Reading/RSS — matching the description.
 Also reads better on the mobile single-column stack (which renders
 `left` fully before `right`): GitHub → Steam/Spotify → Tasks → Notes →
 Notebook → placeholders, instead of Tasks being interleaved with
@@ -3033,7 +3033,7 @@ other regressions found.
 
 ## 2026-08-01 — Dashboard layout architecture rebuild
 
-Ken asked to stop patching individual widgets reactively (this file's
+A request came in to stop patching individual widgets reactively (this file's
 last several entries: heatmap window size, heatmap cell size, Steam row
 layout, Steam+Spotify pairing, Tasks/Notes/Notebook column pinning) and
 rebuild the shared layout system itself, so every widget inherits the
@@ -3056,12 +3056,12 @@ two-flex-column split with one real grid:
 container. The browser now decides column count and reflow natively —
 there's no JS weight algorithm to keep in sync as widgets are
 added/removed. Visual priority is now just render order: Tasks → Notes
-→ Notebook (Ken's daily-input widgets, kept first) → GitHub → the
+→ Notebook (the daily-input widgets, kept first) → GitHub → the
 Steam+Spotify pair → the "coming soon" placeholders last.
 `balanceColumns()`/`WIDGET_WEIGHT`/`WIDGET_WEIGHT_OVERRIDE`/
 `PINNED_RIGHT_ORDER` are all deleted (`balance-columns.tsx` and its
-test file removed entirely). **Trade-off, confirmed explicitly with
-Ken via `AskUserQuestion` before implementing:** widgets no longer have
+test file removed entirely). **Trade-off, confirmed explicitly
+via `AskUserQuestion` before implementing:** widgets no longer have
 a guaranteed "always in this exact lane" placement — a fluid `auto-fit`
 grid has no fixed left/right column concept — in exchange for genuinely
 native responsive reflow. `lg`-sized widgets (GitHub, Notebook) get
@@ -3078,7 +3078,7 @@ heatmap now renders directly as `WidgetCard` content with a plain
 `flex flex-col gap-4` spacing wrapper, no border/bg/hover of its own.
 Also reverted the widget to rendering `data.weeks` (the full Jan–Dec
 year) instead of the `selectRecentWeeks(...)`-trimmed 12-week strip
-from two entries above — an explicit reversal, Ken's direct
+from two entries above — an explicit reversal, direct
 instruction this round ("show from jan to dec"). Removed the
 now-dead `RECENT_WEEKS_COUNT` constant and `selectRecentWeeks` function
 (plus its tests). The cell-sizing formula itself
@@ -3135,8 +3135,8 @@ Tasks/Notes/Notebook appear first in the flow at every width.
 
 ## 2026-08-01 — Dashboard layout: targeted fixes after a second audit
 
-Ken flagged (with live screenshots) that the dashboard had regressed
-since the previous entry's rebuild and asked for a ground-up
+The dashboard was flagged (with live screenshots) as having regressed
+since the previous entry's rebuild, with a request for a ground-up
 redesign: an audit report, a dashboard-owns-sizing layout system,
 semantic `S`/`M`/`L`/`XL` size tokens, and every widget refactored onto
 it.
@@ -3148,8 +3148,8 @@ broken — no nested-card violations survived anywhere, no widget defined
 its own outer width/height fighting the grid, every widget already
 rendered through the one shared `WidgetCard` shell. The real findings
 were six narrow, concrete issues, not evidence of a fundamentally
-broken system. Surfaced this to Ken via `AskUserQuestion` rather than
-either blindly doing the full rename or silently downscoping — he chose
+broken system. Surfaced this via `AskUserQuestion` rather than
+either blindly doing the full rename or silently downscoping — the choice was
 targeted fixes over the full `sm/md/lg/hero` → `S/M/L/XL` rename (a
 pure rename with no behavioral difference until sizes actually map to
 different grid-span rules, which they don't yet — matches CLAUDE.md's
@@ -3228,7 +3228,7 @@ as clean, unambiguous digits.
 
 ## 2026-08-02 — Dashboard layout regroup from design handoff, Spotify removed from grid, Notes gets a create-note modal
 
-Ken supplied a high-fidelity handoff (`design_handoff_dashboard_layout/`)
+A high-fidelity handoff (`design_handoff_dashboard_layout/`) was supplied,
 regrouping the dashboard grid. Implemented as specified, layout-only —
 no new colors/type/radii/shadows.
 
@@ -3298,8 +3298,8 @@ against the handoff's exact breakpoints/spans.
 
 ## 2026-08-02 — Follow-up from live feedback: desktop grid width-fill, iPad text-size false alarm
 
-Ken checked the merged layout live on `my-pulse-os.vercel.app` (Safari,
-iPad and desktop) and reported two things: iPad text looked smaller
+The merged layout was checked live in production (Safari,
+iPad and desktop), reporting two things: iPad text looked smaller
 than expected, and desktop cards didn't fill the page. This sandbox
 can't reach that deployment (`AUTH_URL`/GitHub OAuth aren't configured
 here — see prior entries), so verification used the established
@@ -3324,9 +3324,9 @@ Safari zoom setting, not a layout bug.
 **Desktop width-fill: confirmed and fixed.** `apps/web/src/app/page.tsx`'s
 grid wrapper was capped at `max-w-6xl` (1152px) regardless of viewport
 — at 1024–1180px (iPad) that's barely a cap at all, so the grid used
-nearly full width ("fits properly," per Ken), but at 1920px+ (desktop)
+nearly full width ("fits properly," per report), but at 1920px+ (desktop)
 it left ~650px+ of unused margin on wide monitors. This cap was a
-deliberate, Ken-confirmed decision from the "Dashboard layout
+deliberate, confirmed decision from the "Dashboard layout
 architecture rebuild" entry above — not a regression from the layout
 regroup — but seeing it live changed the call. Widened to
 `max-w-[1600px]`: noticeably fills more of a 1920–2560px display while
@@ -3344,7 +3344,7 @@ preview route from a still-running `next dev` server.
 
 ## 2026-08-02 — Six bug-fix pass from live feedback round 2
 
-Ken reported six more issues after checking the live dashboard again.
+Six more issues were reported after checking the live dashboard again.
 Bug-fix only, each root-caused before fixing (via three parallel
 read-only Explore agents), then verified interactively (not just
 screenshotted) through the throwaway-preview-route technique.
@@ -3372,7 +3372,7 @@ screenshotted) through the throwaway-preview-route technique.
    `packages/widgets/notebook/src/notebook-input.tsx`'s `<textarea>`
    (clears the pending autosave debounce timer and calls the existing
    `attemptSave(content)` immediately). Notebook has no save/add button
-   at all (pure autosave) — Ken found that confusing without an
+   at all (pure autosave) — that was found confusing without an
    explicit trigger, so Enter is now that trigger, without changing the
    underlying autosave behavior for anyone who just keeps typing.
 3. **Notebook entries show a subtle added/edited timestamp on the
@@ -3380,7 +3380,7 @@ screenshotted) through the throwaway-preview-route technique.
    relative label ("Yesterday") above the content, and `updatedAt` was
    read nowhere. Added `formatEntryTimestamp` to `format.ts` (one line:
    the edited time + "(edited)" if `updatedAt` differs from
-   `createdAt`, otherwise just the added time — Ken's choice over a
+   `createdAt`, otherwise just the added time — chosen over a
    two-line always-both-times layout, to keep it "not obvious").
    Restructured the entry from `flex-col` to `flex-row` with a narrow
    muted-text left column. Applies to both the dashboard card and
@@ -3442,7 +3442,7 @@ driver is mouse-based) — its existing test suite
 confirmed by reading the render logic, not by simulating a touch drag.
 
 **Correction, same day:** item 3's "(edited)" tag was removed almost
-immediately after Ken pointed out there's no entry-edit UI at all —
+immediately after it was pointed out there's no entry-edit UI at all —
 the only way `updatedAt` ever differs from `createdAt` is the
 autosave upsert re-saving the same still-open draft while the user
 keeps typing, which isn't something a person perceives as "editing" a
@@ -3454,16 +3454,16 @@ tag stays visible.
 
 ## 2026-08-02 — GitHub PRs/merges tracked as Timeline memory events
 
-Ken asked whether the Timeline could track his GitHub activity beyond
+A question came up whether the Timeline could track GitHub activity beyond
 the one signal it already had ("Created a new repository") —
-specifically every PR he opens and every merge, across all his repos
+specifically every PR opened and every merge, across all repos
 (not just Pulse; Pulse just happens to be one of them, so it's covered
 without a repo-specific filter). Pulse already had the plumbing for
 this (`docs/MEMORY_ROADMAP.md` M1: `Widget.deriveMemories` +
 `packages/database/src/memories.ts` + the Timeline page) — GitHub's
 widget just hadn't used it for anything beyond a repo-count diff.
 
-**The real risk, discussed with Ken before writing any code:** getting
+**The real risk, discussed before writing any code:** getting
 individual PR titles/repos (not just a count) needs GitHub's GraphQL
 `pullRequestContributions` connection, genuinely new territory — no
 query in this codebase has ever used it. A prior decision (this file,
@@ -3471,7 +3471,7 @@ query in this codebase has ever used it. A prior decision (this file,
 data specifically to avoid needing broader OAuth scope than the
 `read:user` already granted at login, and this risked reopening that
 tradeoff. This sandbox has no live GitHub token to verify scope
-requirements ahead of time. **Ken's explicit call: if it turns out to
+requirements ahead of time. **The explicit call: if it turns out to
 need broader scope/re-authorization, don't pursue it — ship it only if
 it works under the existing grant, no re-auth flow to be built either
 way.** (The Pulse repo itself is public, which removes one variant of
@@ -3544,6 +3544,6 @@ has no real GitHub token, so whether `pullRequestContributions`
 actually returns data under `read:user` alone can only be confirmed
 once deployed. If it doesn't, the isolation in `fetch.ts` means
 `recentPullRequests` just stays permanently empty and no PR memories
-ever appear — a silent no-op, not a broken widget, per Ken's explicit
+ever appear — a silent no-op, not a broken widget, per explicit
 instruction not to pursue a scope upgrade if this turns out to need
 one.

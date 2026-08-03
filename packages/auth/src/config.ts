@@ -19,6 +19,10 @@ export const authConfig: NextAuthConfig = {
   session: {
     strategy: "database",
   },
+  // Pulse is deployed on Vercel, which Auth.js already trusts by
+  // convention — set explicitly so host-header handling doesn't rely on
+  // inference if the deployment target ever changes.
+  trustHost: true,
   callbacks: {
     session({ session, user }) {
       session.user.id = user.id;

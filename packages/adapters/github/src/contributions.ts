@@ -89,7 +89,7 @@ export interface PullRequestSummary {
   number: number;
   title: string;
   url: string;
-  /** "owner/name", e.g. "itskenthf/Pulse". */
+  /** "owner/name", e.g. "octocat/example-repo". */
   repository: string;
   merged: boolean;
 }

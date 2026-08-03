@@ -9,6 +9,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 env:
   # Placeholder values, never real secrets. next build's static analysis
   # touches the auth route bundle even for pages that don't need a

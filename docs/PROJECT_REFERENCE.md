@@ -20,8 +20,8 @@ implementation decision below.
 
 ## 1. Concept
 
-A personal "life OS" dashboard that aggregates the daily tools and info Ken
-checks every morning into one screen, available on desktop, mobile, and
+A personal "life OS" dashboard that aggregates the daily tools and info
+checked every morning into one screen, available on desktop, mobile, and
 browser, with live/near-live data on every device.
 
 **Core idea:** the app shell knows nothing about calendars or GitHub or
@@ -206,7 +206,7 @@ A widget is only considered complete when it has:
 - Empty state
 - Manual refresh
 - Settings support, **unless** the widget is meant to run fully automatically
-  with no per-user configuration (2026-07-24, Ken's request — see
+  with no per-user configuration (2026-07-24, by explicit request — see
   docs/DECISIONS.md; currently just Hero: name comes from the login
   profile, time zone/location are fixed constants)
 - Responsive layout
@@ -243,7 +243,7 @@ schema migration every time a new widget is added.
 ## 9. Core widgets (v1 / MVP)
 
 **Calendar (Google), Email (Gmail), Focus timer, and YouTube were removed
-from this list permanently on 2026-08-01** — Ken decided against ever
+from this list permanently on 2026-08-01** — a decision against ever
 building them (not a deferral; see `docs/ROADMAP.md`'s matching dated
 entry). The original numbered list included them; they're gone from the
 list below rather than kept as crossed-out placeholders, since "never
@@ -475,7 +475,7 @@ background) are superseded by `docs/DESIGN_SYSTEM.md` v2.0:
   deliberately left out to keep scope to what was actually asked for —
   see docs/DECISIONS.md if picking this up later.
 - **No navigation chrome beyond the navbar** (2026-07-25, reversing the
-  entry below — Ken reported never using it: "all i need is just to see
+  entry below — reported as never used in practice: "all i need is just to see
   cards"). Sidebar, Dock, and BottomNav were deleted entirely, not hidden
   behind a flag; same for the navbar's Search/Notification icons. The
   navbar is just the Pulse wordmark and the profile menu.
@@ -487,7 +487,7 @@ background) are superseded by `docs/DESIGN_SYSTEM.md` v2.0:
   backdrop-blur ancestor never covers the full viewport — see
   docs/DECISIONS.md), but doesn't reliably work on mobile/iPad Safari,
   where a tap doesn't always move DOM focus onto a `<button>` — confirmed
-  as a real bug via Ken's own device testing, fixed 2026-07-25.
+  as a real bug via on-device testing, fixed 2026-07-25.
 - Every widget's action slot is a single **"⋯" overflow menu**
   (`WidgetMenu` in `packages/ui`) — Refresh, and Settings when the widget
   has any — instead of a bare icon button plus a separate below-card
@@ -495,7 +495,7 @@ background) are superseded by `docs/DESIGN_SYSTEM.md` v2.0:
 - The header's account control is a compact profile pill (avatar/initial +
   name) with a dropdown for Settings (placeholder) and Sign out, not a bare
   "Signed in as X / Sign out" text row.
-- **Card hover is a static color cue, not motion** (2026-07-25, Ken's
+- **Card hover is a static color cue, not motion** (2026-07-25, per explicit
   request): no lift, no scale — `GLASS_HOVER` brightens the card's
   border/ring on hover instead. Steam's cover art follows the same
   pattern (a border light-up via `group-hover`) rather than scaling the
@@ -529,12 +529,12 @@ background) are superseded by `docs/DESIGN_SYSTEM.md` v2.0:
 <details>
 <summary>Superseded 2026-07-25: adaptive per-breakpoint navigation (dock/drawer/bottom-nav)</summary>
 
-Kept for history — Ken reported never using any of this, so it was
+Kept for history — never used in practice, so it was
 deleted outright rather than iterated on further:
 
 - Desktop (`lg:` 1024px+): a floating glass **dock**, bottom-center — not
   a pinned sidebar rail (2026-07-24 refinement pass: replaced the rail
-  after Ken judged it "still feels disconnected").
+  after it was judged "still feels disconnected").
 - Tablet (`sm:`–`lg:` 640–1024px): an off-canvas sidebar drawer, toggled
   by a menu button in the navbar — a checkbox + `peer-checked:` CSS
   toggle, no client JS.
@@ -551,7 +551,7 @@ Tasks and Habits were visible, disabled placeholders for future sections.
   indefinitely — timebox Phase 1 (e.g. 3 weeks) and force daily real use
   before adding scope
 - OAuth token storage requires a backend — ruled out a pure local/offline-only app
-- If publishing to others later, don't hardcode Ken's specific widget set as
+- If publishing to others later, don't hardcode this specific widget set as
   "the product" — the shell + widget system is the product
 - Monorepo (packages/apps split) adds real tooling overhead
   (Turborepo/Nx) for a solo builder — a deliberate trade, not a default

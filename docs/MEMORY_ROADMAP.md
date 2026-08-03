@@ -7,7 +7,7 @@ collide with it. Milestones below are labeled M1-M4 instead.
 
 ## Origin
 
-Ken's pitch (2026-07-27, see `docs/DECISIONS.md`): instead of widgets
+The original pitch (2026-07-27, see `docs/DECISIONS.md`): instead of widgets
 only ever showing *current* state, meaningful changes get logged as
 small events, which power a chronological Timeline now and, much later,
 retrieval for an "Ask Pulse" AI assistant. The core principle: **build

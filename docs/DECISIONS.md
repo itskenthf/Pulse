@@ -3634,6 +3634,45 @@ Two real changes beyond the rename:
 `refresh-widgets.yml` is untouched — it's an unrelated cron job, not part
 of this consolidation.
 
+## 2026-08-03 — Dependency vulnerability sweep: 16 advisories fixed
+
+`pnpm audit --prod` found 16 vulnerabilities (1 critical, 8 high, 7
+moderate) across three dependency chains, none of them ever exploited —
+this is a proactive fix ahead of publishing the repo, not a response to
+an incident.
+
+- **`next` 16.2.10 → 16.2.12** — the patched release. Fixes four high
+  advisories (Turbopack middleware/proxy bypass, Server Actions DoS,
+  SSRF in Server Actions on custom servers, SSRF in rewrites via
+  attacker-controlled destination hostname) and four moderate ones
+  (cache confusion for requests with bodies, unbounded Server Action
+  payload in Edge runtime, image-optimization DoS via SVG, disclosure of
+  internal Server Function endpoints).
+- **`@auth/supabase-adapter` `^1.11.2` → `^1.11.3`** — pulls in
+  `@auth/core@0.41.3` instead of `0.41.2`, fixing the one **critical**
+  advisory (email normalizer validated the address before Unicode
+  normalization, allowing a homoglyph `@` bypass) plus a high one
+  (`getToken()` threw an uncaught exception on malformed Bearer headers)
+  and a moderate one (OAuth state/nonce/PKCE cookies weren't bound to
+  the provider that created them).
+- **`postcss` and `sharp` — forced via `pnpm-workspace.yaml`'s new
+  `overrides` block**, not a direct dependency bump. Both are pulled in
+  by `next` itself (postcss for its CSS build pipeline, sharp for
+  `next/image`), and `next@16.2.12` still pins `postcss@8.4.31` and
+  `sharp@^0.34.5` internally — bumping `next` alone doesn't fix them.
+  Overrides force `postcss >=8.5.18` (fixes a high-severity arbitrary
+  `.map` file disclosure via `sourceMappingURL` path traversal, an
+  earlier high-severity file-read variant, and a moderate XSS via
+  unescaped `</style>` in stringified output) and `sharp >=0.35.0`
+  (fixes several inherited libvips CVEs).
+
+Re-ran `pnpm audit --prod` after: zero vulnerabilities. Confirmed
+`pnpm lint`/`typecheck`/`test` and a full `pnpm build` (CI-equivalent
+placeholder env vars, same pattern as `ci.yml`) all still pass — this
+was a same-major/patch-level bump for `next`, a patch bump for the auth
+adapter, and forced-but-compatible transitive bumps for `postcss`/
+`sharp`, so no app code changes were needed.
+
 ## 2026-08-03 — Post-merge security/bug review: four real fixes, two flagged
 
 A full pass (two parallel read-only reviews — one security-focused, one

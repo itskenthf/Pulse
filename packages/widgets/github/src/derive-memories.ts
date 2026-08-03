@@ -8,7 +8,13 @@ import type { GitHubData } from "./types";
  *
  * - `activitySummary.repositoriesCreated` increasing — the aggregate
  *   doesn't include which repo was created, a known limitation not worth
- *   a second GraphQL query to fix in this milestone.
+ *   a second GraphQL query to fix in this milestone. It's a *month-to-date*
+ *   counter (see `periodStart`), so a plain previous/next comparison
+ *   would false-negative right after a month boundary — e.g. 4 repos
+ *   created in July, 1 so far in August, `1 > 4` is false even though a
+ *   real new repo was just created. `periodStart` changing is treated as
+ *   the counter having reset to 0, not compared against last month's
+ *   stale total.
  * - `recentPullRequests` diffed by id (same `Map`-of-previous-items idiom
  *   as Steam's `deriveSteamMemories`, and the `Set`-of-previous-ids idiom
  *   Tasks/Notes/Notebook use for their own list diffs): a PR id absent
@@ -26,7 +32,12 @@ import type { GitHubData } from "./types";
 export function deriveGitHubMemories(previous: GitHubData | null, next: GitHubData): MemoryEvent[] {
   const events: MemoryEvent[] = [];
 
-  const previousRepositoriesCreated = previous?.activitySummary?.repositoriesCreated ?? 0;
+  const monthChanged =
+    previous?.activitySummary != null &&
+    previous.activitySummary.periodStart !== next.activitySummary?.periodStart;
+  const previousRepositoriesCreated = monthChanged
+    ? 0
+    : (previous?.activitySummary?.repositoriesCreated ?? 0);
   const nextRepositoriesCreated = next.activitySummary?.repositoriesCreated ?? 0;
   if (nextRepositoriesCreated > previousRepositoriesCreated) {
     events.push({ title: "Created a new repository" });

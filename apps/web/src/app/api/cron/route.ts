@@ -1,7 +1,17 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getAllWidgets } from "@pulse/sdk";
 import { listUserIds } from "@pulse/database";
 import { refreshWidget } from "@/lib/refresh-widget";
+
+function isAuthorized(header: string | null, secret: string): boolean {
+  const expected = Buffer.from(`Bearer ${secret}`);
+  const actual = Buffer.from(header ?? "");
+  // timingSafeEqual throws on length mismatch rather than returning false,
+  // so a wrong-length header (the common case for any real guess) has to
+  // be handled before reaching it.
+  return actual.length === expected.length && timingSafeEqual(actual, expected);
+}
 
 export const dynamic = "force-dynamic";
 
@@ -17,8 +27,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "CRON_SECRET is not configured" }, { status: 500 });
   }
 
-  const authorization = request.headers.get("authorization");
-  if (authorization !== `Bearer ${secret}`) {
+  if (!isAuthorized(request.headers.get("authorization"), secret)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

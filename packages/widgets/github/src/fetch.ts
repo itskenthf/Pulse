@@ -3,10 +3,10 @@ import {
   fetchContributions,
   fetchRecentPullRequests,
 } from "@pulse/adapter-github";
-import { ensureWidgetRegistered, readProviderAccessToken } from "@pulse/database";
+import { ensureWidgetRegistered, readProviderAccessToken, readWidgetCache } from "@pulse/database";
 import type { WidgetFetchContext } from "@pulse/sdk";
 import { WIDGET_DESCRIPTION, WIDGET_ID, WIDGET_NAME } from "./constants";
-import type { GitHubData } from "./types";
+import { githubDataSchema, type GitHubData } from "./types";
 
 export async function fetchGitHubData(context: WidgetFetchContext): Promise<GitHubData> {
   await ensureWidgetRegistered(WIDGET_ID, WIDGET_NAME, WIDGET_DESCRIPTION);
@@ -21,12 +21,19 @@ export async function fetchGitHubData(context: WidgetFetchContext): Promise<GitH
     fetchActivitySummary(accessToken, context.signal),
     // Isolated: `pullRequestContributions` is new territory for this
     // codebase (see fetchRecentPullRequests' own doc comment) — a
-    // permission/scope error here degrades to no PR memories rather than
-    // failing the whole widget's refresh (stale heatmap/counts for every
-    // other user too, since this all runs on one shared cron tick).
-    fetchRecentPullRequests(accessToken, context.signal).catch((err: unknown) => {
+    // permission/scope error here degrades to the last known-good list
+    // rather than failing the whole widget's refresh (stale heatmap/counts
+    // for every other user too, since this all runs on one shared cron
+    // tick). Falling back to [] instead of the previous cache would make
+    // deriveGitHubMemories see every still-open PR as newly opened on the
+    // next successful refresh — a transient failure shouldn't be able to
+    // manufacture duplicate Timeline events.
+    fetchRecentPullRequests(accessToken, context.signal).catch(async (err: unknown) => {
       console.error("Failed to fetch GitHub pull requests:", err);
-      return [];
+      const cached = await readWidgetCache(context.userId, WIDGET_ID, githubDataSchema).catch(
+        () => null,
+      );
+      return cached?.data.recentPullRequests ?? [];
     }),
   ]);
 

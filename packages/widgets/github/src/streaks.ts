@@ -1,5 +1,22 @@
 import type { ContributionWeek } from "@pulse/adapter-github";
 
+// Matches @pulse/adapter-github's REFERENCE_TIME_ZONE (and
+// @pulse/widget-hero's HERO_TIME_ZONE) — duplicated as a literal rather
+// than imported, since the day.date values being compared against here
+// are already bucketed by GitHub's viewer-profile timezone, not UTC, so
+// computing "today" via a UTC date string could exclude the real most
+// recent day for several hours around midnight depending on the offset.
+const REFERENCE_TIME_ZONE = "Asia/Kuching";
+
+function todayDateString(today: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: REFERENCE_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(today);
+}
+
 /**
  * Current + longest streak, computed from the same daily data the heatmap
  * already renders — no extra API call. `weeks` now spans the full
@@ -18,7 +35,7 @@ export function computeStreaks(
   current: number;
   longest: number;
 } {
-  const todayStr = today.toISOString().slice(0, 10);
+  const todayStr = todayDateString(today);
   const days = weeks.flatMap((week) => week.days).filter((day) => day.date <= todayStr);
 
   let longest = 0;

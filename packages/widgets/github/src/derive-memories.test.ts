@@ -57,6 +57,55 @@ describe("deriveGitHubMemories", () => {
     ).toEqual([]);
   });
 
+  it("emits a memory for a new repo right after a month boundary, even though the counter reset lower", () => {
+    // 4 repos created in July; 1 so far in August. A plain 1 > 4
+    // comparison would miss this real new repo — periodStart changing
+    // means the previous month's total shouldn't be compared against.
+    const previous = data({
+      activitySummary: {
+        commitCount: 40,
+        repositoriesWithCommits: 3,
+        pullRequestsOpened: 5,
+        repositoriesCreated: 4,
+        periodStart: "2026-07-01T00:00:00Z",
+      },
+    });
+    const next = data({
+      activitySummary: {
+        commitCount: 2,
+        repositoriesWithCommits: 1,
+        pullRequestsOpened: 0,
+        repositoriesCreated: 1,
+        periodStart: "2026-08-01T00:00:00Z",
+      },
+    });
+
+    expect(deriveGitHubMemories(previous, next)).toEqual([{ title: "Created a new repository" }]);
+  });
+
+  it("emits nothing right after a month boundary when no repo was created in the new month yet", () => {
+    const previous = data({
+      activitySummary: {
+        commitCount: 40,
+        repositoriesWithCommits: 3,
+        pullRequestsOpened: 5,
+        repositoriesCreated: 4,
+        periodStart: "2026-07-01T00:00:00Z",
+      },
+    });
+    const next = data({
+      activitySummary: {
+        commitCount: 0,
+        repositoriesWithCommits: 0,
+        pullRequestsOpened: 0,
+        repositoriesCreated: 0,
+        periodStart: "2026-08-01T00:00:00Z",
+      },
+    });
+
+    expect(deriveGitHubMemories(previous, next)).toEqual([]);
+  });
+
   const pr = {
     id: "pr_1",
     number: 42,

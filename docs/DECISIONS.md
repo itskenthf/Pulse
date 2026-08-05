@@ -3791,3 +3791,22 @@ refreshes have likely been silently broken since the rename.
   domain rotation strictly requires, since a rotated/removed domain is
   already a dead URL wherever it's found, but done at explicit request
   for full removal.
+
+## 2026-08-05 — Sign-in restricted to a single owner GitHub account
+
+Pulse's GitHub OAuth had no allowlist: any GitHub account could sign in
+and get an account row created (though scoped `userId` reads mean they'd
+only ever see their own empty dashboard, never Ken's data). For a
+single-user personal app this was unnecessary open sign-up — every
+extra account is wasted Supabase/cron/API quota and surface area for no
+benefit, since Pulse isn't meant to support other users yet.
+
+Added a `signIn` callback in `packages/auth/src/config.ts` that rejects
+any GitHub profile whose `login` doesn't match the `OWNER_GITHUB_USERNAME`
+env var, before Auth.js creates an account. New env var registered in
+`turbo.json`'s `build.env` and `.env.example` per this repo's own
+env-var rule.
+
+Chose a single hardcoded username over a multi-user allowlist since only
+Ken uses Pulse today — revisit if/when Pulse ever needs to support a
+second real user.

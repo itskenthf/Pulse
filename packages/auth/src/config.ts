@@ -1,5 +1,6 @@
 import { SupabaseAdapter } from "@auth/supabase-adapter";
 import GitHub from "next-auth/providers/github";
+import type { GitHubProfile } from "next-auth/providers/github";
 import type { NextAuthConfig } from "next-auth";
 
 /**
@@ -24,6 +25,15 @@ export const authConfig: NextAuthConfig = {
   // inference if the deployment target ever changes.
   trustHost: true,
   callbacks: {
+    // Single-user app: reject anyone whose GitHub login isn't the owner's
+    // before Auth.js creates an account row for them — otherwise this is
+    // open sign-up to anyone with a GitHub account, per docs/DECISIONS.md.
+    signIn({ profile }) {
+      const ownerLogin = process.env.OWNER_GITHUB_USERNAME;
+      if (!ownerLogin) return false;
+      const githubLogin = (profile as GitHubProfile | undefined)?.login;
+      return githubLogin?.toLowerCase() === ownerLogin.toLowerCase();
+    },
     session({ session, user }) {
       session.user.id = user.id;
       return session;

@@ -3832,3 +3832,35 @@ itself (`cycleQuote`), same as before. A plain browser reload still shows
 the same cached quote; that's an existing, separate behavior (widgets
 never fetch at render time — see `docs/ARCHITECTURE.md`), not something
 this change touches.
+
+## 2026-08-06 — Security headers added; postcss/sharp dependency bumps
+
+A deliberate audit pass (prompted by three prior reactive security fixes —
+the live-URL log leak, the git history rewrite, and open GitHub OAuth
+sign-up) found two real gaps that hadn't been caught by anything else in
+the pipeline:
+
+- **No security headers at all.** `next.config.ts` was empty and there
+  was no `vercel.json` — no `X-Frame-Options`, no CSP, no
+  `Referrer-Policy`, no `Permissions-Policy`. Added all four via
+  `next.config.ts`'s `headers()`. The CSP's `script-src`/`style-src` keep
+  `'unsafe-inline'` rather than a nonce setup — Next's App Router injects
+  inline hydration/RSC payload scripts, and this repo uses plenty of
+  inline `style=""` attributes (heatmap.tsx's `cqw` calc,
+  refresh-all-title.tsx's mask-image), and nonce-based CSP needs
+  per-request middleware this app doesn't have yet. The other directives
+  (`connect-src 'self'`, `frame-ancestors 'none'`, `form-action 'self'`,
+  `object-src 'none'`) still meaningfully narrow the attack surface —
+  particularly `connect-src`, which blocks exfiltrating this single-user
+  app's personal data to an attacker's origin even without a strict
+  `script-src`. Verified with a headless-browser check against a real
+  `next start` server (Playwright, `securitypolicyviolation` listener):
+  zero CSP violations, zero console errors, sign-in page renders and
+  hydrates normally.
+- **Two dependency vulnerabilities** (`pnpm audit`): `postcss@8.5.20`
+  (moderate, GHSA-fxqj-rqcc-2cmp, incomplete-fix sourceMappingURL
+  handling — dev-only via `vite`/`@tailwindcss/postcss`) and
+  `sharp@0.34.5` (high, libvips CVEs, pulled in as one of two resolved
+  versions via Next's optional image-optimization dependency). Both
+  pinned to patched versions via root `package.json`'s `pnpm.overrides`.
+  `pnpm audit --prod` is clean after the bump.

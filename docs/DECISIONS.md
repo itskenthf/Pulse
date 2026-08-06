@@ -3810,3 +3810,25 @@ env-var rule.
 Chose a single hardcoded username over a multi-user allowlist since only
 Ken uses Pulse today — revisit if/when Pulse ever needs to support a
 second real user.
+
+## 2026-08-06 — Hero quote picking switched from random to sequential rotation
+
+`pickQuote` picked a random quote from `QUOTES`, excluding only the last 5
+shown. With a 30-quote list that's a small exclusion window relative to
+`Math.random()`'s natural clustering — in practice this read as "the same
+few quotes keep coming back," not as genuinely random, since nothing
+guaranteed even coverage of the list.
+
+Replaced the random pick with sequential rotation in list order (coffee →
+dev-humor → dark-humor → humor, per `quotes.ts`'s own grouping), wrapping
+back to the start after the last quote. `recentQuotes` (still `string[]`
+in `HeroData`'s schema for storage-shape stability) now holds just the
+single last-shown quote's text, used only to find where in `QUOTES` to
+resume from — not an anti-repeat exclusion list anymore.
+
+This only changes when a new quote is *picked* — the quote still only
+advances on a cron refresh, a manual "Refresh all," or clicking the quote
+itself (`cycleQuote`), same as before. A plain browser reload still shows
+the same cached quote; that's an existing, separate behavior (widgets
+never fetch at render time — see `docs/ARCHITECTURE.md`), not something
+this change touches.

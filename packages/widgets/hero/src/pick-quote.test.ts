@@ -3,29 +3,42 @@ import { pickQuote } from "./pick-quote";
 import { QUOTES } from "./quotes";
 
 describe("pickQuote", () => {
-  it("never returns a quote in the exclusion list when candidates remain", () => {
-    const recent = QUOTES.slice(0, 5).map((quote) => quote.text);
-    for (let i = 0; i < 20; i++) {
-      const result = pickQuote(recent);
-      expect(recent).not.toContain(result.text);
-    }
-  });
-
-  it("caps recentQuotes at 5 entries, most recent first", () => {
-    const recent = QUOTES.slice(0, 5).map((quote) => quote.text);
-    const result = pickQuote(recent);
-    expect(result.recentQuotes).toHaveLength(5);
-    expect(result.recentQuotes[0]).toBe(result.text);
-  });
-
-  it("falls back to the full list when exclusion would leave no candidates", () => {
-    const allTexts = QUOTES.map((quote) => quote.text);
-    const result = pickQuote(allTexts);
-    expect(allTexts).toContain(result.text);
-  });
-
-  it("returns a real quote when there's no history yet", () => {
+  it("starts from the first quote when there's no history yet", () => {
     const result = pickQuote([]);
-    expect(QUOTES.map((quote) => quote.text)).toContain(result.text);
+    expect(result.text).toBe(QUOTES[0]!.text);
+  });
+
+  it("advances to the next quote in list order", () => {
+    const result = pickQuote([QUOTES[3]!.text]);
+    expect(result.text).toBe(QUOTES[4]!.text);
+  });
+
+  it("wraps back to the first quote after the last one", () => {
+    const result = pickQuote([QUOTES[QUOTES.length - 1]!.text]);
+    expect(result.text).toBe(QUOTES[0]!.text);
+  });
+
+  it("restarts from the first quote when the last shown quote isn't in the list", () => {
+    const result = pickQuote(["a quote that no longer exists"]);
+    expect(result.text).toBe(QUOTES[0]!.text);
+  });
+
+  it("returns a single-entry recentQuotes holding just the picked quote", () => {
+    const result = pickQuote([QUOTES[0]!.text]);
+    expect(result.recentQuotes).toEqual([result.text]);
+  });
+
+  it("cycles through the entire list back to the start", () => {
+    let recent: string[] = [];
+    const seen: string[] = [];
+    for (let i = 0; i < QUOTES.length; i++) {
+      const result = pickQuote(recent);
+      seen.push(result.text);
+      recent = result.recentQuotes;
+    }
+    expect(seen).toEqual(QUOTES.map((quote) => quote.text));
+
+    const wrapped = pickQuote(recent);
+    expect(wrapped.text).toBe(QUOTES[0]!.text);
   });
 });

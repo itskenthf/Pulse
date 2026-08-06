@@ -3864,3 +3864,38 @@ the pipeline:
   versions via Next's optional image-optimization dependency). Both
   pinned to patched versions via root `package.json`'s `pnpm.overrides`.
   `pnpm audit --prod` is clean after the bump.
+
+## 2026-08-06 — Service worker was breaking third-party images (GitHub avatar, Steam cover art)
+
+Found while verifying the security-headers PR above: the profile avatar and
+Steam cover art weren't loading in production. DevTools console showed *"A
+ServiceWorker passed a promise to FetchEvent.respondWith() that resolved
+with non-Response value 'undefined'"* for both — not a CSP issue (verified
+clean response headers on both CDNs, no CSP violations fired).
+
+Root cause was in `apps/web/public/sw.js`'s `fetch` handler, unrelated to
+anything in the CSP PR: it intercepted *every* GET request, including
+cross-origin ones (GitHub avatar CDN, Steam CDN), applying the same
+cache-then-network-with-offline-fallback logic meant for the app shell.
+When the underlying `fetch()` to a third-party CDN rejected — cross-origin
+requests inside a service worker are more prone to this than same-origin
+ones — the code fell back to `cached`, which was `undefined` for a URL
+that had never been cached. Passing `undefined` to `respondWith()` is
+invalid and the browser kills the request outright.
+
+Fixed by having the fetch handler bail out immediately for any
+cross-origin request (`if (new URL(event.request.url).origin !==
+self.location.origin) return;`), letting the browser handle third-party
+resources natively — the SW was never meant to proxy those, only the app
+shell (`SHELL_URLS`). Also hardened the `.catch(() => cached)` fallback to
+`.catch(() => cached ?? Response.error())` as defense-in-depth for the
+same class of bug on a same-origin cache-miss. Bumped `CACHE_NAME` to
+`v2` so the new worker takes over cleanly on next load.
+
+Verified the fix's mechanism directly: simulated a rejected cross-origin
+fetch (Playwright route interception + `route.abort()`) against a
+minimal reproduction of the old vs. new `sw.js` — old crashed with the
+exact `respondWith(undefined)` error, new failed the request cleanly
+with a normal `net::ERR_FAILED` (letting the app's existing
+onError/fallback UI handle it, e.g. Steam's "No cover art" state) with
+no service-worker crash.

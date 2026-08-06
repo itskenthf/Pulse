@@ -1,26 +1,26 @@
 import { QUOTES } from "./quotes";
 
-const RECENT_QUOTES_LIMIT = 5;
-
 export interface QuotePick {
   text: string;
   recentQuotes: string[];
 }
 
 /**
- * Random pick excluding the last few shown quotes (not just the
- * immediately previous one) — with a small static list, excluding only
- * one quote still allows short A→B→A cycles that read as "it keeps
- * repeating." Falls back to the full list if the exclusion would leave no
- * candidates (a short list or an oversized history).
+ * Sequential rotation through QUOTES in list order (coffee → dev-humor →
+ * dark-humor → humor), wrapping back to the start once the list is
+ * exhausted — not random. `recentQuotes` holds just the last shown
+ * quote's text, used only to find where in the list to resume from; if
+ * it's missing or no longer in QUOTES (list edited, or first-ever pick),
+ * rotation restarts from the first quote.
  */
 export function pickQuote(recentQuotes: string[]): QuotePick {
-  const candidates = QUOTES.filter((quote) => !recentQuotes.includes(quote.text));
-  const pool = candidates.length > 0 ? candidates : QUOTES;
-  const pick = pool[Math.floor(Math.random() * pool.length)] ?? QUOTES[0]!;
+  const lastText = recentQuotes[0];
+  const lastIndex = lastText ? QUOTES.findIndex((quote) => quote.text === lastText) : -1;
+  const nextIndex = (lastIndex + 1) % QUOTES.length;
+  const pick = QUOTES[nextIndex]!;
 
   return {
     text: pick.text,
-    recentQuotes: [pick.text, ...recentQuotes].slice(0, RECENT_QUOTES_LIMIT),
+    recentQuotes: [pick.text],
   };
 }

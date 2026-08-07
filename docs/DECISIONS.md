@@ -3941,3 +3941,27 @@ widgets/rss` owns the card, `fetch.ts` wires them together).
 - Wired into `WidgetGrid` in place of the static placeholder, same
   position (Steam+RSS side column, stretching to fill remaining height
   below Steam) — no layout change, only the card's content became real.
+
+## 2026-08-07 — RSS: fixed title overflow; still missing Apple/Steam items
+
+Live check after merge (per the previous entry's caveat) found two
+issues:
+
+- **Long titles overflowed the card instead of truncating** — confirmed
+  with a real browser measurement (a title rendered 682px wide inside a
+  318px card). Root cause: `component.tsx`'s `<a>` wrapper is a
+  column-direction flex container with `items-start`, which sizes
+  children to their own content width (shrink-to-fit) rather than
+  stretching them to the container's width — so the `truncate` span had
+  nothing constraining its max-width for `overflow: hidden` to clip
+  against. Fixed by adding `w-full` to both spans; re-measured after the
+  fix (`scrollWidth 682 > clientWidth 300` — genuinely clipped, not just
+  visually similar).
+- **Apple and Steam produced zero items** — exactly the risk flagged
+  when this shipped (their feed URLs were unverified guesses). Added a
+  browser-like `User-Agent` header to the adapter's fetch — some feed
+  hosts (Apple plausibly among them) reject requests with no UA or an
+  obviously non-browser one — but this environment still can't reach
+  either domain to confirm it's the actual fix or the whole story. Real
+  URLs may need correcting in `RSS_SOURCES` once checked against a live
+  environment with normal internet access.

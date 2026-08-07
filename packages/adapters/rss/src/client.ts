@@ -51,9 +51,16 @@ function extractAtomLink(link: unknown): string {
  * instead of re-deriving this per feed.
  */
 export async function fetchFeed(url: string, signal?: AbortSignal): Promise<NormalizedFeed> {
+  // Some feed hosts reject requests with no User-Agent or an obviously
+  // non-browser one (a bare Node/undici default) — sending a normal
+  // browser-looking one avoids that class of false "feed is down".
   const response = await fetch(url, {
     signal,
-    headers: { Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml" },
+    headers: {
+      Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml",
+      "User-Agent":
+        "Mozilla/5.0 (compatible; PulseRSS/1.0; +https://github.com/itskenthf/Pulse)",
+    },
   });
   if (!response.ok) {
     throw new Error(`Feed request failed (${response.status}): ${url}`);

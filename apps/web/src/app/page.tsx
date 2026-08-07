@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { BookOpen, ListChecks, Rss } from "lucide-react";
+import { BookOpen, ListChecks } from "lucide-react";
 import { getAllWidgets, type Widget, type WidgetAction } from "@pulse/sdk";
 import { readWidgetCache, readWidgetSettings } from "@pulse/database";
 import { Skeleton, SPRING_PRESS, WidgetCard, WidgetErrorBoundary } from "@pulse/ui";
@@ -7,6 +7,7 @@ import { WIDGET_ID as GITHUB_WIDGET_ID } from "@pulse/widget-github";
 import { HERO_WIDGET_ID } from "@pulse/widget-hero";
 import { NOTES_WIDGET_ID } from "@pulse/widget-notes";
 import { NOTEBOOK_WIDGET_ID } from "@pulse/widget-notebook";
+import { WIDGET_ID as RSS_WIDGET_ID } from "@pulse/widget-rss";
 import { WIDGET_ID as STEAM_WIDGET_ID } from "@pulse/widget-steam";
 import { TASKS_WIDGET_ID } from "@pulse/widget-tasks";
 import { auth, signIn } from "@/auth";
@@ -213,6 +214,7 @@ function WidgetGrid({ userId }: { userId: string }) {
   const notebookWidget = nonHeroWidgets.find((widget) => widget.id === NOTEBOOK_WIDGET_ID);
   const githubWidget = nonHeroWidgets.find((widget) => widget.id === GITHUB_WIDGET_ID);
   const steamWidget = nonHeroWidgets.find((widget) => widget.id === STEAM_WIDGET_ID);
+  const rssWidget = nonHeroWidgets.find((widget) => widget.id === RSS_WIDGET_ID);
 
   const rowTopWidgets = [tasksWidget, notesWidget, notebookWidget].filter(
     (widget): widget is Widget => Boolean(widget),
@@ -254,16 +256,11 @@ function WidgetGrid({ userId }: { userId: string }) {
 
           <div className="flex min-w-0 flex-col gap-5 sm:gap-6 lg:row-span-2 lg:self-stretch">
             {steamWidget && <WidgetCell widget={steamWidget} userId={userId} resetKey={resetKey} />}
-            <div className="opacity-70 lg:flex-1 lg:[&>*]:h-full">
-              <WidgetCard
-                title="RSS"
-                icon={<Rss className="h-4 w-4" aria-hidden="true" />}
-                tag={{ label: "Coming soon", variant: "neutral" }}
-              >
-                Latest posts from your favorite blogs — planned for a future
-                release.
-              </WidgetCard>
-            </div>
+            {rssWidget && (
+              <div className="lg:flex-1 lg:[&>*]:h-full">
+                <WidgetCell widget={rssWidget} userId={userId} resetKey={resetKey} />
+              </div>
+            )}
           </div>
 
           <div className="opacity-70">

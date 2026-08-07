@@ -3899,3 +3899,45 @@ exact `respondWith(undefined)` error, new failed the request cleanly
 with a normal `net::ERR_FAILED` (letting the app's existing
 onError/fallback UI handle it, e.g. Steam's "No cover art" state) with
 no service-worker crash.
+
+## 2026-08-07 — RSS: real widget, replacing the "Coming soon" placeholder
+
+Built as a real `Widget` for the first time, following the Steam widget's
+exact shape (`packages/adapters/rss` owns the HTTP/parsing, `packages/
+widgets/rss` owns the card, `fetch.ts` wires them together).
+
+- **Fixed source list, no settings UI** — same reasoning as Hero's
+  fixed quote list: no per-user configuration exists yet, and building a
+  settings form for a single curated list would be scaffolding ahead of
+  need. `RSS_SOURCES` in `constants.ts` is the one place to add/remove
+  feeds. Sources are the four named in the 2026-07-26 placeholder entry:
+  GitHub Blog, OpenAI, Apple, Steam.
+- **RSS/Atom normalized to one shape** in the adapter (`fetchFeed`) —
+  feeds disagree on field names (`pubDate` vs `updated`/`published`,
+  `link` as a text node vs an Atom `<link href>` attribute), so every
+  caller deals with one `NormalizedFeedItem` shape instead of
+  re-deriving this per feed. `parseTagValue: false` on the XML parser
+  avoids a real footgun: a post literally titled e.g. "2026" would
+  otherwise get silently type-coerced to a number.
+- **Per-feed error isolation**, same pattern as Steam's fetch.ts: each
+  source is fetched and caught individually, so one dead/slow feed only
+  means fewer items, never an empty widget or a failed refresh for
+  every other source.
+- **No `deriveMemories` for v1** — kept deliberately minimal per the
+  "as long as it's reasonable, it's v1" scope given for this pass;
+  worth reconsidering once real usage shows whether "new post from X"
+  belongs on the Timeline.
+- **Feed URLs for OpenAI and Steam are best-effort, unverified.** This
+  environment's sandboxed network policy blocks all four source domains
+  outright (proxy-level 403, confirmed via `/__agentproxy/status`), so
+  none of the four could be fetched to confirm from here — not even the
+  ones later confirmed reliable. GitHub Blog (`github.blog/feed/`) and
+  Apple Newsroom (`apple.com/newsroom/rss-feed.rss`) are long-stable
+  official feeds I'm confident in; OpenAI's and Steam's URLs in
+  `constants.ts` are reasonable guesses that need a live check once
+  deployed — per-feed error isolation means a wrong URL degrades
+  quietly (fewer items, a logged server error) rather than breaking
+  anything, but they should still be corrected if wrong.
+- Wired into `WidgetGrid` in place of the static placeholder, same
+  position (Steam+RSS side column, stretching to fill remaining height
+  below Steam) — no layout change, only the card's content became real.

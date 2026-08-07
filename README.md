@@ -1,21 +1,16 @@
 # Pulse
 
-A personal dashboard for work, development, and everyday life. Why? I got tired of opening multiple apps every morning just to check GitHub, Spotify, Steam, the weather, and other daily apps/tools.
-
-So I decided to build one place for everything. Why not?
+A personal dashboard for work, development, and everyday life. Got tired of opening multiple apps every morning just to check GitHub, Steam, the weather, and other daily apps/tools. So I decided to build one place for everything for myself cause why not?
 
 ## Features
 
 - GitHub activity and repository insights
 - Steam recently played games
-- Spotify top listened songs
 - Weather
 - Tasks, Notes, Notebook
 - More widgets coming soon...
 
 ## About this project
-
-Pulse is a personal passion project that I build outside of work.
 
 I'm building Pulse in my spare time and using AI to help me along the way. AI helps me build faster, but it also occasionally suggests questionable ideas. Those usually don't make it into Pulse.
 

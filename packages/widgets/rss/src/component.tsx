@@ -24,10 +24,10 @@ export function RssComponent({
                 rel="noopener noreferrer"
                 className="flex min-h-11 w-full flex-col items-start justify-center gap-0.5 rounded-[4px] px-1 py-1 hover:bg-[color-mix(in_srgb,var(--color-accent)_8%,transparent)]"
               >
-                <span className="truncate text-sm font-medium text-[var(--foreground)]">
+                <span className="w-full truncate text-sm font-medium text-[var(--foreground)]">
                   {item.title}
                 </span>
-                <span className="truncate text-xs text-[var(--color-neutral-500)]">
+                <span className="w-full truncate text-xs text-[var(--color-neutral-500)]">
                   {item.sourceName} · {formatRelativeTime(item.publishedAt)}
                 </span>
               </a>

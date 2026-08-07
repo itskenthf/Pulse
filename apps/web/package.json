@@ -21,6 +21,7 @@
     "@pulse/widget-hero": "workspace:*",
     "@pulse/widget-notebook": "workspace:*",
     "@pulse/widget-notes": "workspace:*",
+    "@pulse/widget-rss": "workspace:*",
     "@pulse/widget-spotify": "workspace:*",
     "@pulse/widget-steam": "workspace:*",
     "@pulse/widget-tasks": "workspace:*",

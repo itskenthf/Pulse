@@ -45,7 +45,7 @@ export default async function SteamGamePage({
         </Link>
 
         <div className={`flex flex-col gap-6 ${RADIUS.card} p-6 ${glassClass("light")}`}>
-          <CoverArt appId={game.appId} name={game.name} />
+          <CoverArt appId={game.appId} name={game.name} coverArtUrl={game.coverArtUrl} />
 
           <div className="flex flex-1 flex-col gap-5">
             <h1 className="font-heading text-2xl font-semibold tracking-tight text-[var(--foreground)]">

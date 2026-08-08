@@ -113,6 +113,50 @@ export async function fetchLastPlayedMap(
   return map;
 }
 
+interface AppDetailsApiResponse {
+  [appId: string]: {
+    success?: boolean;
+    data?: {
+      header_image?: string;
+      capsule_image?: string;
+    };
+  };
+}
+
+/**
+ * Steam's public store metadata endpoint (no API key needed — it's the
+ * same data the store page itself reads). Used only for the real,
+ * currently-valid cover art URL: the two guessable CDN conventions
+ * (`header.jpg`, `capsule_616x353.jpg` — see @pulse/widget-steam's
+ * CoverArt) don't exist for every app, especially ones onboarded under
+ * Steam's newer asset pipeline, so guessing silently shows "No cover
+ * art" for a game that has real art, just not at that path. Returns
+ * null (not a thrown error) on any failure — cover art is decorative,
+ * not worth failing the whole widget refresh over.
+ */
+export async function fetchAppCoverArtUrl(
+  appId: number,
+  signal?: AbortSignal,
+): Promise<string | null> {
+  try {
+    const url = new URL("https://store.steampowered.com/api/appdetails");
+    url.searchParams.set("appids", String(appId));
+    url.searchParams.set("filters", "basic");
+
+    const response = await fetch(url, { cache: "no-store", signal });
+    if (!response.ok) return null;
+
+    const body = (await response.json()) as AppDetailsApiResponse;
+    const entry = body[String(appId)];
+    if (!entry?.success) return null;
+
+    return entry.data?.header_image ?? entry.data?.capsule_image ?? null;
+  } catch (err) {
+    console.error(`Steam appdetails fetch failed for appId ${appId}:`, err);
+    return null;
+  }
+}
+
 interface PlayerAchievementsApiResponse {
   playerstats?: {
     success?: boolean;

@@ -45,7 +45,7 @@ export function SteamComponent({
                 href={`/steam/${game.appId}`}
                 className="group flex min-w-0 flex-1 flex-col gap-1.5"
               >
-                <CoverArt appId={game.appId} name={game.name} />
+                <CoverArt appId={game.appId} name={game.name} coverArtUrl={game.coverArtUrl} />
                 <span className="truncate text-sm font-medium text-[var(--foreground)]">
                   {game.name}
                 </span>

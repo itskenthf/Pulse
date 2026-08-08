@@ -4040,3 +4040,28 @@ decides how many slots each tier gets, not interleaving order. Pure
 function, unit tested directly (5 cases: even split, backfill priority,
 crowding prevention, short-content fallback, edge cases) rather than
 only exercised indirectly through `fetch.ts`.
+
+## 2026-08-08 — Steam cover art: ask Steam's own API instead of guessing the CDN path
+
+Forza Horizon 6 kept showing "No cover art" even after the service
+worker fix (2026-08-06) resolved the actual loading bug — confirmed
+across several live checks. Root cause: `CoverArt` only ever guessed at
+two CDN path conventions (`header.jpg`, `capsule_616x353.jpg`), and
+neither exists for every app — Steam's newer asset pipeline doesn't
+always follow those exact paths, so a game with real cover art at a
+different path was silently shown as if it had none.
+
+Added `fetchAppCoverArtUrl` to `@pulse/adapter-steam` — calls Steam's
+public store metadata endpoint (`store.steampowered.com/api/appdetails`,
+no API key needed, same data the store page itself reads) for the
+game's real, currently-valid `header_image`/`capsule_image` URL,
+instead of constructing a guess. Returns `null` (not a thrown error) on
+any failure — cover art is decorative, not worth failing the widget
+refresh over, same reasoning as achievements.
+
+`CoverArt` now tries the real URL first, falling back to the two
+guessed conventions only if that fails or wasn't available (cache rows
+written before `coverArtUrl` existed, or Steam's appdetails call
+itself failed) — `coverArtUrlForAttempt`'s fallback-chain logic is
+exported and unit tested directly (5 cases covering both the
+real-URL-first and guess-only paths).

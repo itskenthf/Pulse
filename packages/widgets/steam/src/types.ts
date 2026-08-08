@@ -22,6 +22,12 @@ const steamGameSchema = z.object({
   /** null (not undefined) means "checked, this game has no achievements
    *  or the data isn't available" — distinct from "not yet fetched". */
   achievements: achievementSummarySchema.nullable(),
+  /** Real cover art URL from Steam's own store metadata (see
+   *  fetchAppCoverArtUrl) — null when Steam's appdetails call failed or
+   *  had nothing. `.optional()` so cache rows written before this field
+   *  existed still parse; CoverArt falls back to guessed CDN
+   *  conventions when this is null/undefined. */
+  coverArtUrl: z.string().nullable().optional(),
 });
 
 /**

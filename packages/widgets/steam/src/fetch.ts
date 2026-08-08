@@ -1,5 +1,6 @@
 import {
   fetchAchievementSummary,
+  fetchAppCoverArtUrl,
   fetchLastPlayedMap,
   fetchRecentlyPlayed,
 } from "@pulse/adapter-steam";
@@ -41,7 +42,7 @@ export async function fetchSteamData(context: WidgetFetchContext): Promise<Steam
   // games list there's nothing left to show regardless, so letting that
   // one propagate as a real widget-level error is the honest behavior,
   // not something to paper over with a fake empty result.
-  const [lastPlayedMap, achievementsList] = await Promise.all([
+  const [lastPlayedMap, achievementsList, coverArtUrls] = await Promise.all([
     fetchLastPlayedMap(apiKey, settings.steamId64, context.signal).catch((err) => {
       console.error("Steam last-played fetch failed:", err);
       return {} as Record<number, number>;
@@ -56,12 +57,16 @@ export async function fetchSteamData(context: WidgetFetchContext): Promise<Steam
         ),
       ),
     ),
+    // fetchAppCoverArtUrl already returns null (not a rejected promise)
+    // on any failure — see its own doc comment — so no .catch() needed.
+    Promise.all(topGames.map((game) => fetchAppCoverArtUrl(game.appId, context.signal))),
   ]);
 
   const games: SteamGame[] = topGames.map((game, index) => ({
     ...game,
     lastPlayedAt: lastPlayedMap[game.appId],
     achievements: achievementsList[index] ?? null,
+    coverArtUrl: coverArtUrls[index] ?? null,
   }));
 
   return {

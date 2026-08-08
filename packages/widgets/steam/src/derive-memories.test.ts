@@ -24,8 +24,8 @@ describe("deriveSteamMemories", () => {
   });
 
   it("emits a memory for a newly-appearing game", () => {
-    expect(deriveSteamMemories(null, data([game({ name: "Palworld" })]))).toEqual([
-      { title: "Started playing Palworld" },
+    expect(deriveSteamMemories(null, data([game({ appId: 1, name: "Palworld" })]))).toEqual([
+      { title: "Started playing Palworld", metadata: { appId: 1 } },
     ]);
   });
 
@@ -34,7 +34,7 @@ describe("deriveSteamMemories", () => {
     const next = data([game({ appId: 1, playtimeForeverMinutes: 100 })]);
 
     expect(deriveSteamMemories(previous, next)).toEqual([
-      { title: "Played Palworld", description: "40m this session" },
+      { title: "Played Palworld", description: "40m this session", metadata: { appId: 1 } },
     ]);
   });
 
@@ -43,7 +43,7 @@ describe("deriveSteamMemories", () => {
     const next = data([game({ appId: 1, playtimeForeverMinutes: 150 })]);
 
     expect(deriveSteamMemories(previous, next)).toEqual([
-      { title: "Played Palworld", description: "2.5h this session" },
+      { title: "Played Palworld", description: "2.5h this session", metadata: { appId: 1 } },
     ]);
   });
 

@@ -20,7 +20,7 @@ export function deriveSteamMemories(previous: SteamData | null, next: SteamData)
     const previousGame = previousGames.get(game.appId);
 
     if (!previousGame) {
-      events.push({ title: `Started playing ${game.name}` });
+      events.push({ title: `Started playing ${game.name}`, metadata: { appId: game.appId } });
       continue;
     }
 
@@ -30,7 +30,11 @@ export function deriveSteamMemories(previous: SteamData | null, next: SteamData)
         deltaMinutes < 60
           ? `${Math.round(deltaMinutes)}m this session`
           : `${(deltaMinutes / 60).toFixed(1)}h this session`;
-      events.push({ title: `Played ${game.name}`, description });
+      events.push({
+        title: `Played ${game.name}`,
+        description,
+        metadata: { appId: game.appId },
+      });
     }
   }
 

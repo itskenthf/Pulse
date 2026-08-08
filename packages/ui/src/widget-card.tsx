@@ -34,9 +34,11 @@ export interface WidgetCardProps {
  * Classical is a mono-accent system (see docs/DESIGN_SYSTEM.md) — every
  * widget's icon badge shares one outlined treatment now, so the old
  * per-widget glow-color `accent` prop (blue/green/indigo/sky) was dropped
- * rather than kept as a no-op.
+ * rather than kept as a no-op. Exported so other chrome that wants the
+ * same "outlined accent badge" treatment (e.g. Timeline's per-entry
+ * source icon) doesn't have to duplicate the class string.
  */
-const ACCENT_BADGE =
+export const ACCENT_BADGE =
   "border border-[var(--color-accent-300)] bg-[var(--color-accent-100)] text-[var(--color-accent-700)]";
 
 const TAG_VARIANT: Record<WidgetCardTagVariant, string> = {

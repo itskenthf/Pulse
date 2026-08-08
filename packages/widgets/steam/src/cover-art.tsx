@@ -79,7 +79,15 @@ export function CoverArt({
       ref={imgRef}
       src={coverArtUrlForAttempt(appId, coverArtUrl, attempt)}
       alt={name}
-      className={`aspect-[16/9] w-full ${RADIUS.chip} border border-[var(--color-divider)] object-cover transition-colors group-hover:border-[var(--color-accent)]`}
+      // object-contain, not object-cover: the real URL from Steam's
+      // appdetails API isn't guaranteed to be the same aspect ratio as
+      // the two guessed CDN conventions (which were both close to
+      // 16:9) — object-cover would crop it to fill the box regardless
+      // of its actual shape, which is what made Palworld/Forza Horizon 6
+      // look zoomed in once real cover art started loading. contain
+      // always shows the whole image, letterboxed into the fill color
+      // when the aspect ratio doesn't match exactly.
+      className={`aspect-[16/9] w-full ${RADIUS.chip} border border-[var(--color-divider)] bg-[var(--color-accent-100)] object-contain transition-colors group-hover:border-[var(--color-accent)]`}
       onError={handleFailure}
     />
   );

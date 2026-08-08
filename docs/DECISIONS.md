@@ -4065,3 +4065,50 @@ written before `coverArtUrl` existed, or Steam's appdetails call
 itself failed) — `coverArtUrlForAttempt`'s fallback-chain logic is
 exported and unit tested directly (5 cases covering both the
 real-URL-first and guess-only paths).
+
+## 2026-08-08 — Steam cover art zoomed in; switched object-cover to object-contain
+
+Once the real Steam-API cover art URL (above) started loading, both
+Palworld and Forza Horizon 6 looked "zoomed in" — cropped tight on the
+character/car, losing the surrounding image. The two previously-guessed
+CDN conventions (`header.jpg`, `capsule_616x353.jpg`) happen to be close
+to 16:9, so `object-cover`'s crop was barely noticeable; the real URL
+Steam's appdetails API returns isn't guaranteed to match that aspect
+ratio at all, and `object-cover` crops aggressively to fill the box
+regardless of the source's actual shape.
+
+Switched to `object-contain` (with the same neutral background used by
+the "No cover art" placeholder as letterbox fill) so the whole image is
+always visible, whatever aspect ratio Steam happens to return — avoids
+re-guessing at exact dimensions for a fix that would only hold for
+today's asset shapes.
+
+## 2026-08-08 — Timeline: fixed wrong timestamps and calendar-day grouping
+
+Two real bugs, both timezone-related:
+
+- `TIME_FORMAT` in `timeline/page.tsx` had no `timeZone` set, so it
+  rendered in the server's own timezone (UTC on Vercel) instead of
+  `HERO_TIME_ZONE` (Asia/Kuching, UTC+8) — every timestamp shown was 8
+  hours off from real local time. `HERO_TIME_ZONE` is now exported from
+  `@pulse/widget-hero`'s index and used directly (apps/web sits above
+  widgets in the dependency graph, so this isn't the "duplicate as a
+  literal" workaround adapters need — see `contributions.ts`'s comment
+  for why that one's different).
+- `groupMemoriesByRecency`'s Today/Yesterday bucketing compared raw
+  elapsed hours (`daysAgo <= 0` / `=== 1`), not calendar days — an entry
+  from earlier today could show as "Yesterday," or an entry from
+  yesterday as "Today," depending on what time of day "now" fell at.
+  Switched Today/Yesterday specifically to compare calendar-date
+  strings in `HERO_TIME_ZONE` (same `Intl.DateTimeFormat("en-CA", ...)`
+  pattern `contributions.ts` already uses for "today"). The coarser
+  Last Week/month buckets stay elapsed-time based — an off-by-one there
+  is far less noticeable than misclassifying "today" as "yesterday."
+  New test file covers both directions of the bug (an entry under 24
+  raw hours old that's a different calendar day, and one over the UTC
+  day boundary that's still today locally).
+
+Also added a short date (`Aug 8`) next to the time on every entry, by
+request — previously only the group header (Today/Yesterday/Last
+Week/month) gave any date context, which was ambiguous for the
+multi-day Last Week and month buckets.

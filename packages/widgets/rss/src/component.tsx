@@ -2,17 +2,25 @@ import { Rss } from "lucide-react";
 import { EmptyState, WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
 import { formatRelativeTime } from "./format";
-import type { RssData } from "./types";
+import { SettingsFormFields } from "./settings-form-fields";
+import type { RssData, RssSettings } from "./types";
 
 export function RssComponent({
   data,
+  settings,
   actions,
-}: WidgetRenderProps<RssData, Record<string, unknown>>) {
+}: WidgetRenderProps<RssData, RssSettings>) {
   return (
     <WidgetCard
       title="RSS"
       icon={<Rss className="h-4 w-4" aria-hidden="true" />}
-      action={<WidgetMenu id="rss" actions={actions} />}
+      action={
+        <WidgetMenu
+          id="rss"
+          actions={actions}
+          settingsFields={<SettingsFormFields settings={settings} />}
+        />
+      }
     >
       {data && data.items.length > 0 ? (
         <ul className="flex flex-col gap-1">

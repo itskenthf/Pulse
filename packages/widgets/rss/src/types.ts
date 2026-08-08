@@ -18,3 +18,17 @@ export const rssDataSchema = z.object({
 
 export type RssItem = z.infer<typeof rssItemSchema>;
 export type RssData = z.infer<typeof rssDataSchema>;
+
+export interface RssSource {
+  name: string;
+  url: string;
+  /** Lower sorts first. Items are grouped by this before being sorted
+   *  by recency within each tier — see fetch.ts's tier-building and
+   *  mix.ts's `mixByPriority` — not purely chronological across all
+   *  sources, by explicit request. */
+  priority: number;
+}
+
+export interface RssSettings {
+  sources: RssSource[];
+}

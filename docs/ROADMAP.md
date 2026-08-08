@@ -156,14 +156,17 @@ on building them in order:
    one quote per calendar day, so the "Shuffle" button is actually useful.
    A second clean confirmation of the normal fetch → cache → render
    pattern, alongside Clock's deliberate exception to it.
-2. [x] Quick launch — `packages/widgets/quick-launch`: up to 6
-   label+URL shortcut links, plain text (no favicons, per the minimal
-   preference — matches Quote's no-attribution stance), open in a new
-   tab. Fixed-slot settings form (6 label/URL field pairs, blank = unused)
-   rather than a dynamic add/remove list — same plain-form-fields pattern
-   every other widget uses, no new client-side array-editing UI needed.
-   Pure config, no adapter, no external call at all — `fetchData()` is
-   nominal like Clock's.
+2. [x, later removed] Quick launch — up to 6 label+URL shortcut links,
+   plain text (no favicons, per the minimal preference — matches Quote's
+   no-attribution stance), open in a new tab. Fixed-slot settings form (6
+   label/URL field pairs, blank = unused) rather than a dynamic add/remove
+   list — same plain-form-fields pattern every other widget uses, no new
+   client-side array-editing UI needed. Pure config, no adapter, no
+   external call at all — `fetchData()` was nominal like Clock's.
+   **Removed entirely 2026-07-26 by explicit request** — `packages/widgets/quick-launch`
+   no longer exists; see `docs/DECISIONS.md`'s matching-dated entry for
+   the full removal (no DB migration needed, since settings/cache are
+   generic and keyed by `widget_id`).
 3. [x] Spotify — `packages/widgets/spotify` + `packages/adapters/spotify`:
    top 5 tracks (medium-term/~6-month window), `user-top-read` scope only.
    Third OAuth-backed widget, and the first where the OAuth provider isn't

@@ -519,10 +519,13 @@ background) are superseded by `docs/DESIGN_SYSTEM.md` v2.0:
   a new per-game detail page (`apps/web/src/app/steam/[appId]`) rather
   than being crammed onto the card. Never fill empty space with an
   invented number.
-- Quick Launch is icon-only (no text labels), small fixed-size tiles
+- ~~Quick Launch is icon-only (no text labels), small fixed-size tiles
   (`h-11 w-11`, matching icon size rather than stretching to fill a grid
   cell) — each link's own favicon, fetched directly from its domain, with
-  a generic fallback icon on load failure.
+  a generic fallback icon on load failure.~~ Quick Launch was removed
+  entirely 2026-07-26 by explicit request — see `docs/DECISIONS.md`'s
+  matching-dated entry. This bullet is kept struck through rather than
+  deleted since it was live layout guidance while the widget existed.
 - Avoid adding more detail to mobile cards just because there's a full
   screen — keep cards content-appropriate per breakpoint rather than a
   uniformly shrunk desktop layout; extra detail belongs behind a

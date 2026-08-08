@@ -1,21 +1,34 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { auth, getAllWidgets, getWidget, ensureWidgetRegistered, writeWidgetSettings, refreshWidget, revalidatePath } =
-  vi.hoisted(() => ({
-    auth: vi.fn(),
-    getAllWidgets: vi.fn(),
-    getWidget: vi.fn(),
-    ensureWidgetRegistered: vi.fn(),
-    writeWidgetSettings: vi.fn(),
-    refreshWidget: vi.fn(),
-    revalidatePath: vi.fn(),
-  }));
+const {
+  auth,
+  getAllWidgets,
+  getWidget,
+  ensureWidgetRegistered,
+  writeWidgetSettings,
+  refreshWidget,
+  revalidatePath,
+  revalidateWidgetTag,
+} = vi.hoisted(() => ({
+  auth: vi.fn(),
+  getAllWidgets: vi.fn(),
+  getWidget: vi.fn(),
+  ensureWidgetRegistered: vi.fn(),
+  writeWidgetSettings: vi.fn(),
+  refreshWidget: vi.fn(),
+  revalidatePath: vi.fn(),
+  revalidateWidgetTag: vi.fn(),
+}));
 
 vi.mock("@/auth", () => ({ auth }));
 vi.mock("@pulse/sdk", () => ({ getAllWidgets, getWidget }));
 vi.mock("@pulse/database", () => ({ ensureWidgetRegistered, writeWidgetSettings }));
 vi.mock("@/lib/refresh-widget", () => ({ refreshWidget }));
 vi.mock("next/cache", () => ({ revalidatePath }));
+vi.mock("@/lib/widget-data-cache", () => ({
+  revalidateWidgetTag,
+  widgetSettingsTag: (userId: string, widgetId: string) => `widget-settings:${userId}:${widgetId}`,
+}));
 vi.mock("@/lib/register-widgets", () => ({}));
 
 const { refreshWidgetAction, refreshAllWidgetsAction, updateWidgetSettingsAction } =
@@ -182,6 +195,7 @@ describe("updateWidgetSettingsAction", () => {
     expect(ensureWidgetRegistered).toHaveBeenCalledWith("spotify", "Spotify");
     expect(writeWidgetSettings).toHaveBeenCalledWith("user-1", "spotify", { location: "Kuching" });
     expect(refreshWidget).toHaveBeenCalledWith("spotify", "user-1");
+    expect(revalidateWidgetTag).toHaveBeenCalledWith("widget-settings:user-1:spotify");
     expect(revalidatePath).toHaveBeenCalledWith("/");
     expect(result).toEqual({});
   });

@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { BookOpen, ListChecks } from "lucide-react";
 import { getAllWidgets, type Widget, type WidgetAction } from "@pulse/sdk";
-import { readWidgetCache, readWidgetSettings } from "@pulse/database";
 import { Skeleton, SPRING_PRESS, WidgetCard, WidgetErrorBoundary } from "@pulse/ui";
 import { WIDGET_ID as GITHUB_WIDGET_ID } from "@pulse/widget-github";
 import { HERO_WIDGET_ID } from "@pulse/widget-hero";
@@ -18,6 +17,7 @@ import { addTaskAction, deleteTaskAction, toggleTaskAction } from "./actions/tas
 import { refreshWidgetAction, updateWidgetSettingsAction } from "./actions/widgets";
 import { ProfileMenu } from "./profile-menu";
 import { RefreshAllTitle } from "./refresh-all-title";
+import { readCachedWidgetCache, readCachedWidgetSettings } from "@/lib/widget-data-cache";
 import "@/lib/register-widgets";
 
 /**
@@ -127,8 +127,8 @@ function Navbar({ session }: { session: { user?: SessionUser } | null }) {
  */
 async function WidgetSlot({ widget, userId }: { widget: Widget; userId: string }) {
   const [cached, settings] = await Promise.all([
-    readWidgetCache(userId, widget.id, widget.dataSchema),
-    readWidgetSettings(userId, widget.id),
+    readCachedWidgetCache(userId, widget.id, widget.refreshInterval, widget.dataSchema),
+    readCachedWidgetSettings(userId, widget.id, widget.refreshInterval),
   ]);
 
   const resolvedSettings = settings ?? widget.settings?.() ?? {};

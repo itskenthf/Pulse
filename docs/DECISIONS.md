@@ -4197,3 +4197,57 @@ Critical finding for the same symptom: no route had an instant
 Next.js-driven loading UI, so navigation sat frozen behind whatever
 `await`s the target page made (including the now-fast JWT `auth()`
 call) with zero visual feedback that a click had registered.
+
+## 2026-08-08 — Narrow per-widget cache invalidation, replacing the dashboard's full-reload-on-any-refresh behavior
+
+`PERFORMANCE_AUDIT.md`'s C3/H1 findings: `page.tsx`'s `WidgetSlot` reads
+every registered widget's cache + settings on every dashboard render (2
+Supabase queries × ~7 widgets = up to 14 round trips), and every refresh
+action (`refreshWidgetAction`, the notes/tasks/notebook/hero actions,
+`updateWidgetSettingsAction`) called `revalidatePath("/")` — which,
+since nothing cached those reads, meant refreshing *one* widget forced
+all ~14 round trips to re-run, not just the one that changed.
+
+Added `apps/web/src/lib/widget-data-cache.ts`: `readCachedWidgetCache`/
+`readCachedWidgetSettings` wrap `readWidgetCache`/`readWidgetSettings`
+in `unstable_cache`, tagged per `(userId, widgetId)`
+(`widget-cache:<userId>:<widgetId>` / `widget-settings:<userId>:<widgetId>`),
+with `revalidate` set to the widget's own declared `refreshInterval`
+(already a per-widget field on `Widget`, see packages/sdk/src/widget.ts)
+as a time-based safety net. `page.tsx`'s `WidgetSlot` now reads through
+these instead of calling `readWidgetCache`/`readWidgetSettings` directly.
+
+Rather than adding a `revalidateTag` call at every one of the many
+call sites that mutate a widget's cache (cron, every refresh action,
+every notes/tasks/notebook/hero write action), centralized it in
+`refreshWidget` itself (`apps/web/src/lib/refresh-widget.ts`) — every
+one of those call sites already calls `refreshWidget`, so adding one
+`revalidateWidgetTag(widgetCacheTag(userId, widgetId))` call there
+after the cache write covers all of them for free, including the cron
+route, which previously had no invalidation story at all for this new
+cache layer. `updateWidgetSettingsAction` additionally revalidates the
+settings tag directly, since `writeWidgetSettings` is a separate write
+`refreshWidget` doesn't know about. Existing `revalidatePath("/")`
+calls were kept as-is (still needed to tell the client's Router Cache
+to refetch the route) — this change is additive to that, not a
+replacement for it.
+
+Real snag: this installed Next.js version's `revalidateTag(tag)` type
+signature actually requires a second `profile` argument (part of a
+newer "Cache Components" caching model this app doesn't otherwise use
+anywhere — no `"use cache"` directive, no `cacheLife`/`cacheTag` calls,
+no `experimental.cacheComponents` in `next.config.ts`), so a bare
+single-argument call fails `tsc`. Added `revalidateWidgetTag` in
+`widget-data-cache.ts` as the one place that calls the real
+`revalidateTag(tag, "max")` with a comment explaining the required
+second argument doesn't change this app's actual behavior — it's a
+byproduct of this Next version's type surface, not a deliberate opt-in.
+
+Also confirmed no regression to the app's core freshness guarantee
+(every device reads the same cron-refreshed data — reference doc §4):
+the cron scheduler calls `refreshWidget` per `(user, widget)` exactly
+as before, so it now also revalidates each tag it touches; a dashboard
+visit picks up a background cron refresh either via that immediate
+invalidation or, worst case, within the widget's own `refreshInterval`
+via `unstable_cache`'s `revalidate` bound — never staler than the
+widget already accepted being stale for by design.

@@ -1,5 +1,6 @@
 import { getWidget } from "@pulse/sdk";
 import { readWidgetCache, writeMemories, writeWidgetCache } from "@pulse/database";
+import { revalidateWidgetTag, widgetCacheTag } from "./widget-data-cache";
 import "./register-widgets";
 
 /**
@@ -43,6 +44,13 @@ export async function refreshWidget(widgetId: string, userId: string): Promise<v
   ]);
 
   await writeWidgetCache(userId, widgetId, data, readAsOf);
+  // Narrow, per-widget invalidation — see widget-data-cache.ts's own doc
+  // comment for why this (not a page-wide revalidatePath) is what actually
+  // keeps a single widget's refresh from forcing every other widget's
+  // dashboard read to re-hit Supabase too. Every caller of refreshWidget
+  // (the cron scheduler, every manual refresh/settings-save action) gets
+  // this for free from this one call site.
+  revalidateWidgetTag(widgetCacheTag(userId, widgetId));
 
   const events = widget.deriveMemories?.(previous?.data ?? null, data) ?? [];
   if (events.length > 0) {

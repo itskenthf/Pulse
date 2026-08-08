@@ -16,7 +16,21 @@ export interface NormalizedFeed {
 // post literally called "2026") would otherwise get silently coerced to
 // a number by the parser's type-inference, which our string-shaped
 // normalization below isn't expecting.
-const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_", parseTagValue: false });
+//
+// stopNodes — some feeds (Steam's per-app news, in particular) pack a
+// full HTML-escaped post body into description/content fields, which
+// can contain thousands of entities in one node and trip
+// fast-xml-parser's anti-XML-bomb entity-expansion cap ("Entity
+// expansion limit exceeded: N > 1000"), failing the whole parse. We
+// never read those fields (only title/link/pubDate), so stopNodes tells
+// the parser to keep them as raw, un-decoded text instead of fully
+// processing their entities.
+const parser = new XMLParser({
+  ignoreAttributes: false,
+  attributeNamePrefix: "@_",
+  parseTagValue: false,
+  stopNodes: ["*.description", "*.summary", "*.content", "*.content:encoded"],
+});
 
 function toArray<T>(value: T | T[] | undefined): T[] {
   if (value === undefined) return [];

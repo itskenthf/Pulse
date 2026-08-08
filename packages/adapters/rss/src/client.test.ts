@@ -84,4 +84,36 @@ describe("fetchFeed", () => {
       "Unrecognized feed format",
     );
   });
+
+  it("parses an item whose description exceeds fast-xml-parser's entity-expansion cap", async () => {
+    // Reproduces the real failure hit against Steam's per-app news feed:
+    // "Entity expansion limit exceeded: N > 1000" from a huge
+    // HTML-escaped post body — a field this adapter never reads. `&lt;`
+    // and `&gt;` (unlike `&amp;`, which fast-xml-parser exempts from the
+    // count) are exactly what a feed embedding real HTML markup as
+    // escaped text produces in bulk — 600 escaped tag pairs clears the
+    // library's default 1000-expansion cap (1200 counted matches).
+    const heavyDescription = "&lt;p&gt;Patch notes&lt;/p&gt;".repeat(600);
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Heavy Feed</title>
+    <item>
+      <title>Patch notes</title>
+      <link>https://example.com/patch-notes</link>
+      <pubDate>Mon, 27 Jul 2026 12:00:00 GMT</pubDate>
+      <description>${heavyDescription}</description>
+    </item>
+  </channel>
+</rss>`;
+    mockFetchOnce(xml);
+    const feed = await fetchFeed("https://example.com/rss.xml");
+    expect(feed.items).toEqual([
+      {
+        title: "Patch notes",
+        link: "https://example.com/patch-notes",
+        publishedAt: new Date("2026-07-27T12:00:00Z").toISOString(),
+      },
+    ]);
+  });
 });

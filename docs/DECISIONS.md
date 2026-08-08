@@ -3977,3 +3977,30 @@ games actually tracked by the Steam widget's configured SteamID
 (Palworld `1623730`, Forza Horizon 6 `2483190` — same appIds
 `cover-art.tsx` already uses), by request. `RSS_SOURCES` is now 5
 entries instead of 4; `MAX_ITEMS` (6) is unchanged.
+
+## 2026-08-08 — RSS: fixed the real Steam parse failure (entity-expansion cap)
+
+Vercel's runtime logs (requested directly, since this sandbox can't reach
+any of the source domains) showed the actual error for both Steam
+sources: `Entity expansion limit exceeded: 3257 > 1000` /
+`1019 > 1000` — not a network/URL problem at all. Steam's per-app news
+feed embeds full HTML-escaped patch notes in its `description` field
+(`&lt;p&gt;...&lt;/p&gt;` etc.), which this adapter never reads (only
+`title`/`link`/`pubDate`) but `fast-xml-parser` still fully decodes by
+default — and its anti-XML-bomb safeguard caps total entity expansions
+per document at 1000, tripping on a single long patch-notes post.
+
+Traced the exact mechanism in `fast-xml-parser`'s source
+(`OrderedObjParser.js`): `&lt;`/`&gt;`/`&quot;`/`&apos;` count toward the
+cap, but `&amp;` is specially exempted (handled last, uncounted) — so an
+initial synthetic test using only `&amp;` passed even with the bug still
+present, a false-negative regression test. Rewrote it using escaped
+`&lt;p&gt;...&lt;/p&gt;` repetitions instead, confirmed it actually fails
+without the fix (`1200 > 1000`, same error class as production) and
+passes with it.
+
+Fixed via `stopNodes: ["*.description", "*.summary", "*.content",
+"*.content:encoded"]` on the parser — these are exactly the
+bulky-content fields this adapter never consumes, so telling the parser
+to keep them as raw, un-decoded text sidesteps the cap entirely for
+fields we don't need anyway.

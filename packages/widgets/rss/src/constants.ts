@@ -11,17 +11,20 @@ export interface RssSource {
 /**
  * Fixed source list for v1 — no settings UI, matching Hero's
  * no-settings pattern (see its constants.ts) since there's no per-user
- * configuration yet, just a curated set. Verified reachable from a
- * normal network; GitHub Blog and Apple Newsroom are long-stable
- * official feeds. OpenAI's and Steam's URLs are best-effort — this
- * sandbox's outbound network policy blocks all four domains outright,
- * so none could be fetched to confirm here. Worth a live check once
- * deployed (swap the url below if either turns up empty in the
- * server logs).
+ * configuration yet, just a curated set. GitHub Blog is confirmed
+ * working in production; OpenAI too. There's no single official "Steam
+ * blog" feed, so Steam's original guessed URL (feeds/news.xml, a plain
+ * 404) was replaced with Steam's real documented per-app news feed
+ * format (store.steampowered.com/feeds/news/app/<appid>/) for the two
+ * games actually tracked by the Steam widget's SteamID — see
+ * cover-art.tsx for the same two appIds. Apple's URL is still an
+ * unconfirmed guess (this sandbox can't reach any of these domains to
+ * verify) — worth a live check.
  */
 export const RSS_SOURCES: RssSource[] = [
   { name: "GitHub Blog", url: "https://github.blog/feed/" },
   { name: "OpenAI", url: "https://openai.com/news/rss.xml" },
   { name: "Apple", url: "https://www.apple.com/newsroom/rss-feed.rss" },
-  { name: "Steam", url: "https://store.steampowered.com/feeds/news.xml" },
+  { name: "Palworld", url: "https://store.steampowered.com/feeds/news/app/1623730/" },
+  { name: "Forza Horizon 6", url: "https://store.steampowered.com/feeds/news/app/2483190/" },
 ];

@@ -4148,3 +4148,52 @@ temporary preview route rendering `MemoryRow` against representative
 mock data across all four link cases (external, internal-with-metadata,
 internal-static, non-clickable) — screenshotted and DOM-inspected, then
 deleted; not left behind as a permanent route.
+
+## 2026-08-08 — Auth.js session strategy: database → JWT
+
+A performance audit (`PERFORMANCE_AUDIT.md`) identified `session: {
+strategy: "database" }` (`packages/auth/src/config.ts`) as the single
+largest contributor to a reported "every click has a small delay"
+symptom: with the database strategy, Auth.js's `auth()` — called on
+every page render and every server action, not just at sign-in — does a
+live Postgres round trip through `SupabaseAdapter` to validate the
+session token, every time.
+
+Switched to `session: { strategy: "jwt" }`. The `SupabaseAdapter` stays
+wired up unchanged — it still owns account/user persistence (GitHub
+OAuth linking, the `next_auth.users` row `readUserName`/
+`readProviderAccessToken` read from); only how a session is *validated*
+per request changes, from a DB lookup to a signed-cookie decrypt. Added
+a `jwt()` callback (`config.ts`) that persists the adapter-created
+user's `id` onto the token on initial sign-in — `session()` now reads
+`token.id` instead of the database-strategy-only `user` parameter it
+used to receive. `session.user.id`'s value and every consumer of it
+(every server action's `auth()` call, every page) is unchanged — only
+how that value gets there is different.
+
+The usual `declare module "next-auth/jwt" { interface JWT { id: string
+} }` augmentation (the documented way to type this) doesn't resolve
+under this repo's `moduleResolution: "Bundler"` setting — a real
+TypeScript limitation with ambient module augmentation for a subpath
+export, confirmed via `tsc --traceResolution` (the module resolves
+successfully as an *import*, but the augmentation checker still reports
+"cannot be found" — a known divergence between the two resolution paths
+under Bundler mode). Worked around by reading `token.id` as `unknown`
+and casting to `string` at its one consumption site in `session()`
+(`config.ts`) instead, with a comment pointing here; `types.ts` keeps a
+comment explaining why the augmentation was dropped rather than left as
+a silent gap.
+
+No new env vars — `AUTH_SECRET` (already required) is what signs/
+encrypts the JWT cookie under either strategy.
+
+Part of a broader implementation pass working through
+`IMPLEMENTATION_PLAN.md` (the master plan consolidating
+`PERFORMANCE_AUDIT.md`/`UX_AUDIT.md`/`ARCHITECTURE_AUDIT.md`/
+`FEATURE_GAP_REPORT.md`), landed alongside `loading.tsx` for every route
+(`apps/web/src/app/{loading,tasks/loading,notes/loading,notebook/loading,
+timeline/loading,steam/[appId]/loading}.tsx`) — the audit's other
+Critical finding for the same symptom: no route had an instant
+Next.js-driven loading UI, so navigation sat frozen behind whatever
+`await`s the target page made (including the now-fast JWT `auth()`
+call) with zero visual feedback that a click had registered.

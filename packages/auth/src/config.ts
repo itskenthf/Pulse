@@ -17,8 +17,17 @@ export const authConfig: NextAuthConfig = {
     secret: process.env.SUPABASE_SERVICE_ROLE_KEY as string,
   }),
   providers: [GitHub],
+  // JWT, not "database": a database session makes every `auth()` call —
+  // every page render, every server action — a live Postgres round trip
+  // just to check who's signed in. A signed JWT cookie is a pure decrypt,
+  // no DB call, and is the entire reason for this switch (see
+  // docs/DECISIONS.md and PERFORMANCE_AUDIT.md's C1). The adapter above
+  // stays wired up regardless of session strategy — it still owns
+  // account/user persistence (GitHub OAuth linking, the `next_auth.users`
+  // row `readUserName`/`readProviderAccessToken` read from) — only how a
+  // session is *validated* on each request changes.
   session: {
-    strategy: "database",
+    strategy: "jwt",
   },
   // Pulse is deployed on Vercel, which Auth.js already trusts by
   // convention — set explicitly so host-header handling doesn't rely on
@@ -34,8 +43,22 @@ export const authConfig: NextAuthConfig = {
       const githubLogin = (profile as GitHubProfile | undefined)?.login;
       return githubLogin?.toLowerCase() === ownerLogin.toLowerCase();
     },
-    session({ session, user }) {
-      session.user.id = user.id;
+    // `user` is only present on the initial sign-in call (the adapter's
+    // just-created/found DB user row) — persisting its id onto the token
+    // here is what lets `session()` below read it back on every
+    // subsequent request without touching the database.
+    jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    session({ session, token }) {
+      // `token.id` is set by the jwt() callback above; the underlying JWT
+      // type can't be augmented from this file (see types.ts's comment on
+      // why), so it's read back as `unknown` and cast here at its one
+      // consumption site instead.
+      session.user.id = token.id as string;
       return session;
     },
   },

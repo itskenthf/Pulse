@@ -5,12 +5,12 @@ import { createNotebookEntry, updateNotebookEntry } from "@pulse/database";
 import type { WidgetActionState } from "@pulse/sdk";
 import { NOTEBOOK_WIDGET_ID } from "@pulse/widget-notebook";
 import { auth } from "@/auth";
-import { refreshWidget } from "@/lib/refresh-widget";
+import { runWidgetWriteAction } from "@/lib/run-widget-write-action";
 
 /**
- * `addEntryAction` fires once per new entry (infrequent) and follows
- * actions/notes.ts's shape exactly: write → `refreshWidget` →
- * `revalidatePath("/")` + `revalidatePath("/notebook")`, so the new entry
+ * `addEntryAction` fires once per new entry (infrequent) and follows the
+ * shared `runWidgetWriteAction` shape (write → `refreshWidget` →
+ * `revalidatePath("/")` + `revalidatePath("/notebook")`), so the new entry
  * shows up on both surfaces right away. It also returns the created
  * entry's id so the client can upsert into it on later autosaves while
  * the box stays open.
@@ -19,35 +19,32 @@ import { refreshWidget } from "@/lib/refresh-widget";
  * potentially many times for one entry — so it deliberately skips
  * `refreshWidget` (a full fetchData + widget_cache write) and
  * `revalidatePath("/")` (which would re-render every widget on the
- * dashboard, not just this one). Doing that on every keystroke pause
- * made the whole page feel laggy while typing. The write is still fully
- * durable; the dashboard card's copy of this entry catches up via the
- * widget's 15-minute cron backstop or the next `addEntryAction`. Keeps
- * only the cheap `revalidatePath("/notebook")` so the full history page
- * stays reasonably fresh.
+ * dashboard, not just this one) — i.e. it deliberately does *not* use
+ * `runWidgetWriteAction`, which always does both. Doing that on every
+ * keystroke pause made the whole page feel laggy while typing. The write
+ * is still fully durable; the dashboard card's copy of this entry catches
+ * up via the widget's 15-minute cron backstop or the next
+ * `addEntryAction`. Keeps only the cheap `revalidatePath("/notebook")` so
+ * the full history page stays reasonably fresh.
  */
 
 export async function addEntryAction(
   _prevState: WidgetActionState,
   formData: FormData,
 ): Promise<WidgetActionState> {
-  const session = await auth();
-  if (!session?.user?.id) return { error: "Not signed in" };
-
-  const content = formData.get("content");
-  if (typeof content !== "string" || !content.trim()) {
-    return { error: "Entry can't be empty" };
-  }
-
-  try {
-    const entry = await createNotebookEntry(session.user.id, content);
-    await refreshWidget(NOTEBOOK_WIDGET_ID, session.user.id);
-    revalidatePath("/");
-    revalidatePath("/notebook");
-    return { entryId: entry.id };
-  } catch (err) {
-    return { error: err instanceof Error ? err.message : "Failed to save entry" };
-  }
+  return runWidgetWriteAction(formData, {
+    widgetId: NOTEBOOK_WIDGET_ID,
+    revalidatePaths: ["/", "/notebook"],
+    errorMessage: "Failed to save entry",
+    write: async (userId, formData) => {
+      const content = formData.get("content");
+      if (typeof content !== "string" || !content.trim()) {
+        return { error: "Entry can't be empty" };
+      }
+      const entry = await createNotebookEntry(userId, content);
+      return { entryId: entry.id };
+    },
+  });
 }
 
 export async function updateEntryAction(

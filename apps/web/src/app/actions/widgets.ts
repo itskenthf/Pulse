@@ -6,6 +6,7 @@ import type { WidgetActionState } from "@pulse/sdk";
 import { ensureWidgetRegistered, writeWidgetSettings } from "@pulse/database";
 import { auth } from "@/auth";
 import { refreshWidget } from "@/lib/refresh-widget";
+import { revalidateWidgetTag, widgetSettingsTag } from "@/lib/widget-data-cache";
 import "@/lib/register-widgets";
 
 export async function refreshWidgetAction(
@@ -94,6 +95,10 @@ export async function updateWidgetSettingsAction(
     // registers it) would otherwise fail the constraint.
     await ensureWidgetRegistered(widget.id, widget.name);
     await writeWidgetSettings(session.user.id, widgetId, settings);
+    // Narrow invalidation for the settings read itself — refreshWidget
+    // below already revalidates the cache-data tag centrally (see its own
+    // comment in refresh-widget.ts).
+    revalidateWidgetTag(widgetSettingsTag(session.user.id, widgetId));
     // Settings changed — refresh immediately so the new location shows up
     // without waiting for the next scheduled run.
     await refreshWidget(widgetId, session.user.id);

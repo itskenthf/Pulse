@@ -44,8 +44,6 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-cormorant-garamond);
   --font-body: var(--font-lora);
 }
@@ -63,4 +61,15 @@ body {
 h1, h2, h3, h4 {
   font-family: var(--font-heading);
   font-weight: 600;
+}
+
+/* docs/DESIGN_SYSTEM.md's Accessibility section: ":focus-visible as a 2px
+   solid accent-colored outline — never the browser default." Most controls
+   had no explicit focus style and fell back to each browser's own default
+   outline; this is the single baseline rule that was missing. Local
+   `focus-visible:` overrides in a few components (form inputs pairing it
+   with a border-color change) still apply on top of this. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }

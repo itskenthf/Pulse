@@ -1,14 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getWidget, readWidgetCache, writeWidgetCache, writeMemories } = vi.hoisted(() => ({
-  getWidget: vi.fn(),
-  readWidgetCache: vi.fn(),
-  writeWidgetCache: vi.fn(),
-  writeMemories: vi.fn(),
-}));
+const { getWidget, readWidgetCache, writeWidgetCache, writeMemories, revalidateWidgetTag } =
+  vi.hoisted(() => ({
+    getWidget: vi.fn(),
+    readWidgetCache: vi.fn(),
+    writeWidgetCache: vi.fn(),
+    writeMemories: vi.fn(),
+    revalidateWidgetTag: vi.fn(),
+  }));
 
 vi.mock("@pulse/sdk", () => ({ getWidget }));
 vi.mock("@pulse/database", () => ({ readWidgetCache, writeWidgetCache, writeMemories }));
+vi.mock("./widget-data-cache", () => ({
+  revalidateWidgetTag,
+  widgetCacheTag: (userId: string, widgetId: string) => `widget-cache:${userId}:${widgetId}`,
+}));
 // Side-effect-only import (registers every real widget) — irrelevant to
 // this test, which fully controls getWidget's return value.
 vi.mock("./register-widgets", () => ({}));
@@ -51,6 +57,11 @@ describe("refreshWidget", () => {
       { tasks: ["new"] },
       expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
     );
+
+    // Narrow, per-(user, widget) invalidation — not a page-wide revalidatePath
+    // — is what lets other widgets' dashboard reads keep serving from cache
+    // instead of re-hitting Supabase after this one widget's refresh.
+    expect(revalidateWidgetTag).toHaveBeenCalledWith("widget-cache:user-1:tasks");
   });
 
   it("derives and writes memories from the previous/new data pair", async () => {

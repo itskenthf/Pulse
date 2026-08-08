@@ -104,26 +104,34 @@ export function Heatmap({
             aria-label={`Contribution heatmap, ${year}`}
           >
             {weeks.flatMap((week) =>
-              week.days.map((day) => (
-                <div key={day.date} className="relative">
-                  <button
-                    type="button"
-                    onClick={() => toggle(day.date)}
-                    title={`${day.date}: ${day.count} contribution${day.count === 1 ? "" : "s"}`}
-                    className={`block h-full w-full rounded-[2px] ${LEVEL_CLASSES[day.level] ?? LEVEL_CLASSES[0]}`}
-                  />
-                  {openDate === day.date && (
-                    <div
-                      ref={popoverRef}
-                      role="tooltip"
-                      className={`absolute top-full left-1/2 z-10 mt-1 -translate-x-1/2 rounded-[4px] px-2 py-1 text-xs whitespace-nowrap text-[var(--foreground)] ${glassClass("light")}`}
-                    >
-                      {day.count} contribution{day.count === 1 ? "" : "s"} on{" "}
-                      {formatMonthDay(day.date)}
-                    </div>
-                  )}
-                </div>
-              )),
+              week.days.map((day) => {
+                const label = `${formatMonthDay(day.date)}: ${day.count} contribution${day.count === 1 ? "" : "s"}`;
+                const popoverId = `heatmap-popover-${day.date}`;
+                return (
+                  <div key={day.date} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => toggle(day.date)}
+                      title={`${day.date}: ${day.count} contribution${day.count === 1 ? "" : "s"}`}
+                      aria-label={label}
+                      aria-expanded={openDate === day.date}
+                      aria-describedby={openDate === day.date ? popoverId : undefined}
+                      className={`block h-full w-full rounded-[2px] ${LEVEL_CLASSES[day.level] ?? LEVEL_CLASSES[0]}`}
+                    />
+                    {openDate === day.date && (
+                      <div
+                        ref={popoverRef}
+                        id={popoverId}
+                        role="tooltip"
+                        className={`absolute top-full left-1/2 z-10 mt-1 -translate-x-1/2 rounded-[4px] px-2 py-1 text-xs whitespace-nowrap text-[var(--foreground)] ${glassClass("light")}`}
+                      >
+                        {day.count} contribution{day.count === 1 ? "" : "s"} on{" "}
+                        {formatMonthDay(day.date)}
+                      </div>
+                    )}
+                  </div>
+                );
+              }),
             )}
           </div>
         </div>

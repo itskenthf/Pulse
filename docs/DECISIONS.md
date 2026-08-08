@@ -4148,3 +4148,191 @@ temporary preview route rendering `MemoryRow` against representative
 mock data across all four link cases (external, internal-with-metadata,
 internal-static, non-clickable) — screenshotted and DOM-inspected, then
 deleted; not left behind as a permanent route.
+
+## 2026-08-08 — Auth.js session strategy: database → JWT
+
+A performance audit (`PERFORMANCE_AUDIT.md`) identified `session: {
+strategy: "database" }` (`packages/auth/src/config.ts`) as the single
+largest contributor to a reported "every click has a small delay"
+symptom: with the database strategy, Auth.js's `auth()` — called on
+every page render and every server action, not just at sign-in — does a
+live Postgres round trip through `SupabaseAdapter` to validate the
+session token, every time.
+
+Switched to `session: { strategy: "jwt" }`. The `SupabaseAdapter` stays
+wired up unchanged — it still owns account/user persistence (GitHub
+OAuth linking, the `next_auth.users` row `readUserName`/
+`readProviderAccessToken` read from); only how a session is *validated*
+per request changes, from a DB lookup to a signed-cookie decrypt. Added
+a `jwt()` callback (`config.ts`) that persists the adapter-created
+user's `id` onto the token on initial sign-in — `session()` now reads
+`token.id` instead of the database-strategy-only `user` parameter it
+used to receive. `session.user.id`'s value and every consumer of it
+(every server action's `auth()` call, every page) is unchanged — only
+how that value gets there is different.
+
+The usual `declare module "next-auth/jwt" { interface JWT { id: string
+} }` augmentation (the documented way to type this) doesn't resolve
+under this repo's `moduleResolution: "Bundler"` setting — a real
+TypeScript limitation with ambient module augmentation for a subpath
+export, confirmed via `tsc --traceResolution` (the module resolves
+successfully as an *import*, but the augmentation checker still reports
+"cannot be found" — a known divergence between the two resolution paths
+under Bundler mode). Worked around by reading `token.id` as `unknown`
+and casting to `string` at its one consumption site in `session()`
+(`config.ts`) instead, with a comment pointing here; `types.ts` keeps a
+comment explaining why the augmentation was dropped rather than left as
+a silent gap.
+
+No new env vars — `AUTH_SECRET` (already required) is what signs/
+encrypts the JWT cookie under either strategy.
+
+Part of a broader implementation pass working through
+`IMPLEMENTATION_PLAN.md` (the master plan consolidating
+`PERFORMANCE_AUDIT.md`/`UX_AUDIT.md`/`ARCHITECTURE_AUDIT.md`/
+`FEATURE_GAP_REPORT.md`), landed alongside `loading.tsx` for every route
+(`apps/web/src/app/{loading,tasks/loading,notes/loading,notebook/loading,
+timeline/loading,steam/[appId]/loading}.tsx`) — the audit's other
+Critical finding for the same symptom: no route had an instant
+Next.js-driven loading UI, so navigation sat frozen behind whatever
+`await`s the target page made (including the now-fast JWT `auth()`
+call) with zero visual feedback that a click had registered.
+
+## 2026-08-08 — Narrow per-widget cache invalidation, replacing the dashboard's full-reload-on-any-refresh behavior
+
+`PERFORMANCE_AUDIT.md`'s C3/H1 findings: `page.tsx`'s `WidgetSlot` reads
+every registered widget's cache + settings on every dashboard render (2
+Supabase queries × ~7 widgets = up to 14 round trips), and every refresh
+action (`refreshWidgetAction`, the notes/tasks/notebook/hero actions,
+`updateWidgetSettingsAction`) called `revalidatePath("/")` — which,
+since nothing cached those reads, meant refreshing *one* widget forced
+all ~14 round trips to re-run, not just the one that changed.
+
+Added `apps/web/src/lib/widget-data-cache.ts`: `readCachedWidgetCache`/
+`readCachedWidgetSettings` wrap `readWidgetCache`/`readWidgetSettings`
+in `unstable_cache`, tagged per `(userId, widgetId)`
+(`widget-cache:<userId>:<widgetId>` / `widget-settings:<userId>:<widgetId>`),
+with `revalidate` set to the widget's own declared `refreshInterval`
+(already a per-widget field on `Widget`, see packages/sdk/src/widget.ts)
+as a time-based safety net. `page.tsx`'s `WidgetSlot` now reads through
+these instead of calling `readWidgetCache`/`readWidgetSettings` directly.
+
+Rather than adding a `revalidateTag` call at every one of the many
+call sites that mutate a widget's cache (cron, every refresh action,
+every notes/tasks/notebook/hero write action), centralized it in
+`refreshWidget` itself (`apps/web/src/lib/refresh-widget.ts`) — every
+one of those call sites already calls `refreshWidget`, so adding one
+`revalidateWidgetTag(widgetCacheTag(userId, widgetId))` call there
+after the cache write covers all of them for free, including the cron
+route, which previously had no invalidation story at all for this new
+cache layer. `updateWidgetSettingsAction` additionally revalidates the
+settings tag directly, since `writeWidgetSettings` is a separate write
+`refreshWidget` doesn't know about. Existing `revalidatePath("/")`
+calls were kept as-is (still needed to tell the client's Router Cache
+to refetch the route) — this change is additive to that, not a
+replacement for it.
+
+Real snag: this installed Next.js version's `revalidateTag(tag)` type
+signature actually requires a second `profile` argument (part of a
+newer "Cache Components" caching model this app doesn't otherwise use
+anywhere — no `"use cache"` directive, no `cacheLife`/`cacheTag` calls,
+no `experimental.cacheComponents` in `next.config.ts`), so a bare
+single-argument call fails `tsc`. Added `revalidateWidgetTag` in
+`widget-data-cache.ts` as the one place that calls the real
+`revalidateTag(tag, "max")` with a comment explaining the required
+second argument doesn't change this app's actual behavior — it's a
+byproduct of this Next version's type surface, not a deliberate opt-in.
+
+Also confirmed no regression to the app's core freshness guarantee
+(every device reads the same cron-refreshed data — reference doc §4):
+the cron scheduler calls `refreshWidget` per `(user, widget)` exactly
+as before, so it now also revalidates each tag it touches; a dashboard
+visit picks up a background cron refresh either via that immediate
+invalidation or, worst case, within the widget's own `refreshInterval`
+via `unstable_cache`'s `revalidate` bound — never staler than the
+widget already accepted being stale for by design.
+
+## 2026-08-08 — Undo-able delete for Tasks and Notes
+
+`UX_AUDIT.md`'s M2 and `FEATURE_GAP_REPORT.md`'s #3 both flagged the
+same real risk: `TaskRow`'s delete button sits at the same 44×44px
+touch target right next to its checkbox, and deleted immediately with
+no confirmation or recovery — a plausible mis-tap during a rushed
+morning check permanently loses a task. Notes' delete (inside
+`NoteModal`) had the same instant, irreversible shape.
+
+Added `packages/ui/src/use-undoable-delete.ts` (`useUndoableDelete`,
+exported from `@pulse/ui`): clicking "Delete" no longer submits the
+real delete action — it starts a 5-second window showing an inline
+"Undo" affordance instead. If undone, nothing is ever submitted to the
+server; if the window elapses, the real delete form (kept mounted but
+hidden, via a `formRef`) is submitted via `requestSubmit()` — the same
+programmatic-submit pattern already used elsewhere in this codebase
+(`RefreshAllTitle`, `NotebookInput`). Deliberately client-only, no
+server-side "soft delete" — an undone delete simply never reaches the
+database. Wired into `TaskRow` (`packages/widgets/tasks/src/task-row.tsx`)
+and `NoteModal` (`packages/widgets/notes/src/note-modal.tsx`), the two
+places a user-authored item can be deleted today.
+
+One deliberate behavior worth naming: `NoteModal`'s pending-delete timer
+survives the modal being closed (Escape/backdrop) while the undo window
+is still open, since `NoteModal` itself stays mounted across `open`
+toggling (only `Modal`'s own rendered output is conditional) — closing
+the modal doesn't cancel the pending delete, matching how a
+Gmail-style "Undo Send" toast outlives navigating away from the
+compose window. Reopening the same note before the window elapses
+correctly shows the same pending "Undo" state, not the edit form.
+
+## 2026-08-08 — Removed the Habits/Reading "Coming soon" placeholder cards
+
+`UX_AUDIT.md`'s S1 and `FEATURE_GAP_REPORT.md`'s #9 both flagged the
+same thing: two full `WidgetCard`s reading "Coming soon" rendered on
+*every* dashboard visit, styled almost identically to real widgets
+(same card shell, icon badge, title treatment) just at reduced opacity
+— reading as broken widgets on first glance rather than intentionally
+unbuilt ones, and a permanent small reminder of unfinished work on a
+page whose whole design goal is calm and considered.
+
+Removed both cards from `apps/web/src/app/page.tsx`'s `WidgetGrid`
+(and the now-unused `BookOpen`/`ListChecks` icon imports) rather than
+redesigning them to read as more clearly provisional — matches the
+same "don't scaffold ahead of need" principle `CLAUDE.md` already
+applies to nav links, and both audits' first recommended option.
+Habits itself is unchanged in scope — still not started, still on the
+Phase 2 backlog (`docs/ROADMAP.md`) — only the placeholder UI is gone;
+`docs/ROADMAP.md` and `docs/PROJECT_REFERENCE.md` updated to say so
+rather than continuing to describe a card that no longer exists.
+
+## 2026-08-08 — Extracted the shared write-action shape (auth → write → refreshWidget → revalidate)
+
+`ARCHITECTURE_AUDIT.md`'s CD1 finding: every action in
+`actions/notes.ts` (3) and `actions/tasks.ts` (3), plus notebook's
+`addEntryAction`, hand-repeated the same five-line skeleton — auth
+check, parse/validate `formData`, `try { write(); refreshWidget(); }
+catch { return { error } }`, then `revalidatePath` for `"/"` and the
+widget's own history page. The code already knew it: `notes.ts`'s and
+`tasks.ts`'s own comments said "same shape as" the other file, pointing
+at each other instead of a shared implementation.
+
+Added `apps/web/src/lib/run-widget-write-action.ts`
+(`runWidgetWriteAction`): takes the widget id, the paths to revalidate,
+a fallback error message, and a `write(userId, formData)` callback that
+does only what's actually specific to that action — its own form
+parsing/validation and its own DB call. `write` returns `{ error }` to
+short-circuit before `refreshWidget`/revalidation run (a validation
+failure, not a write), or an object whose fields (e.g. notebook's
+`{ entryId }`) get merged into the final state on success. Rewired all
+7 call sites (`addTaskAction`/`toggleTaskAction`/`deleteTaskAction`,
+`addNoteAction`/`updateNoteAction`/`deleteNoteAction`,
+`addEntryAction`) to use it — cut roughly 60% of the code in
+`tasks.ts`/`notes.ts` with no behavior change (every existing test in
+`tasks.test.ts`/`notes.test.ts`/`notebook.test.ts` passed unmodified,
+since they mock `@/auth`/`@/lib/refresh-widget`/`next/cache` by module
+path, which the new helper still imports transitively).
+
+Deliberately NOT used by notebook's `updateEntryAction` (skips
+`refreshWidget`/`revalidatePath("/")` on every autosave keystroke pause
+by design — see that file's own comment) or hero's
+`cycleHeroQuoteAction` (skips the same, for the same reason, plus
+doesn't take `formData` at all) — both already documented, deliberate
+exceptions to the shape this helper standardizes, not oversights.

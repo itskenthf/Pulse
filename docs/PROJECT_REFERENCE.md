@@ -327,8 +327,10 @@ changes — the discipline is sequencing, not capability.
   (`packages/widgets/tasks`) writes to its own Supabase table; Notes and
   Notebook followed the same pattern for freeform content. See
   `docs/ROADMAP.md`.
-- Habit check-ins logged to `habits` — not started; Habits is still a
-  "Coming soon" placeholder card with no real logic behind it
+- Habit check-ins logged to `habits` — not started; the "Coming soon"
+  placeholder card (and its Reading counterpart) was removed from the
+  dashboard 2026-08-08 rather than left showing unfinished work on
+  every visit — see docs/DECISIONS.md
 - **Gate to move on:** write-back features feel reliable, not fragile — no
   data loss, no silent failures
 

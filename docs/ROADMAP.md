@@ -592,8 +592,9 @@ Phase 1 usage first. Real status:
 - [x] Freeform write-back content — Notes (titled, editable) and Notebook
   (untitled, autosaving stream) widgets, each with their own table and a
   full history page
-- [ ] Habit check-ins logged to `habits` — not started; Habits is still
-  just a "Coming soon" placeholder card
+- [ ] Habit check-ins logged to `habits` — not started; the "Coming
+  soon" placeholder card (and its Reading counterpart) was removed from
+  the dashboard 2026-08-08, not built — see docs/DECISIONS.md
 
 Focus-session start/stop (originally planned for this phase) was removed
 along with the rest of the focus-timer target — see the "Documentation

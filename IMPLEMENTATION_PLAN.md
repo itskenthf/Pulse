@@ -85,11 +85,12 @@ explicit sign-off, or net-new features rather than fixes:
   a real settings form (`settings.ts`/`settings-form-fields.tsx`,
   following Steam's existing pattern) instead of the fully hardcoded
   `RSS_SOURCES` list.
-- **UX K1/FEATURE #6 — keyboard shortcuts.** New interaction surface
-  (a shortcut-handling layer), not a fix — worth a dedicated pass with
-  its own discoverability design (e.g. a `?` help overlay), not bolted on.
-  Interpreted as new-feature scope, matching the failing "biggest impact
-  / lowest effort" ratio the phasing above prioritizes first.
+- ~~**UX K1/FEATURE #6 — keyboard shortcuts.**~~ **Partially done
+  2026-08-08** — see `docs/DECISIONS.md`'s matching entry. Scoped down
+  from a full palette to just one shortcut (`r`, global refresh) after
+  explicit discussion; `useKeyboardShortcut` (`@pulse/ui`) exists now as
+  the pattern to extend. Add-task/add-note shortcuts and any broader
+  `?`-triggered discoverability overlay remain deferred, not ruled out.
 - **PERF C4** — refresh actions blocking on live API calls. The audit
   itself concludes this is *expected, correct* behavior for an explicit
   refresh, not a bug — no change recommended.

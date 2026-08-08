@@ -27,3 +27,5 @@ export { Modal } from "./modal";
 export type { ModalProps } from "./modal";
 export { useUndoableDelete } from "./use-undoable-delete";
 export type { UseUndoableDeleteResult } from "./use-undoable-delete";
+export { useKeyboardShortcut } from "./use-keyboard-shortcut";
+export type { UseKeyboardShortcutOptions } from "./use-keyboard-shortcut";

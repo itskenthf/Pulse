@@ -35,7 +35,7 @@ export function TaskRow({
         />
       </form>
       <span
-        className={`flex-1 truncate text-sm ${
+        className={`flex-1 truncate text-sm transition-colors duration-150 ${
           task.completed
             ? "text-[var(--color-neutral-400)] line-through"
             : "text-[var(--foreground)]"

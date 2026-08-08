@@ -1,17 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Geist, Geist_Mono, Lora } from "next/font/google";
+import { Cormorant_Garamond, Lora } from "next/font/google";
 import "./globals.css";
 import { RegisterServiceWorker } from "./register-service-worker";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 const cormorantGaramond = Cormorant_Garamond({
   variable: "--font-cormorant-garamond",
@@ -51,7 +41,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${cormorantGaramond.variable} ${lora.variable} h-full antialiased`}
+      className={`${cormorantGaramond.variable} ${lora.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {children}

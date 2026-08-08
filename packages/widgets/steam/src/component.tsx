@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { EmptyState, WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
 import { CoverArt } from "./cover-art";
@@ -40,7 +41,7 @@ export function SteamComponent({
         data.games.length > 0 ? (
           <div className="flex flex-row gap-3">
             {data.games.map((game) => (
-              <a
+              <Link
                 key={game.appId}
                 href={`/steam/${game.appId}`}
                 className="group flex min-w-0 flex-1 flex-col gap-1.5"
@@ -49,7 +50,7 @@ export function SteamComponent({
                 <span className="truncate text-sm font-medium text-[var(--foreground)]">
                   {game.name}
                 </span>
-              </a>
+              </Link>
             ))}
           </div>
         ) : (

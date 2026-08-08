@@ -14,8 +14,12 @@
     "@supabase/supabase-js": "^2.110.7",
     "zod": "^3.24.1"
   },
+  "peerDependencies": {
+    "react": "^19"
+  },
   "devDependencies": {
     "@types/node": "^22",
+    "@types/react": "^19",
     "typescript": "^5.7.3",
     "vitest": "^4.1.10"
   }

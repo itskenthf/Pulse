@@ -1,4 +1,5 @@
 import { CheckSquare } from "lucide-react";
+import Link from "next/link";
 import { WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
 import type { TaskWidgetActions } from "./actions";
@@ -15,12 +16,12 @@ export function TasksComponent({
       action={<WidgetMenu id="tasks" actions={actions} />}
       compact
       footer={
-        <a
+        <Link
           href="/tasks"
           className="text-sm font-medium text-[var(--color-accent)] hover:underline"
         >
           View all →
-        </a>
+        </Link>
       }
     >
       <AddTaskForm action={actions.addTask} />

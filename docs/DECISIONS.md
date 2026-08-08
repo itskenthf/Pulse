@@ -4004,3 +4004,22 @@ Fixed via `stopNodes: ["*.description", "*.summary", "*.content",
 bulky-content fields this adapter never consumes, so telling the parser
 to keep them as raw, un-decoded text sidesteps the cap entirely for
 fields we don't need anyway.
+
+## 2026-08-08 — RSS: source priority tiers, replacing pure chronological merge
+
+By request, once Steam's per-game feeds were confirmed working: game
+news (Palworld, Forza Horizon 6) should always show before Apple news,
+which should always show before GitHub Blog — not just whichever source
+happened to post most recently. Dropped OpenAI as a source entirely (no
+longer wanted).
+
+Added a `priority` number to each `RssSource` in `constants.ts` (lower
+sorts first); `fetch.ts`'s merge now sorts by `(priority, then
+publishedAt desc)` instead of a single global chronological sort across
+all sources — items are grouped into tiers first, recency only breaks
+ties within a tier.
+
+Apple's own newsroom feed was never confirmed reachable (flagged as an
+open question in the 2026-08-07 entries) — replaced with two
+established, high-confidence Apple-focused blog feeds (9to5Mac,
+MacRumors) instead of continuing to guess at Apple's own URL.

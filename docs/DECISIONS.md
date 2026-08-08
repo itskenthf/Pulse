@@ -4023,3 +4023,20 @@ Apple's own newsroom feed was never confirmed reachable (flagged as an
 open question in the 2026-08-07 entries) — replaced with two
 established, high-confidence Apple-focused blog feeds (9to5Mac,
 MacRumors) instead of continuing to guess at Apple's own URL.
+
+## 2026-08-08 — RSS: capped per-tier so game news can't crowd out everything
+
+Live check after the priority-tier change above surfaced the obvious
+consequence: Palworld/Forza Horizon 6 alone had 6+ recent posts, so the
+`MAX_ITEMS` cap was entirely full of game news — Apple and GitHub never
+got a slot at all, even though they were "next" in priority.
+
+Added `mix.ts`'s `mixByPriority` — an even soft cap per tier
+(`maxItems / tier count`, rounded up; 2 each for 3 tiers at
+`MAX_ITEMS = 6`) applied first, with any tier's unused capacity handed
+to higher-priority tiers before lower ones. Output stays grouped by
+tier (game news block, then Apple block, then GitHub block) — this only
+decides how many slots each tier gets, not interleaving order. Pure
+function, unit tested directly (5 cases: even split, backfill priority,
+crowding prevention, short-content fallback, edge cases) rather than
+only exercised indirectly through `fetch.ts`.

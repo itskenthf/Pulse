@@ -4302,3 +4302,37 @@ Habits itself is unchanged in scope — still not started, still on the
 Phase 2 backlog (`docs/ROADMAP.md`) — only the placeholder UI is gone;
 `docs/ROADMAP.md` and `docs/PROJECT_REFERENCE.md` updated to say so
 rather than continuing to describe a card that no longer exists.
+
+## 2026-08-08 — Extracted the shared write-action shape (auth → write → refreshWidget → revalidate)
+
+`ARCHITECTURE_AUDIT.md`'s CD1 finding: every action in
+`actions/notes.ts` (3) and `actions/tasks.ts` (3), plus notebook's
+`addEntryAction`, hand-repeated the same five-line skeleton — auth
+check, parse/validate `formData`, `try { write(); refreshWidget(); }
+catch { return { error } }`, then `revalidatePath` for `"/"` and the
+widget's own history page. The code already knew it: `notes.ts`'s and
+`tasks.ts`'s own comments said "same shape as" the other file, pointing
+at each other instead of a shared implementation.
+
+Added `apps/web/src/lib/run-widget-write-action.ts`
+(`runWidgetWriteAction`): takes the widget id, the paths to revalidate,
+a fallback error message, and a `write(userId, formData)` callback that
+does only what's actually specific to that action — its own form
+parsing/validation and its own DB call. `write` returns `{ error }` to
+short-circuit before `refreshWidget`/revalidation run (a validation
+failure, not a write), or an object whose fields (e.g. notebook's
+`{ entryId }`) get merged into the final state on success. Rewired all
+7 call sites (`addTaskAction`/`toggleTaskAction`/`deleteTaskAction`,
+`addNoteAction`/`updateNoteAction`/`deleteNoteAction`,
+`addEntryAction`) to use it — cut roughly 60% of the code in
+`tasks.ts`/`notes.ts` with no behavior change (every existing test in
+`tasks.test.ts`/`notes.test.ts`/`notebook.test.ts` passed unmodified,
+since they mock `@/auth`/`@/lib/refresh-widget`/`next/cache` by module
+path, which the new helper still imports transitively).
+
+Deliberately NOT used by notebook's `updateEntryAction` (skips
+`refreshWidget`/`revalidatePath("/")` on every autosave keystroke pause
+by design — see that file's own comment) or hero's
+`cycleHeroQuoteAction` (skips the same, for the same reason, plus
+doesn't take `formData` at all) — both already documented, deliberate
+exceptions to the shape this helper standardizes, not oversights.

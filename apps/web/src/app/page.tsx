@@ -1,7 +1,6 @@
 import { Suspense } from "react";
-import { BookOpen, ListChecks } from "lucide-react";
 import { getAllWidgets, type Widget, type WidgetAction } from "@pulse/sdk";
-import { Skeleton, SPRING_PRESS, WidgetCard, WidgetErrorBoundary } from "@pulse/ui";
+import { Skeleton, SPRING_PRESS, WidgetErrorBoundary } from "@pulse/ui";
 import { WIDGET_ID as GITHUB_WIDGET_ID } from "@pulse/widget-github";
 import { HERO_WIDGET_ID } from "@pulse/widget-hero";
 import { NOTES_WIDGET_ID } from "@pulse/widget-notes";
@@ -182,13 +181,16 @@ function WidgetCell({
  * - Row 1: Tasks, Notes, Notebook (Ken's own daily-input widgets).
  *   Notebook (the 3rd item) spans both columns only at the `sm` (2-col)
  *   breakpoint, reverting to one track at `lg`.
- * - Row 2+3: GitHub, a Steam+RSS side column, then Habits and Reading.
- *   GitHub spans 2 of 3 columns at `lg` so its edges align with Row 1's
- *   tracks. The side column spans both grid rows at `lg` (running the
- *   full height of GitHub plus the Habits/Reading row below it), with
- *   RSS stretching to fill any remaining height below Steam. Below `lg`
- *   there's no 3rd column, so these four items just auto-flow through
+ * - Row 2: GitHub, plus a Steam+RSS side column. GitHub spans 2 of 3
+ *   columns at `lg` so its edges align with Row 1's tracks. The side
+ *   column spans both grid rows at `lg` (running the full height of
+ *   GitHub), with RSS stretching to fill any remaining height below
+ *   Steam. Below `lg` there's no 3rd column, so these auto-flow through
  *   the grid in DOM order.
+ *
+ * Habits/Reading "Coming soon" placeholder cards were removed
+ * 2026-08-08 — see docs/DECISIONS.md's entry for why (unfinished
+ * placeholders shown on every visit, no real logic behind them).
  *
  * Spotify is intentionally not looked up/rendered here — see
  * docs/DECISIONS.md. It stays registered (so its cache still refreshes
@@ -261,27 +263,6 @@ function WidgetGrid({ userId }: { userId: string }) {
                 <WidgetCell widget={rssWidget} userId={userId} resetKey={resetKey} />
               </div>
             )}
-          </div>
-
-          <div className="opacity-70">
-            <WidgetCard
-              title="Habits"
-              icon={<ListChecks className="h-4 w-4" aria-hidden="true" />}
-              tag={{ label: "Coming soon", variant: "neutral" }}
-            >
-              A daily checklist — water, exercise, reading, meditation — is
-              planned for a future release.
-            </WidgetCard>
-          </div>
-          <div className="opacity-70">
-            <WidgetCard
-              title="Reading"
-              icon={<BookOpen className="h-4 w-4" aria-hidden="true" />}
-              tag={{ label: "Coming soon", variant: "neutral" }}
-            >
-              Track your current book and reading streak — planned for a
-              future release.
-            </WidgetCard>
           </div>
         </div>
       </div>

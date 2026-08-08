@@ -1,8 +1,9 @@
 "use client";
 
 import { useActionState, useRef } from "react";
-import { Trash2 } from "lucide-react";
+import { Undo2, Trash2 } from "lucide-react";
 import type { WidgetAction, WidgetActionState } from "@pulse/sdk";
+import { useUndoableDelete } from "@pulse/ui";
 import type { Task } from "./types";
 
 const initialState: WidgetActionState = {};
@@ -17,8 +18,27 @@ export function TaskRow({
   deleteAction: WidgetAction;
 }) {
   const [, toggleFormAction, isToggling] = useActionState(toggleAction, initialState);
-  const [, deleteFormAction, isDeleting] = useActionState(deleteAction, initialState);
+  const [, deleteFormAction] = useActionState(deleteAction, initialState);
   const toggleFormRef = useRef<HTMLFormElement>(null);
+  const { pending: pendingDelete, requestDelete, undo, formRef: deleteFormRef } = useUndoableDelete();
+
+  if (pendingDelete) {
+    return (
+      <div className="flex items-center justify-between gap-2 py-1.5 text-sm text-[var(--color-neutral-500)]">
+        <span className="truncate">&ldquo;{task.title}&rdquo; deleted</span>
+        <button
+          type="button"
+          onClick={undo}
+          className="flex min-h-11 shrink-0 items-center gap-1.5 px-2 text-sm font-medium text-[var(--color-accent)] hover:underline"
+        >
+          <Undo2 className="h-3.5 w-3.5" aria-hidden="true" /> Undo
+        </button>
+        <form ref={deleteFormRef} action={deleteFormAction} className="hidden">
+          <input type="hidden" name="taskId" value={task.id} />
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-2 py-1.5">
@@ -43,17 +63,14 @@ export function TaskRow({
       >
         {task.title}
       </span>
-      <form action={deleteFormAction}>
-        <input type="hidden" name="taskId" value={task.id} />
-        <button
-          type="submit"
-          disabled={isDeleting}
-          aria-label={`Delete "${task.title}"`}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--color-neutral-400)] hover:bg-current/10 hover:text-red-600 disabled:opacity-50"
-        >
-          <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-        </button>
-      </form>
+      <button
+        type="button"
+        onClick={requestDelete}
+        aria-label={`Delete "${task.title}"`}
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--color-neutral-400)] hover:bg-current/10 hover:text-red-600"
+      >
+        <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+      </button>
     </div>
   );
 }

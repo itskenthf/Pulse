@@ -4251,3 +4251,54 @@ visit picks up a background cron refresh either via that immediate
 invalidation or, worst case, within the widget's own `refreshInterval`
 via `unstable_cache`'s `revalidate` bound — never staler than the
 widget already accepted being stale for by design.
+
+## 2026-08-08 — Undo-able delete for Tasks and Notes
+
+`UX_AUDIT.md`'s M2 and `FEATURE_GAP_REPORT.md`'s #3 both flagged the
+same real risk: `TaskRow`'s delete button sits at the same 44×44px
+touch target right next to its checkbox, and deleted immediately with
+no confirmation or recovery — a plausible mis-tap during a rushed
+morning check permanently loses a task. Notes' delete (inside
+`NoteModal`) had the same instant, irreversible shape.
+
+Added `packages/ui/src/use-undoable-delete.ts` (`useUndoableDelete`,
+exported from `@pulse/ui`): clicking "Delete" no longer submits the
+real delete action — it starts a 5-second window showing an inline
+"Undo" affordance instead. If undone, nothing is ever submitted to the
+server; if the window elapses, the real delete form (kept mounted but
+hidden, via a `formRef`) is submitted via `requestSubmit()` — the same
+programmatic-submit pattern already used elsewhere in this codebase
+(`RefreshAllTitle`, `NotebookInput`). Deliberately client-only, no
+server-side "soft delete" — an undone delete simply never reaches the
+database. Wired into `TaskRow` (`packages/widgets/tasks/src/task-row.tsx`)
+and `NoteModal` (`packages/widgets/notes/src/note-modal.tsx`), the two
+places a user-authored item can be deleted today.
+
+One deliberate behavior worth naming: `NoteModal`'s pending-delete timer
+survives the modal being closed (Escape/backdrop) while the undo window
+is still open, since `NoteModal` itself stays mounted across `open`
+toggling (only `Modal`'s own rendered output is conditional) — closing
+the modal doesn't cancel the pending delete, matching how a
+Gmail-style "Undo Send" toast outlives navigating away from the
+compose window. Reopening the same note before the window elapses
+correctly shows the same pending "Undo" state, not the edit form.
+
+## 2026-08-08 — Removed the Habits/Reading "Coming soon" placeholder cards
+
+`UX_AUDIT.md`'s S1 and `FEATURE_GAP_REPORT.md`'s #9 both flagged the
+same thing: two full `WidgetCard`s reading "Coming soon" rendered on
+*every* dashboard visit, styled almost identically to real widgets
+(same card shell, icon badge, title treatment) just at reduced opacity
+— reading as broken widgets on first glance rather than intentionally
+unbuilt ones, and a permanent small reminder of unfinished work on a
+page whose whole design goal is calm and considered.
+
+Removed both cards from `apps/web/src/app/page.tsx`'s `WidgetGrid`
+(and the now-unused `BookOpen`/`ListChecks` icon imports) rather than
+redesigning them to read as more clearly provisional — matches the
+same "don't scaffold ahead of need" principle `CLAUDE.md` already
+applies to nav links, and both audits' first recommended option.
+Habits itself is unchanged in scope — still not started, still on the
+Phase 2 backlog (`docs/ROADMAP.md`) — only the placeholder UI is gone;
+`docs/ROADMAP.md` and `docs/PROJECT_REFERENCE.md` updated to say so
+rather than continuing to describe a card that no longer exists.

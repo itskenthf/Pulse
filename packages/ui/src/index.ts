@@ -25,3 +25,5 @@ export { EmptyState } from "./empty-state";
 export type { EmptyStateProps } from "./empty-state";
 export { Modal } from "./modal";
 export type { ModalProps } from "./modal";
+export { useUndoableDelete } from "./use-undoable-delete";
+export type { UseUndoableDeleteResult } from "./use-undoable-delete";

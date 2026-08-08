@@ -1,9 +1,10 @@
 import { fetchFeed } from "@pulse/adapter-rss";
-import { ensureWidgetRegistered } from "@pulse/database";
+import { ensureWidgetRegistered, readWidgetSettings } from "@pulse/database";
 import type { WidgetFetchContext } from "@pulse/sdk";
-import { MAX_ITEMS, RSS_SOURCES, WIDGET_DESCRIPTION, WIDGET_ID, WIDGET_NAME } from "./constants";
+import { MAX_ITEMS, WIDGET_DESCRIPTION, WIDGET_ID, WIDGET_NAME } from "./constants";
 import { mixByPriority } from "./mix";
-import type { RssData, RssItem } from "./types";
+import { defaultRssSettings } from "./settings";
+import type { RssData, RssItem, RssSettings } from "./types";
 
 /**
  * Each source is fetched and caught individually — one dead/slow feed
@@ -15,8 +16,17 @@ import type { RssData, RssItem } from "./types";
 export async function fetchRssData(context: WidgetFetchContext): Promise<RssData> {
   await ensureWidgetRegistered(WIDGET_ID, WIDGET_NAME, WIDGET_DESCRIPTION);
 
+  // Unlike Steam's SteamID (no sensible default exists), the curated
+  // source list already IS a sensible default — falls back to it rather
+  // than requiring a settings save first, so RSS keeps working exactly
+  // as it did before this widget had settings at all, with the settings
+  // form as an opt-in override rather than a requirement.
+  const settings =
+    (await readWidgetSettings<RssSettings>(context.userId, WIDGET_ID)) ?? defaultRssSettings;
+  const sources = settings.sources;
+
   const perSource = await Promise.all(
-    RSS_SOURCES.map(async (source): Promise<RssItem[]> => {
+    sources.map(async (source): Promise<RssItem[]> => {
       try {
         const feed = await fetchFeed(source.url, context.signal);
         return feed.items.map((item) => ({
@@ -32,16 +42,18 @@ export async function fetchRssData(context: WidgetFetchContext): Promise<RssData
     }),
   );
 
-  const priorities = [...new Set(RSS_SOURCES.map((source) => source.priority))].sort(
+  const priorities = [...new Set(sources.map((source) => source.priority))].sort(
     (a, b) => a - b,
   );
   const tiers = priorities.map((priority) =>
-    RSS_SOURCES.flatMap((source, index) => (source.priority === priority ? perSource[index]! : []))
+    sources
+      .flatMap((source, index) => (source.priority === priority ? perSource[index]! : []))
       .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()),
   );
 
   // Grouped by source priority first (game news, then Apple blogs, then
-  // GitHub, per RSS_SOURCES), recency breaking ties within a tier — but
+  // GitHub, per the default source list — or whatever the user's own
+  // settings now specify), recency breaking ties within a tier — but
   // capped per tier (see mix.ts) so a prolific tier can't crowd out
   // every other source entirely.
   const items = mixByPriority(tiers, MAX_ITEMS);

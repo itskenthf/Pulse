@@ -80,10 +80,11 @@ explicit sign-off, or net-new features rather than fixes:
   design-reference-governed and Claude must not change layout/visual
   decisions unilaterally. Flagging for a dedicated, explicitly-approved
   pass, not bundling into this one.
-- **FEATURE #4 — RSS settings UI.** A net-new feature (settings form +
-  `widget_settings` wiring for a widget that currently has none), not a
-  fix to existing behavior. Sizable enough to deserve its own reviewed
-  change.
+- ~~**FEATURE #4 — RSS settings UI.**~~ **Done 2026-08-08** — see
+  `docs/DECISIONS.md`'s matching entry. `packages/widgets/rss` now has
+  a real settings form (`settings.ts`/`settings-form-fields.tsx`,
+  following Steam's existing pattern) instead of the fully hardcoded
+  `RSS_SOURCES` list.
 - **UX K1/FEATURE #6 — keyboard shortcuts.** New interaction surface
   (a shortcut-handling layer), not a fix — worth a dedicated pass with
   its own discoverability design (e.g. a `?` help overlay), not bolted on.

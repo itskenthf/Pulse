@@ -4336,3 +4336,49 @@ by design — see that file's own comment) or hero's
 `cycleHeroQuoteAction` (skips the same, for the same reason, plus
 doesn't take `formData` at all) — both already documented, deliberate
 exceptions to the shape this helper standardizes, not oversights.
+
+## 2026-08-08 — RSS: real settings UI, replacing the fully hardcoded v1 source list
+
+`FEATURE_GAP_REPORT.md`'s #4 finding: `RSS_SOURCES` (`constants.ts`) was
+the entire source list, hardcoded, with an explicit "no settings UI —
+just a curated set" comment. Real project history already showed this
+costing a code-change-and-redeploy cycle every time the list needed a
+tweak — dropping OpenAI, replacing a broken Apple feed URL, adding
+priority tiers, adding a per-tier cap (see this doc's own 2026-08-08
+RSS entries above) — every one of those was a deploy, where every other
+configurable widget already has a normal in-app Settings form.
+
+Added real settings, following Steam's existing pattern exactly
+(`settings.ts`'s default + `parseSettingsForm`, `settings-form-fields.tsx`,
+wired into `widget.ts`/`component.tsx`) — no shell changes needed, since
+`page.tsx`'s `WidgetSlot` already wires `updateSettings` generically
+whenever a widget declares `parseSettingsForm`:
+
+- `RssSource`/`RssSettings` moved from `constants.ts` into `types.ts`
+  (mirroring where `SteamSettings` lives) — `constants.ts` keeps the
+  old hardcoded list, renamed `DEFAULT_RSS_SOURCES`, now used only as
+  the seeded default rather than the sole source of truth.
+- **Fixed-slot form** (`source1Name`/`source1Url`/`source1Priority` …
+  `source6…`, `MAX_SOURCE_SLOTS = 6`) rather than a dynamic add/remove
+  list — same plain-form-fields convention every other widget with
+  settings already uses (Steam's SteamID field, and historically Quick
+  Launch's 6 label/URL slots before its removal), so no new client-side
+  array-editing UI was needed. A slot with both name and URL blank is
+  treated as unused; one of the two filled and the other blank is
+  rejected as a mistake, not silently dropped. At least one filled slot
+  is required.
+- **Deliberately does NOT require a settings save before the widget
+  works**, unlike Steam's SteamID (which has no sensible default).
+  `fetchRssData` falls back to `defaultRssSettings` (the same curated
+  list as before) when nothing's been saved yet — the existing curated
+  list already *is* a sensible default, so settings are an opt-in
+  override, not a new required setup step. RSS keeps working exactly as
+  it did before this widget had settings at all.
+- `parseRssSettingsForm` validates each filled slot's URL with the
+  built-in `URL` constructor (rejecting anything that doesn't parse or
+  isn't http(s)) and requires priority to be a positive integer when
+  given (defaults to `1` when blank) — unit tested directly
+  (`settings.test.ts`, 11 cases: valid single/multi-slot parsing,
+  blank-slot skipping, whitespace trimming, half-filled-slot rejection,
+  invalid URL, non-http(s) scheme, invalid priority, fully-empty-form
+  rejection, and slots beyond the fixed count being ignored).

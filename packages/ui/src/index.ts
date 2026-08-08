@@ -1,4 +1,4 @@
-export { WidgetCard } from "./widget-card";
+export { ACCENT_BADGE, WidgetCard } from "./widget-card";
 export type { WidgetCardProps, WidgetCardTag, WidgetCardTagVariant } from "./widget-card";
 export { cardShellClass } from "./card-shell";
 export type { CardShellOptions } from "./card-shell";

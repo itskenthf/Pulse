@@ -4112,3 +4112,39 @@ Also added a short date (`Aug 8`) next to the time on every entry, by
 request — previously only the group header (Today/Yesterday/Last
 Week/month) gave any date context, which was ambiguous for the
 multi-day Last Week and month buckets.
+
+## 2026-08-08 — Timeline: per-source icons, clickable entries, per-day counts
+
+By request, four presentation-only additions to the M1 Timeline page
+(`docs/MEMORY_ROADMAP.md`) — deliberately stopping short of M2's actual
+daily/weekly rollups, which are their own milestone:
+
+- **Per-source icon badge** on every entry, reusing each widget's own
+  icon component (`GitHubIcon`/`SteamIcon`/`SpotifyIcon`, newly exported
+  from their packages' `index.ts`) in the same outlined accent-badge
+  treatment `WidgetCard` uses — `ACCENT_BADGE` exported from
+  `@pulse/ui` rather than duplicating the class string. Notebook/Notes/
+  Tasks use their existing lucide icons directly (no dedicated icon
+  component in those packages to reuse).
+- **Small source label** under each entry's description (e.g. "GitHub",
+  "Steam") — same source→label mapping as the icon, in
+  `apps/web/src/lib/memory-sources.tsx`.
+- **Clickable entries where a real link exists**: GitHub PR memories
+  already stored `metadata.url`; added `metadata.appId` to Steam's
+  `deriveSteamMemories` so its entries can link to `/steam/[appId]`.
+  Notebook/Notes/Tasks link to their list pages (no per-item detail page
+  exists for those). Spotify has no page to link to, so its entries stay
+  plain — `memoryHref()` returns `null` and the row renders as a `div`,
+  not a link. External links (GitHub) use a plain `<a target="_blank">`;
+  internal ones use `next/link`'s `Link`, matching how this same file
+  already links back to the dashboard. `memoryHref`/`isExternalHref`
+  are pure functions, unit tested directly (9 cases).
+- **Per-day count** in each group header (`TODAY · 4`) — cheap, gives a
+  sense of how busy a day was without needing real summarization.
+
+Verified the row rendering (icon badge sizing, source label, date/time,
+clickable-vs-plain rows resolving to the right element/href) with a
+temporary preview route rendering `MemoryRow` against representative
+mock data across all four link cases (external, internal-with-metadata,
+internal-static, non-clickable) — screenshotted and DOM-inspected, then
+deleted; not left behind as a permanent route.

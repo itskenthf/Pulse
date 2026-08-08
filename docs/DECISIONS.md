@@ -3965,3 +3965,15 @@ issues:
   either domain to confirm it's the actual fix or the whole story. Real
   URLs may need correcting in `RSS_SOURCES` once checked against a live
   environment with normal internet access.
+
+## 2026-08-07 — RSS: replaced the guessed "Steam" source with real per-game feeds
+
+Live check confirmed the User-Agent header didn't fix Steam (Apple still
+unconfirmed either way). There's no single official "Steam blog" feed —
+the original `feeds/news.xml` guess was a plain 404. Swapped it for
+Steam's real, documented per-app news feed format
+(`store.steampowered.com/feeds/news/app/<appid>/`), pointed at the two
+games actually tracked by the Steam widget's configured SteamID
+(Palworld `1623730`, Forza Horizon 6 `2483190` — same appIds
+`cover-art.tsx` already uses), by request. `RSS_SOURCES` is now 5
+entries instead of 4; `MAX_ITEMS` (6) is unchanged.

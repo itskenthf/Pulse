@@ -3,10 +3,23 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { listMemories } from "@pulse/database";
 import { EmptyState } from "@pulse/ui";
+import { HERO_TIME_ZONE } from "@pulse/widget-hero";
 import { auth } from "@/auth";
 import { groupMemoriesByRecency } from "@/lib/group-memories";
 
-const TIME_FORMAT = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" });
+// timeZone: without it, this renders in the server's own timezone
+// (UTC on Vercel) instead of the reference timezone the rest of the
+// app uses for "now" — see HERO_TIME_ZONE.
+const TIME_FORMAT = new Intl.DateTimeFormat("en-US", {
+  timeZone: HERO_TIME_ZONE,
+  hour: "numeric",
+  minute: "2-digit",
+});
+const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
+  timeZone: HERO_TIME_ZONE,
+  month: "short",
+  day: "numeric",
+});
 
 export default async function TimelinePage() {
   const session = await auth();
@@ -48,6 +61,7 @@ export default async function TimelinePage() {
                           {memory.title}
                         </span>
                         <span className="shrink-0 text-xs text-[var(--color-neutral-400)]">
+                          {DATE_FORMAT.format(new Date(memory.createdAt))} ·{" "}
                           {TIME_FORMAT.format(new Date(memory.createdAt))}
                         </span>
                       </div>

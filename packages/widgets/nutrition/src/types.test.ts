@@ -23,6 +23,16 @@ describe("nutritionDataSchema", () => {
     expect(nutritionDataSchema.safeParse({ ...validData, history: [] }).success).toBe(true);
   });
 
+  it("rejects a cache row written before the history field existed", () => {
+    // A widget data contract changing across a deploy is expected to
+    // surface as a parse failure (see Widget.dataSchema's doc comment in
+    // @pulse/sdk) — refresh-widget.ts's own resilience to this failure
+    // (not this schema) is what makes such a row self-heal on the next
+    // refresh; see refresh-widget.test.ts.
+    const { history: _history, ...withoutHistory } = validData;
+    expect(nutritionDataSchema.safeParse(withoutHistory).success).toBe(false);
+  });
+
   it("rejects a row missing a required field", () => {
     const { fetchedAt: _fetchedAt, ...withoutFetchedAt } = validData;
     expect(nutritionDataSchema.safeParse(withoutFetchedAt).success).toBe(false);

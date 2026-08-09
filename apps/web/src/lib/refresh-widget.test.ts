@@ -113,6 +113,30 @@ describe("refreshWidget", () => {
     expect(writeWidgetCache).toHaveBeenCalled();
   });
 
+  it("treats a previous cache read that fails schema validation as no previous data, rather than failing the refresh", async () => {
+    const deriveMemories = vi.fn().mockReturnValueOnce([]);
+    const fetchData = vi.fn().mockResolvedValueOnce({ tasks: [] });
+    getWidget.mockReturnValueOnce({ id: "tasks", fetchData, deriveMemories });
+    readWidgetCache.mockRejectedValueOnce(
+      new Error('Cached data for widget "tasks" no longer matches its expected shape: ...'),
+    );
+    writeWidgetCache.mockResolvedValueOnce(undefined);
+
+    await expect(refreshWidget("tasks", "user-1")).resolves.toBeUndefined();
+
+    expect(deriveMemories).toHaveBeenCalledWith(null, { tasks: [] });
+    // The whole point: a stale/incompatible previous row must not stop the
+    // fresh, schema-compliant data from being written — otherwise nothing
+    // could ever replace the incompatible row and the widget stays broken
+    // forever, not just until the next refresh.
+    expect(writeWidgetCache).toHaveBeenCalledWith(
+      "user-1",
+      "tasks",
+      { tasks: [] },
+      expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
+    );
+  });
+
   it("propagates a failing fetchData instead of writing a cache row for it", async () => {
     const fetchData = vi.fn().mockRejectedValueOnce(new Error("GitHub API rate limited"));
     getWidget.mockReturnValueOnce({ id: "github", fetchData });

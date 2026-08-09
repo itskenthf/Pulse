@@ -35,11 +35,24 @@ export async function refreshWidget(widgetId: string, userId: string): Promise<v
   // Captured before either read starts — see writeWidgetCache's readAsOf
   // doc comment for why this guards against a concurrent stale write.
   const readAsOf = new Date().toISOString();
-  // `previous` (used below for deriveMemories) doesn't depend on
+  // `previous` (used below only for deriveMemories) doesn't depend on
   // fetchData's result or vice versa — reading both concurrently instead
-  // of sequentially roughly halves this function's own latency.
+  // of sequentially roughly halves this function's own latency. Its read
+  // is validated through the widget's own dataSchema, so a widget whose
+  // data contract changed across a deploy can find its *own* previously
+  // written row no longer parses (see Widget.dataSchema's doc comment in
+  // @pulse/sdk) — caught and treated as "no previous data" rather than
+  // failing the whole refresh, same "best-effort, never regress the real
+  // refresh" principle as the memory write below. Without this, that
+  // parse failure would otherwise block every future refresh permanently
+  // (cron included): nothing could ever write a schema-compliant row to
+  // replace the stale one, since this same read runs before fetchData/
+  // writeWidgetCache on every attempt.
   const [previous, data] = await Promise.all([
-    readWidgetCache(userId, widgetId, widget.dataSchema),
+    readWidgetCache(userId, widgetId, widget.dataSchema).catch((err) => {
+      console.error(`Failed to read previous cache for widget "${widgetId}":`, err);
+      return null;
+    }),
     widget.fetchData({ userId, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) }),
   ]);
 

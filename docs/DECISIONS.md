@@ -4660,3 +4660,46 @@ Four concrete additions, each scoped to what was actually asked:
   source of truth for *which* meal is done; the bar is only an
   at-a-glance read, not a replacement (the mockup showed both options;
   this keeps both rather than dropping the individual toggles).
+
+## 2026-08-09 — Fixed refreshWidget permanently blocking on a stale previous-cache read
+
+Real bug hit in production right after the progress-bars entry above
+shipped: adding `history` as a required field to `nutritionDataSchema`
+broke parsing of the Nutrition cache row written before that deploy,
+surfacing as "Nutrition is unavailable" — expected, and the card's own
+copy says "it'll retry on the next refresh." It didn't. `refreshWidget`
+(`apps/web/src/lib/refresh-widget.ts`) reads the *previous* cached row
+(via the widget's own `dataSchema`, only used for `deriveMemories`
+diffing) in the same `Promise.all` as calling `fetchData` — so that
+read's parse failure rejected the whole function *before*
+`fetchData`/`writeWidgetCache` ever ran. Every refresh attempt
+(manual, cron) re-read the same stale, still-incompatible row and
+failed the same way — nothing could ever write a fresh, compliant row
+to replace it. Not self-healing, contrary to what the ErrorState text
+promises, and contrary to this file's own already-stated principle for
+that function ("memory writing is a secondary, best-effort feature ...
+must never be able to regress it").
+
+Fix: the previous-cache read now catches its own failure and treats it
+as "no previous data" (`.catch(() => null)`), matching how a genuine
+first-ever fetch is already handled — same "best-effort, never blocks
+the real refresh" treatment already given to the memory *write* right
+below it in the same function, just correctly extended to the read.
+`fetchData`'s own rejection still propagates normally (it's the actual
+refresh, not best-effort) — only the previous-read promise gets the
+catch, not the whole `Promise.all`. Regression test in
+`refresh-widget.test.ts`. This is a general fix, not specific to
+Nutrition: any future widget whose `dataSchema` changes shape across a
+deploy now genuinely self-heals on its next refresh instead of being
+permanently stuck, which is what every other widget's schema evolution
+so far has silently relied on without it actually being true.
+
+Considered and rejected: giving `nutritionDataSchema`'s `history` field
+a Zod `.default([])` instead, so old rows would parse directly. Ran
+into `Widget<TData>.dataSchema`'s type (`ZodType<TData>` in
+`packages/sdk/src/widget.ts`) requiring the schema's input and output
+types to match exactly — a `.default()` field breaks that (input
+becomes optional, output stays required), failing typecheck. Fixing
+`refresh-widget.ts` solves the actual production failure (refresh
+being permanently blocked) generally, for every widget, without
+fighting Zod/TypeScript variance for one field on one schema.

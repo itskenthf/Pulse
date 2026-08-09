@@ -1,7 +1,7 @@
 import { Scale } from "lucide-react";
 import Link from "next/link";
 import { progressPercent } from "@pulse/health";
-import { EmptyState, Metric, ProgressRing, WidgetCard, WidgetMenu } from "@pulse/ui";
+import { EmptyState, Metric, ProgressRing, TrendLine, WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
 import type { WeightWidgetActions } from "./actions";
 import { LogWeightForm } from "./log-weight-form";
@@ -55,6 +55,16 @@ export function WeightComponent({
               </ProgressRing>
             )}
           </div>
+          {logs.length > 1 && (
+            <div className="flex justify-center">
+              <TrendLine
+                points={[...logs].reverse().map((log) => log.weightKg)}
+                goalValue={goal?.targetValue}
+                width={200}
+                height={32}
+              />
+            </div>
+          )}
           <LogWeightForm action={actions.logWeight} />
         </div>
       )}

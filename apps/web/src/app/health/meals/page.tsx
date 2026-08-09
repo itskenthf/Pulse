@@ -2,7 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { listMealHistory, readWidgetCache } from "@pulse/database";
-import { MEALS_WIDGET_ID, MealToggleRow, mealsDataSchema } from "@pulse/widget-meals";
+import { MEALS_WIDGET_ID, MealToggleRow, MealsSummary, mealsDataSchema } from "@pulse/widget-meals";
 import { auth } from "@/auth";
 import { toggleMealAction } from "@/app/actions/meals";
 
@@ -47,6 +47,8 @@ export default async function MealsPage() {
         <h1 className="font-heading text-2xl font-semibold tracking-tight text-[var(--foreground)]">
           Meals
         </h1>
+
+        <MealsSummary today={today} />
 
         <div className="flex flex-col divide-y divide-[var(--color-divider)] border-y border-[var(--color-divider)]">
           {MEALS.map((meal) => (

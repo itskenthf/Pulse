@@ -136,17 +136,24 @@ Only use the accent for:
 - icon badges
 - borders/underlines on interactive elements
 - focus rings
-- progress indicators (e.g. Steam's achievement bar, `ProgressRing`,
-  `TrendLine`)
+- progress indicators (e.g. Steam's achievement bar, `ProgressBar`,
+  `ProgressRing`, `TrendLine`)
 
 Never as a large fill. Never more than one accent.
 
-### Progress indicators: two sanctioned shapes
+### Progress indicators: three sanctioned shapes
 
-- **Filled bar** (Steam's achievement bar, Reading's progress bar): a
-  thin `rounded-full` track with a solid `bg-[var(--color-accent)]`
-  inner fill sized via `width: %`. The one place a large accent fill is
-  sanctioned, for a small, low-visual-weight element.
+- **`ProgressBar`** (`packages/ui/src/progress-bar.tsx`, promoted
+  2026-08-09 from Steam's/Reading's previously hand-rolled local
+  copies once Nutrition/Meals needed the same shape a third and fourth
+  time): a thin `rounded-full` track with a solid
+  `bg-[var(--color-accent)]` inner fill sized via `width: %`. The one
+  place a large accent fill is sanctioned, for a small, low-visual-
+  weight element. Used for Nutrition's per-metric daily-target bars and
+  Meals' "N / 4 meals today" summary — see `docs/DECISIONS.md`'s
+  2026-08-09 "progress bars" entry for why these were added (an
+  explicit, acknowledged reversal of Body & Health's original
+  "no gamified clutter" framing, done deliberately, not by accident).
 - **`ProgressRing`** (`packages/ui/src/progress-ring.tsx`, added
   2026-08-09 for the Weight Tracker widget): a *stroked arc*, not a
   filled donut — two concentric `<circle>` elements, both `fill="none"`,

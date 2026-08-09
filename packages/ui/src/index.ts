@@ -31,5 +31,7 @@ export { useKeyboardShortcut } from "./use-keyboard-shortcut";
 export type { UseKeyboardShortcutOptions } from "./use-keyboard-shortcut";
 export { ProgressRing } from "./progress-ring";
 export type { ProgressRingProps } from "./progress-ring";
+export { ProgressBar } from "./progress-bar";
+export type { ProgressBarProps } from "./progress-bar";
 export { TrendLine } from "./trend-line";
 export type { TrendLineProps } from "./trend-line";

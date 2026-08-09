@@ -6,6 +6,7 @@ const validData = {
   goals: [
     { id: "g1", title: "Drink milk daily", metric: "milk_ml" as const, targetValue: 500, comparator: "at_least" as const },
   ],
+  history: [{ loggedOn: "2026-08-08", calories: 1800 }],
   fetchedAt: "2026-08-09T00:00:00Z",
 };
 
@@ -16,6 +17,10 @@ describe("nutritionDataSchema", () => {
 
   it("accepts an empty goals list", () => {
     expect(nutritionDataSchema.safeParse({ ...validData, goals: [] }).success).toBe(true);
+  });
+
+  it("accepts an empty history list", () => {
+    expect(nutritionDataSchema.safeParse({ ...validData, history: [] }).success).toBe(true);
   });
 
   it("rejects a row missing a required field", () => {

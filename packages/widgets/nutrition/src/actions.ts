@@ -7,4 +7,5 @@ import type { WidgetAction, WidgetActions } from "@pulse/sdk";
 export interface NutritionWidgetActions extends WidgetActions {
   logAmount: WidgetAction;
   setAmount: WidgetAction;
+  createNutritionGoal: WidgetAction;
 }

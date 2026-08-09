@@ -1,12 +1,28 @@
 "use server";
 
-import { incrementNutrition, setNutritionField, type NutritionField } from "@pulse/database";
+import {
+  createGoal,
+  deactivateGoal,
+  incrementNutrition,
+  listGoals,
+  setNutritionField,
+  type GoalMetric,
+  type NutritionField,
+} from "@pulse/database";
 import type { WidgetActionState } from "@pulse/sdk";
 import { NUTRITION_WIDGET_ID } from "@pulse/widget-nutrition";
 import { runWidgetWriteAction } from "@/lib/run-widget-write-action";
 
 const REVALIDATE_PATHS = ["/", "/health/nutrition"];
 const VALID_FIELDS = new Set<NutritionField>(["calories", "protein_g", "water_ml", "milk_ml"]);
+const VALID_GOAL_METRICS = new Set<GoalMetric>(["calories", "protein_g", "water_ml", "milk_ml"]);
+
+const METRIC_LABELS: Record<string, string> = {
+  calories: "Calories",
+  protein_g: "Protein",
+  water_ml: "Water",
+  milk_ml: "Milk",
+};
 
 function parseField(formData: FormData): NutritionField | null {
   const field = formData.get("field");
@@ -57,6 +73,47 @@ export async function setAmountAction(
       }
 
       await setNutritionField(userId, field, amountNum);
+    },
+  });
+}
+
+export async function createNutritionGoalAction(
+  _prevState: WidgetActionState,
+  formData: FormData,
+): Promise<WidgetActionState> {
+  return runWidgetWriteAction(formData, {
+    widgetId: NUTRITION_WIDGET_ID,
+    revalidatePaths: REVALIDATE_PATHS,
+    errorMessage: "Failed to set target",
+    write: async (userId, formData) => {
+      const metric = formData.get("metric");
+      const targetValue = formData.get("targetValue");
+      const comparator = formData.get("comparator");
+
+      if (typeof metric !== "string" || !VALID_GOAL_METRICS.has(metric as GoalMetric)) {
+        return { error: "Invalid metric" };
+      }
+      const targetValueNum = typeof targetValue === "string" ? Number(targetValue) : NaN;
+      if (!Number.isFinite(targetValueNum) || targetValueNum <= 0) {
+        return { error: "Target must be a positive number" };
+      }
+      if (comparator !== "at_least" && comparator !== "at_most") {
+        return { error: "Invalid goal direction" };
+      }
+
+      // Replace, don't accumulate: a metric can only have one active daily
+      // target at a time, so re-submitting the form updates it in place
+      // instead of stacking a second active goal for the same metric.
+      const existing = await listGoals(userId, { activeOnly: true, metric: metric as GoalMetric });
+      await Promise.all(existing.map((goal) => deactivateGoal(userId, goal.id)));
+
+      await createGoal(userId, {
+        title: `${METRIC_LABELS[metric]} target`,
+        metric: metric as GoalMetric,
+        comparator,
+        targetValue: targetValueNum,
+        cadence: "daily",
+      });
     },
   });
 }

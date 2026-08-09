@@ -4,3 +4,4 @@ export { mealsDataSchema } from "./types";
 export type { MealsToday, MealsData } from "./types";
 export type { MealsWidgetActions } from "./actions";
 export { MealToggleRow } from "./meal-toggle-row";
+export { MealsSummary } from "./meals-summary";

@@ -17,7 +17,7 @@ import { cycleHeroQuoteAction } from "./actions/hero";
 import { toggleMealAction } from "./actions/meals";
 import { addNoteAction, deleteNoteAction, updateNoteAction } from "./actions/notes";
 import { addEntryAction, updateEntryAction } from "./actions/notebook";
-import { logAmountAction, setAmountAction } from "./actions/nutrition";
+import { createNutritionGoalAction, logAmountAction, setAmountAction } from "./actions/nutrition";
 import {
   addBookAction,
   deleteBookAction,
@@ -75,6 +75,7 @@ const CUSTOM_ACTIONS: Record<string, Record<string, WidgetAction>> = {
   [NUTRITION_WIDGET_ID]: {
     logAmount: logAmountAction,
     setAmount: setAmountAction,
+    createNutritionGoal: createNutritionGoalAction,
   },
   [MEALS_WIDGET_ID]: {
     toggleMeal: toggleMealAction,

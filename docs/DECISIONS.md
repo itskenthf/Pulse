@@ -4603,3 +4603,60 @@ use. Nothing in this codebase does optimistic updates today (Tasks'/
 Reading's own checkbox toggles wait on the server the same way), and a
 single indexed Supabase upsert is comfortably under the "<10s" UX bar
 without needing to introduce that pattern speculatively.
+
+## 2026-08-09 — Body & Health: progress bars, explicitly reversing the "no gamified clutter" requirement
+
+Follow-up to the same day's Body & Health entry above, after real usage
+against a live Supabase instance. User shared a mockup (filled progress
+bars, "current / target" framing, an explicit "gamification works"
+caption) and asked for it. This is a real, acknowledged reversal of the
+original Body & Health request's own stated design requirement — "Calm,
+Motivating, No gamified clutter" — not a silent reinterpretation.
+Confirmed explicitly via `AskUserQuestion` before touching any code
+(per this file's and `CLAUDE.md`'s "never independently change UX/
+visual decisions" rule), including naming the contradiction directly
+rather than quietly proceeding.
+
+The mockup's own visual language (dark background, monospace type,
+flat gray fills) was **not** carried over — it was read as a functional
+reference ("show progress toward a target," not raw counts) rather than
+a literal skin, translated into Classical's existing sanctioned
+progress-bar exception (thin `rounded-full` track, solid
+`bg-[var(--color-accent)]` fill) rather than introducing a second
+visual system. If that reading is wrong, the fix is a follow-up, not a
+redo of this pass.
+
+Four concrete additions, each scoped to what was actually asked:
+
+- **New shared `packages/ui/src/progress-bar.tsx`** — Reading's book-
+  progress row and Steam's achievement bar had already hand-rolled this
+  exact two-`<div>` shape locally; Nutrition's per-metric bars and
+  Meals' summary bar would have been a third and fourth copy, so it's
+  promoted to a shared primitive now instead (per the widget-standards
+  rule against re-implementing shared chrome locally). Reading/Steam's
+  existing local copies were left alone — refactoring unrelated widgets
+  wasn't part of this request.
+- **Nutrition goal-setting** (`packages/widgets/nutrition/src/
+  nutrition-goal-form.tsx`, `/health/nutrition`): calories/protein/
+  water/milk had no way to set a daily target before this — only
+  Weight had goal creation. Reuses the existing generic `goals` table
+  as-is (no migration needed; `metric` already covered all four
+  fields). `createNutritionGoalAction` deactivates any existing active
+  goal for that metric before inserting a new one, so resubmitting the
+  form replaces the target instead of accumulating duplicate active
+  goals over time — the generic `goals` table has no unique constraint
+  stopping that, so this is enforced at the action layer.
+- **Inline sparklines** on the Weight and Nutrition dashboard cards
+  (`TrendLine`, already built for the detail pages) — Weight shows its
+  full recent-log trend; Nutrition shows only calories, not all four
+  counters, to avoid the exact "gamified clutter" the original spec
+  warned about (four stacked sparklines plus four progress bars plus
+  four log buttons on one compact card would cross from "informative"
+  into "busy"). `NutritionData`'s cache row grew a small `history`
+  field (last 7 days of calories only) to support this.
+- **Meals summary bar** (`packages/widgets/meals/src/meals-summary.tsx`):
+  an "N / 4 meals today" line above the existing checkmarks, on both
+  the dashboard card and `/health/meals` — the checkmarks stay the
+  source of truth for *which* meal is done; the bar is only an
+  at-a-glance read, not a replacement (the mockup showed both options;
+  this keeps both rather than dropping the individual toggles).

@@ -5,10 +5,23 @@ import { listNutritionHistory, readWidgetCache } from "@pulse/database";
 import {
   NUTRITION_WIDGET_ID,
   NutritionCorrectionForm,
+  NutritionGoalForm,
   nutritionDataSchema,
 } from "@pulse/widget-nutrition";
 import { auth } from "@/auth";
-import { setAmountAction } from "@/app/actions/nutrition";
+import { createNutritionGoalAction, setAmountAction } from "@/app/actions/nutrition";
+
+const METRIC_LABELS: Record<string, string> = {
+  calories: "Calories",
+  protein_g: "Protein",
+  water_ml: "Water",
+  milk_ml: "Milk",
+};
+const COMPARATOR_LABELS: Record<string, string> = {
+  at_least: "at least",
+  at_most: "at most",
+  exactly: "exactly",
+};
 
 const HISTORY_DAYS = 14;
 
@@ -36,6 +49,7 @@ export default async function NutritionPage() {
     waterMl: 0,
     milkMl: 0,
   };
+  const goals = cached?.data.goals ?? [];
 
   return (
     <div className="relative flex min-h-screen bg-[var(--background)]">
@@ -56,6 +70,22 @@ export default async function NutritionPage() {
             Today
           </h2>
           <NutritionCorrectionForm today={today} action={setAmountAction} />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <h2 className="font-heading text-sm font-semibold tracking-[0.08em] text-[var(--color-accent-700)] uppercase">
+            Daily targets
+          </h2>
+          {goals.length > 0 && (
+            <ul className="flex flex-col gap-1 text-sm text-[var(--color-neutral-600)]">
+              {goals.map((goal) => (
+                <li key={goal.id}>
+                  {METRIC_LABELS[goal.metric]}: {COMPARATOR_LABELS[goal.comparator]} {goal.targetValue}
+                </li>
+              ))}
+            </ul>
+          )}
+          <NutritionGoalForm action={createNutritionGoalAction} />
         </div>
 
         <div className="flex flex-col gap-2">

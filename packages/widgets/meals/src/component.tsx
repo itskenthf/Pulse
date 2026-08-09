@@ -3,6 +3,7 @@ import Link from "next/link";
 import { WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
 import type { MealsWidgetActions } from "./actions";
+import { MealsSummary } from "./meals-summary";
 import { MealToggleRow } from "./meal-toggle-row";
 import type { MealsData } from "./types";
 
@@ -32,10 +33,13 @@ export function MealsComponent({
         </Link>
       }
     >
-      <div className="flex flex-col">
-        {MEALS.map((meal) => (
-          <MealToggleRow key={meal} meal={meal} checked={today[meal]} action={actions.toggleMeal} />
-        ))}
+      <div className="flex flex-col gap-3">
+        <MealsSummary today={today} />
+        <div className="flex flex-col">
+          {MEALS.map((meal) => (
+            <MealToggleRow key={meal} meal={meal} checked={today[meal]} action={actions.toggleMeal} />
+          ))}
+        </div>
       </div>
     </WidgetCard>
   );

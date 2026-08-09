@@ -19,7 +19,7 @@ importers:
         specifier: ^3.4.2
         version: 3.9.5
       sharp:
-        specifier: ^0.35.3
+        specifier: '>=0.35.0'
         version: 0.35.3(@types/node@22.20.1)
       supabase:
         specifier: ^2.111.0
@@ -83,7 +83,7 @@ importers:
         version: 16.2.12(@babel/core@7.29.7)(@playwright/test@1.62.0)(@types/node@22.20.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       next-auth:
         specifier: 5.0.0-beta.32
-        version: 5.0.0-beta.32(next@16.2.12(@babel/core@7.29.7)(@playwright/test@1.62.0)(@types/node@22.20.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+        version: 5.0.0-beta.32(next@16.2.12(@playwright/test@1.62.0)(@types/node@22.20.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
       react:
         specifier: 19.2.4
         version: 19.2.4
@@ -181,7 +181,7 @@ importers:
         version: 1.11.3(@supabase/supabase-js@2.110.7)
       next-auth:
         specifier: 5.0.0-beta.32
-        version: 5.0.0-beta.32(next@16.2.12(@babel/core@7.29.7)(@playwright/test@1.62.0)(@types/node@22.20.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+        version: 5.0.0-beta.32(next@16.2.12(@playwright/test@1.62.0)(@types/node@22.20.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
     devDependencies:
       typescript:
         specifier: ^5.7.3
@@ -5323,7 +5323,7 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  next-auth@5.0.0-beta.32(next@16.2.12(@babel/core@7.29.7)(@playwright/test@1.62.0)(@types/node@22.20.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4):
+  next-auth@5.0.0-beta.32(next@16.2.12(@playwright/test@1.62.0)(@types/node@22.20.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4):
     dependencies:
       '@auth/core': 0.41.3
       next: 16.2.12(@babel/core@7.29.7)(@playwright/test@1.62.0)(@types/node@22.20.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)

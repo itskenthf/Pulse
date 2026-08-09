@@ -595,9 +595,16 @@ Phase 1 usage first. Real status:
 - [x] Freeform write-back content — Notes (titled, editable) and Notebook
   (untitled, autosaving stream) widgets, each with their own table and a
   full history page
+- [x] Reading — `packages/widgets/reading`: manual entry, own `reading`
+  table (one row per user, no history — starting a new book overwrites
+  it). Title/author/total pages set via a "start a new book" action;
+  current page updated via a separate daily "update progress" action;
+  an explicit "Clear" action (with the same undo-window safety net as
+  Tasks/Notes' delete) empties it back out. No cover art, no detail
+  page. See `docs/DECISIONS.md`'s 2026-08-09 entry.
 - [ ] Habit check-ins logged to `habits` — not started; the "Coming
-  soon" placeholder card (and its Reading counterpart) was removed from
-  the dashboard 2026-08-08, not built — see docs/DECISIONS.md
+  soon" placeholder card was removed from the dashboard 2026-08-08, not
+  built — see docs/DECISIONS.md
 
 Focus-session start/stop (originally planned for this phase) was removed
 along with the rest of the focus-timer target — see the "Documentation

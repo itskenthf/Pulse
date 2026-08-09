@@ -4424,3 +4424,57 @@ get added later and remembering all of them stops being reasonable.
 Scope explicitly limited to this one shortcut for now; add-task/add-note
 shortcuts and any broader palette were discussed and deferred, not
 ruled out — see `IMPLEMENTATION_PLAN.md`'s deferred section.
+
+## 2026-08-09 — Built the Reading widget, defining a real "current book" concept
+
+Reading had only ever existed as a "Coming soon" placeholder, kept
+deliberately undefined (2026-07-26 entry above) and then removed
+entirely (2026-08-08 entry above) — there was never a decided data
+model. This is the first real build, scoped down via explicit
+back-and-forth before any code was written (per CLAUDE.md, since there
+was no existing reference to check fidelity against — this originates
+the design rather than reproducing one):
+
+- **Manual entry, own table** — same pattern as Tasks/Notes/Notebook
+  (`packages/database/src/reading.ts`, a new `reading` table), not an
+  external API. No adapter, no OAuth, no new env var.
+- **Current book only, no history** — `reading` has a `unique(user_id)`
+  constraint, enforcing one row per user at the DB level rather than an
+  app-level check-then-write race. Starting a new book is a plain
+  upsert that overwrites the row (and resets `current_page` to 0) —
+  deliberately not a list/table of past books, so no `/reading` page,
+  no detail-page pattern (the Steam per-game detail page was floated
+  back in the 2026-07-26 entry as a future template for this, but
+  wasn't needed once "no history" was confirmed).
+- **Two separate actions, not one form**: `startBook` (title, author,
+  total pages) is the rare one; `updateProgress` (current page only) is
+  the one used daily. Splitting them means the daily action is a
+  single-field form instead of re-submitting/re-typing the title every
+  time just to bump a page number.
+- **Explicit "Clear" action**, wired through `useUndoableDelete` (the
+  same few-second undo window Tasks/Notes already use for destructive
+  actions) — distinct from starting a new book, which overwrites
+  directly without confirmation since that's not destructive in the
+  same way (you typed a new title on purpose).
+- **Progress bar uses a solid `bg-[var(--color-accent)]` fill**,
+  copying Steam's achievement-bar pattern
+  (`apps/web/src/app/steam/[appId]/page.tsx`) verbatim — a thin
+  `rounded-full` track with an inner fill sized via inline `width: %`.
+  This looked like it might conflict with `docs/DESIGN_SYSTEM.md`'s
+  "accent used only as strokes/borders/focus rings, never as a fill,"
+  but that same doc explicitly lists "progress indicators (e.g. Steam's
+  achievement bar)" as one of the sanctioned accent uses — so this
+  isn't a new exception, just reusing the existing one instead of
+  inventing a separate tinted-fill workaround.
+- **Placement**: Row 2 of the dashboard grid, directly under GitHub —
+  GitHub and Reading both `lg:col-span-2`, occupying rows 1 and 2 of
+  that 2-column area, with the existing Steam+RSS side column spanning
+  both rows alongside them (so Reading's bottom edge lines up with
+  RSS's). Reading's grid `<div>` had to come *after* the side column's
+  in JSX — CSS Grid's auto-placement follows DOM order for auto-flowed
+  items, so placing Reading first would have stolen the side column's
+  row-1 slot instead of landing in row 2.
+
+No `deriveMemories` yet (a "book started"/"finished" memory event is a
+reasonable future addition, not required for this pass — noted rather
+than silently added as scope creep).

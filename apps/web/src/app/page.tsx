@@ -13,7 +13,12 @@ import { auth, signIn } from "@/auth";
 import { cycleHeroQuoteAction } from "./actions/hero";
 import { addNoteAction, deleteNoteAction, updateNoteAction } from "./actions/notes";
 import { addEntryAction, updateEntryAction } from "./actions/notebook";
-import { clearBookAction, startBookAction, updateProgressAction } from "./actions/reading";
+import {
+  addBookAction,
+  deleteBookAction,
+  markFinishedAction,
+  updateProgressAction,
+} from "./actions/reading";
 import { addTaskAction, deleteTaskAction, toggleTaskAction } from "./actions/tasks";
 import { refreshWidgetAction, updateWidgetSettingsAction } from "./actions/widgets";
 import { ProfileMenu } from "./profile-menu";
@@ -47,9 +52,10 @@ const CUSTOM_ACTIONS: Record<string, Record<string, WidgetAction>> = {
     updateEntry: updateEntryAction,
   },
   [READING_WIDGET_ID]: {
-    startBook: startBookAction,
+    addBook: addBookAction,
     updateProgress: updateProgressAction,
-    clearBook: clearBookAction,
+    markFinished: markFinishedAction,
+    deleteBook: deleteBookAction,
   },
 };
 

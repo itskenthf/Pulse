@@ -4,7 +4,7 @@ import { useState } from "react";
 import { RADIUS } from "@pulse/ui";
 
 /** Update whenever a new batch of images lands in apps/web/public/hero-gifs/. */
-const TOTAL_IMAGES = 3;
+const TOTAL_IMAGES = 61;
 
 const GIF_PATHS = Array.from({ length: TOTAL_IMAGES }, (_, i) => `/hero-gifs/${i + 1}.jpg`);
 

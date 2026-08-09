@@ -1,6 +1,7 @@
 import { Sparkles } from "lucide-react";
 import { RADIUS } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
+import { GifStack } from "./gif-stack";
 import { QuoteButton } from "./quote-button";
 import type { HeroData } from "./types";
 
@@ -33,41 +34,50 @@ export function HeroComponent({
   actions,
 }: WidgetRenderProps<HeroData, Record<string, unknown>>) {
   return (
-    <section aria-labelledby={HEADING_ID} className={`flex flex-col gap-5 ${RADIUS.hero}`}>
-      <div className="flex flex-col gap-2">
-        {data?.dateFormatted && (
-          <p className="text-xs tracking-[0.08em] text-[var(--color-accent-700)] uppercase">
-            {data.dateFormatted}
-          </p>
+    <section
+      aria-labelledby={HEADING_ID}
+      className={`flex flex-col items-center justify-between gap-5 sm:flex-row ${RADIUS.hero}`}
+    >
+      <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-2">
+          {data?.dateFormatted && (
+            <p className="text-xs tracking-[0.08em] text-[var(--color-accent-700)] uppercase">
+              {data.dateFormatted}
+            </p>
+          )}
+          <h1
+            id={HEADING_ID}
+            className="font-heading text-3xl font-normal tracking-tight text-[var(--foreground)] sm:text-4xl md:text-5xl"
+          >
+            {data?.greeting ?? "Hello"}
+          </h1>
+        </div>
+
+        {data && (
+          <div className="flex flex-col gap-3">
+            <p className="max-w-2xl text-base leading-relaxed text-[var(--foreground)] sm:text-lg sm:text-justify">
+              {data.weatherSummary} in {data.weatherLocation}
+              {data.weatherTip ? ` — ${data.weatherTip}` : "."}
+            </p>
+
+            {actions.cycleQuote ? (
+              <QuoteButton quote={data.quote} cycleAction={actions.cycleQuote} />
+            ) : (
+              <div className="flex items-start gap-2 text-sm text-[var(--color-neutral-600)] italic">
+                <Sparkles
+                  className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-accent)]"
+                  aria-hidden="true"
+                />
+                <p>&ldquo;{data.quote}&rdquo;</p>
+              </div>
+            )}
+          </div>
         )}
-        <h1
-          id={HEADING_ID}
-          className="font-heading text-3xl font-normal tracking-tight text-[var(--foreground)] sm:text-4xl md:text-5xl"
-        >
-          {data?.greeting ?? "Hello"}
-        </h1>
       </div>
 
-      {data && (
-        <div className="flex flex-col gap-3">
-          <p className="max-w-2xl text-base leading-relaxed text-[var(--foreground)] sm:text-lg sm:text-justify">
-            {data.weatherSummary} in {data.weatherLocation}
-            {data.weatherTip ? ` — ${data.weatherTip}` : "."}
-          </p>
-
-          {actions.cycleQuote ? (
-            <QuoteButton quote={data.quote} cycleAction={actions.cycleQuote} />
-          ) : (
-            <div className="flex items-start gap-2 text-sm text-[var(--color-neutral-600)] italic">
-              <Sparkles
-                className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-accent)]"
-                aria-hidden="true"
-              />
-              <p>&ldquo;{data.quote}&rdquo;</p>
-            </div>
-          )}
-        </div>
-      )}
+      <div className="flex flex-1 justify-center">
+        <GifStack />
+      </div>
     </section>
   );
 }

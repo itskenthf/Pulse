@@ -5,6 +5,7 @@ import { WIDGET_ID as GITHUB_WIDGET_ID } from "@pulse/widget-github";
 import { HERO_WIDGET_ID } from "@pulse/widget-hero";
 import { NOTES_WIDGET_ID } from "@pulse/widget-notes";
 import { NOTEBOOK_WIDGET_ID } from "@pulse/widget-notebook";
+import { READING_WIDGET_ID } from "@pulse/widget-reading";
 import { WIDGET_ID as RSS_WIDGET_ID } from "@pulse/widget-rss";
 import { WIDGET_ID as STEAM_WIDGET_ID } from "@pulse/widget-steam";
 import { TASKS_WIDGET_ID } from "@pulse/widget-tasks";
@@ -12,6 +13,7 @@ import { auth, signIn } from "@/auth";
 import { cycleHeroQuoteAction } from "./actions/hero";
 import { addNoteAction, deleteNoteAction, updateNoteAction } from "./actions/notes";
 import { addEntryAction, updateEntryAction } from "./actions/notebook";
+import { clearBookAction, startBookAction, updateProgressAction } from "./actions/reading";
 import { addTaskAction, deleteTaskAction, toggleTaskAction } from "./actions/tasks";
 import { refreshWidgetAction, updateWidgetSettingsAction } from "./actions/widgets";
 import { ProfileMenu } from "./profile-menu";
@@ -43,6 +45,11 @@ const CUSTOM_ACTIONS: Record<string, Record<string, WidgetAction>> = {
   [NOTEBOOK_WIDGET_ID]: {
     addEntry: addEntryAction,
     updateEntry: updateEntryAction,
+  },
+  [READING_WIDGET_ID]: {
+    startBook: startBookAction,
+    updateProgress: updateProgressAction,
+    clearBook: clearBookAction,
   },
 };
 
@@ -181,15 +188,18 @@ function WidgetCell({
  * - Row 1: Tasks, Notes, Notebook (Ken's own daily-input widgets).
  *   Notebook (the 3rd item) spans both columns only at the `sm` (2-col)
  *   breakpoint, reverting to one track at `lg`.
- * - Row 2: GitHub, plus a Steam+RSS side column. GitHub spans 2 of 3
- *   columns at `lg` so its edges align with Row 1's tracks. The side
- *   column spans both grid rows at `lg` (running the full height of
- *   GitHub), with RSS stretching to fill any remaining height below
- *   Steam. Below `lg` there's no 3rd column, so these auto-flow through
- *   the grid in DOM order.
+ * - Row 2: a 2-col×2-row area (GitHub above Reading, both `lg:col-span-2`
+ *   so their edges align with Row 1's tracks) beside a Steam+RSS side
+ *   column that spans both grid rows at `lg` (running the full height of
+ *   GitHub+Reading combined), RSS stretching to fill any remaining
+ *   height below Steam. Reading's `<div>` comes after the side column's
+ *   in DOM order specifically so CSS Grid's auto-placement lands it in
+ *   row 2 under GitHub instead of stealing the side column's row-1 slot.
+ *   Below `lg` there's no 3rd column, so these auto-flow through the
+ *   grid in DOM order.
  *
- * Habits/Reading "Coming soon" placeholder cards were removed
- * 2026-08-08 — see docs/DECISIONS.md's entry for why (unfinished
+ * Habits "Coming soon" placeholder card (Reading's real build is above)
+ * was removed 2026-08-08 — see docs/DECISIONS.md's entry for why (unfinished
  * placeholders shown on every visit, no real logic behind them).
  *
  * Spotify is intentionally not looked up/rendered here — see
@@ -217,6 +227,7 @@ function WidgetGrid({ userId }: { userId: string }) {
   const githubWidget = nonHeroWidgets.find((widget) => widget.id === GITHUB_WIDGET_ID);
   const steamWidget = nonHeroWidgets.find((widget) => widget.id === STEAM_WIDGET_ID);
   const rssWidget = nonHeroWidgets.find((widget) => widget.id === RSS_WIDGET_ID);
+  const readingWidget = nonHeroWidgets.find((widget) => widget.id === READING_WIDGET_ID);
 
   const rowTopWidgets = [tasksWidget, notesWidget, notebookWidget].filter(
     (widget): widget is Widget => Boolean(widget),
@@ -264,6 +275,12 @@ function WidgetGrid({ userId }: { userId: string }) {
               </div>
             )}
           </div>
+
+          {readingWidget && (
+            <div className="lg:col-span-2">
+              <WidgetCell widget={readingWidget} userId={userId} resetKey={resetKey} />
+            </div>
+          )}
         </div>
       </div>
     </>

@@ -325,12 +325,12 @@ changes — the discipline is sequencing, not capability.
 
 - Task check-off with write-back to source — **done**: the Tasks widget
   (`packages/widgets/tasks`) writes to its own Supabase table; Notes and
-  Notebook followed the same pattern for freeform content. See
-  `docs/ROADMAP.md`.
+  Notebook followed the same pattern for freeform content. Reading
+  (`packages/widgets/reading`) followed too — see `docs/ROADMAP.md`.
 - Habit check-ins logged to `habits` — not started; the "Coming soon"
-  placeholder card (and its Reading counterpart) was removed from the
-  dashboard 2026-08-08 rather than left showing unfinished work on
-  every visit — see docs/DECISIONS.md
+  placeholder card was removed from the dashboard 2026-08-08 rather
+  than left showing unfinished work on every visit — see
+  docs/DECISIONS.md
 - **Gate to move on:** write-back features feel reliable, not fragile — no
   data loss, no silent failures
 
@@ -461,12 +461,14 @@ background) are superseded by `docs/DESIGN_SYSTEM.md` v2.0:
   same outlined accent treatment (superseded 2026-07-26: previously a
   per-widget colored glow — blue/green/indigo — see docs/DECISIONS.md).
   Superseded 2026-08-02: the grid is now two explicit stacked rows, not
-  one `auto-fit` flow — Row 1 (Tasks/Notes/Notebook) above Row 2+3
-  (GitHub, a Steam+RSS side column spanning both rows, then
-  Habits/Reading); see docs/DECISIONS.md's layout-regroup entry and
-  `apps/web/src/app/page.tsx`'s `WidgetGrid`. Spotify no longer renders
-  on the dashboard (still registered, still refreshes in the background)
-  — Steam now pairs with RSS instead.
+  one `auto-fit` flow — Row 1 (Tasks/Notes/Notebook) above Row 2 (GitHub
+  above Reading in a 2-col×2-row area, beside a Steam+RSS side column
+  spanning both rows); see docs/DECISIONS.md's layout-regroup and
+  2026-08-09 (Reading) entries and `apps/web/src/app/page.tsx`'s
+  `WidgetGrid`. Spotify no longer renders on the dashboard (still
+  registered, still refreshes in the background) — Steam now pairs with
+  RSS instead. The Habits "Coming soon" placeholder was removed
+  2026-08-08, not built.
 - **Hero is one flowing "assistant" panel**, not floating text or stat
   chips (2026-07-25, superseding the "row of today chips" version below):
   a greeting headline, then one sentence combining date/time and weather

@@ -12,6 +12,8 @@ export { listNotes, createNote, updateNote, deleteNote } from "./notes";
 export type { Note } from "./notes";
 export { listNotebookEntries, createNotebookEntry, updateNotebookEntry } from "./notebook";
 export type { NotebookEntry } from "./notebook";
+export { getCurrentBook, startBook, updateReadingProgress, clearBook } from "./reading";
+export type { Reading } from "./reading";
 export {
   readProviderAccessToken,
   readProviderAccount,

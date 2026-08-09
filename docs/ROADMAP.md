@@ -612,6 +612,47 @@ Focus-session start/stop (originally planned for this phase) was removed
 along with the rest of the focus-timer target — see the "Documentation
 accuracy pass" entry below.
 
+## Body & Health pillar
+
+**Pulled forward by explicit request, overriding `docs/PROJECT_REFERENCE.md`
+§10's "don't build weight tracker until MVP daily-use gate closes" backlog
+note** — see `docs/DECISIONS.md`'s 2026-08-09 Body & Health entry for the
+full reasoning. The first concrete slice of "Internal Life" (Body, Health,
+Fitness, Habits, Mood, Sleep, Nutrition, Goals, Weekly Review, Personal
+Growth), alongside the existing "External Life" widgets above.
+
+**Phase 1 — shipped:**
+
+- [x] Weight Tracker — `packages/widgets/weight`, own `weight_logs` table
+  (no unique constraint — every weigh-in is its own row), trend graph +
+  progress ring toward an active goal, `/health/weight` page with full
+  history and goal creation.
+- [x] Nutrition — `packages/widgets/nutrition`, one-tap calorie/protein/
+  water/milk logging against a daily-rollup `nutrition_logs` row,
+  `/health/nutrition` page with exact-amount corrections and a 14-day
+  history table.
+- [x] Meals — `packages/widgets/meals`, breakfast/lunch/dinner/snack
+  checkmarks against a daily `meal_checks` row, `/health/meals` page with
+  a compact history table.
+- [x] Daily Dashboard integration — a new row under the hero banner for
+  the three cards above; no Workout placeholder (see
+  `docs/DECISIONS.md`'s entry for why).
+- [x] `goals` table — generic `metric`/`comparator`/`target_value`/
+  `cadence` model, shared by Weight/Nutrition/Meals now and Workout/
+  Photos later.
+
+**Phase 2 — schema-anticipated, not built** (see the trailing comment in
+`supabase/migrations/0009_body_health_core.sql` for the exact planned
+shape of each):
+
+- [ ] Progress Photos — front/side/back monthly uploads, before/after
+  slider, Supabase Storage (this repo's first use of Storage).
+- [ ] Workout — upcoming workout, history, streak.
+- [ ] Weekly Review — Sunday prompt (weight, achievement, struggle, mood,
+  energy, confidence, sleep quality, notes) with a generated summary.
+- [ ] Insights — actionable cross-cutting observations, reading across
+  weight/nutrition/meals/workout data directly rather than its own table.
+
 ## Phase 3 — personal analytics
 
 Not started in its own right, though GitHub's streak computation

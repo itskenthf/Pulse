@@ -4522,3 +4522,84 @@ manually in production by the time this landed.
 `readingDataSchema` went from a single nullable record back to a list
 (`books: z.array(...)`) — same shape Tasks/Notes use, since there's
 real history to represent now.
+
+## 2026-08-09 — Body & Health pillar, Phase 1: Weight/Nutrition/Meals, explicit MVP-gate override
+
+Explicit user request to build a "Personal Operating System" — a new
+Internal Life pillar (Body, Health, Fitness, Habits, Mood, Sleep,
+Nutrition, Goals, Weekly Review, Personal Growth) alongside the
+existing External Life widgets. This directly overrides
+`docs/PROJECT_REFERENCE.md` §10, which backlogs "weight tracker" as
+post-MVP ("don't build until core widgets are in daily use") — the
+user was told this explicitly and chose to proceed anyway. Recorded
+here rather than silently ignored, per this file's own purpose.
+
+Scope was also cut down from the full 9-module request
+(Weight/Nutrition/Meals/Progress Photos/Workout/Weekly Review/Goals/
+Insights) to a **Phase 1**: Weight Tracker, Nutrition, Meals, and
+Daily Dashboard integration, plus a `goals` table shared by all three.
+`CLAUDE.md`'s "finish one widget completely before starting the next"
+made building all 9 in one pass a real violation, not just slow — so
+Progress Photos/Workout/Weekly Review/Insights are schema-anticipated
+(see the trailing comment in `supabase/migrations/0009_body_health_core.sql`)
+but not built.
+
+Schema decisions, in `supabase/migrations/0009_body_health_core.sql`:
+
+- **`weight_logs` has no unique constraint.** Every weigh-in is its
+  own row — this is the same lesson `0008` already learned moving
+  Reading off a rigid `unique(user_id)` invariant. "One entry per
+  week" (per the original request) is a UI convention — the latest
+  log per ISO week wins for the trend/current-weight stat — not a DB
+  rule, so correcting a mis-logged weight is a plain insert, not an
+  awkward upsert-then-overwrite.
+- **`nutrition_logs`/`meal_checks` are one row per day, not an event
+  log of taps.** No per-tap history UI is planned, and daily totals
+  are the natural granularity nutrition/meal insights would want
+  anyway. One-tap "+" buttons read-then-upsert the full row
+  (`packages/database/src/nutrition.ts`'s `incrementNutrition`) rather
+  than using a Postgres function for atomic increments — this is a
+  single-user app, so there's no real concurrent-tap risk, and adding
+  this codebase's first stored procedure just for that would be
+  premature.
+- **`goals` is one generic table**, not one per goal shape — a
+  `metric`/`comparator`/`target_value`/`cadence` model covers a
+  target-value goal ("Reach 45kg"), a daily-habit goal ("Drink milk
+  daily"), and a frequency goal ("Workout 3x/week", Phase 2) uniformly.
+  Whether a goal is currently met is computed on read
+  (`packages/health/src/goal-evaluation.ts`), not stored redundantly.
+
+New shared package `packages/health` (pure functions only, no React,
+no DB import — same discipline as `deriveMemories`): user-local day/
+ISO-week boundary math (`todayInTimeZone`/`isoWeekKey`, reusing Hero's
+`Asia/Kuching` time zone constant rather than inventing a second one),
+goal-met evaluation, and the percent-toward-goal math shared by all
+three widgets' progress rings. Promoted here rather than duplicated
+three times or bolted onto `packages/database` (which stays pure data
+access) or `packages/ui` (chrome/rendering only, no domain types).
+
+Two new `packages/ui` primitives, both hand-rolled SVG (no charting
+library exists in this repo, and a typical library's filled-area
+default is exactly what `docs/DESIGN_SYSTEM.md`'s no-fills rule
+prohibits): `ProgressRing` (a *stroked arc*, not a filled donut —
+stricter than Reading/Steam's sanctioned filled-bar exception, since
+the ring is a more visually prominent element) and `TrendLine` (a
+single hairline `<polyline>`, no gradient area-fill).
+
+Daily Dashboard integration: a new row directly under the hero banner
+(Weight/Nutrition/Meals, `size: "sm"` each) — not a new mega-widget
+that re-fetches GitHub/Weather/Quote data itself, which would violate
+"widgets never call external APIs directly." Workout has **no**
+placeholder card in this row — `CLAUDE.md` explicitly prohibits
+placeholder cards for unbuilt features, and this repo already removed
+one for exactly this reason (the "Habits — Coming soon" card, see this
+file's 2026-08-08 entry). Milk is a row inside the Nutrition card, not
+its own widget — it's one column of `nutrition_logs`, not a distinct
+concept.
+
+No optimistic UI: one-tap logging uses the same plain
+`runWidgetWriteAction` round trip every other widget's write actions
+use. Nothing in this codebase does optimistic updates today (Tasks'/
+Reading's own checkbox toggles wait on the server the same way), and a
+single indexed Supabase upsert is comfortably under the "<10s" UX bar
+without needing to introduce that pattern speculatively.

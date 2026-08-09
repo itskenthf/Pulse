@@ -14,6 +14,14 @@ export { listNotebookEntries, createNotebookEntry, updateNotebookEntry } from ".
 export type { NotebookEntry } from "./notebook";
 export { listBooks, addBook, updateBookProgress, markBookFinished, deleteBook } from "./reading";
 export type { Reading } from "./reading";
+export { listWeightLogs, logWeight, deleteWeightLog } from "./weight";
+export type { WeightLog } from "./weight";
+export { getTodayNutrition, incrementNutrition, setNutritionField, listNutritionHistory } from "./nutrition";
+export type { NutritionLog, NutritionField } from "./nutrition";
+export { getTodayMeals, setMealChecked, listMealHistory } from "./meals";
+export type { MealCheck, Meal } from "./meals";
+export { listGoals, createGoal, deactivateGoal } from "./goals";
+export type { Goal, GoalMetric, GoalComparator, GoalCadence } from "./goals";
 export {
   readProviderAccessToken,
   readProviderAccount,

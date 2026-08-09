@@ -1,0 +1,33 @@
+"use server";
+
+import { setMealChecked, type Meal } from "@pulse/database";
+import type { WidgetActionState } from "@pulse/sdk";
+import { MEALS_WIDGET_ID } from "@pulse/widget-meals";
+import { runWidgetWriteAction } from "@/lib/run-widget-write-action";
+
+const REVALIDATE_PATHS = ["/", "/health/meals"];
+const VALID_MEALS = new Set<Meal>(["breakfast", "lunch", "dinner", "snack"]);
+
+export async function toggleMealAction(
+  _prevState: WidgetActionState,
+  formData: FormData,
+): Promise<WidgetActionState> {
+  return runWidgetWriteAction(formData, {
+    widgetId: MEALS_WIDGET_ID,
+    revalidatePaths: REVALIDATE_PATHS,
+    errorMessage: "Failed to update meal",
+    write: async (userId, formData) => {
+      const meal = formData.get("meal");
+      const checked = formData.get("checked");
+
+      if (typeof meal !== "string" || !VALID_MEALS.has(meal as Meal)) {
+        return { error: "Invalid meal" };
+      }
+      if (checked !== "true" && checked !== "false") {
+        return { error: "Invalid value" };
+      }
+
+      await setMealChecked(userId, meal as Meal, checked === "true");
+    },
+  });
+}

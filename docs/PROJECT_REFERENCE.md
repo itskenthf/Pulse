@@ -278,8 +278,20 @@ challenge whenever possible:
 - **Productivity:** weekly goal, deep work tracker
 - **Developer:** latest git commits, open PRs, CI status, Vercel deployments,
   Claude/OpenAI API usage, Docker containers, local servers
-- **Personal:** finance summary, weight tracker, water intake, sleep
+- **Personal:** finance summary, water intake, sleep
 - **Entertainment:** Steam wishlist, recently played
+
+Weight tracker, nutrition, and meal logging were pulled forward out of
+this backlog by explicit request and shipped as the Body & Health
+pillar's Phase 1 — see `docs/ROADMAP.md`'s "Body & Health pillar"
+section and `docs/DECISIONS.md`'s 2026-08-09 entry for the full
+reasoning (this is a real, recorded override of the "don't build until
+core widgets are in daily use" rule above, not a silent exception).
+Progress photos, workout tracking, and a weekly review prompt remain
+backlogged as that pillar's Phase 2, with their database schema already
+provisioned (see the trailing comment in
+`supabase/migrations/0009_body_health_core.sql`) so they aren't blocked
+on a future migration.
 
 Architecture (widget SDK) already supports all of these without shell
 changes — the discipline is sequencing, not capability.
@@ -468,7 +480,15 @@ background) are superseded by `docs/DESIGN_SYSTEM.md` v2.0:
   `WidgetGrid`. Spotify no longer renders on the dashboard (still
   registered, still refreshes in the background) — Steam now pairs with
   RSS instead. The Habits "Coming soon" placeholder was removed
-  2026-08-08, not built.
+  2026-08-08, not built. Superseded 2026-08-09: a Body & Health row
+  (Weight/Nutrition/Meals) now sits above Row 1, directly under the hero
+  banner — see docs/DECISIONS.md's Body & Health entry.
+- **Body & Health pillar** (added 2026-08-09): a new `/health` section
+  (`/health/weight`, `/health/nutrition`, `/health/meals`), mirroring the
+  existing `/tasks`/`/notes`/`/reading` detail-page pattern — a condensed
+  card on the dashboard, a full page for history/corrections/goals. This
+  is Pulse's first "Internal Life" pillar, alongside the "External Life"
+  widgets above; see `docs/ROADMAP.md`'s "Body & Health pillar" section.
 - **Hero is one flowing "assistant" panel**, not floating text or stat
   chips (2026-07-25, superseding the "row of today chips" version below):
   a greeting headline, then one sentence combining date/time and weather

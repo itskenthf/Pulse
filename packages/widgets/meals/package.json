@@ -1,5 +1,5 @@
 {
-  "name": "@pulse/database",
+  "name": "@pulse/widget-meals",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -10,16 +10,17 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@pulse/health": "workspace:*",
+    "@pulse/database": "workspace:*",
     "@pulse/sdk": "workspace:*",
-    "@supabase/supabase-js": "^2.110.7",
+    "@pulse/ui": "workspace:*",
+    "lucide-react": "^1.26.0",
     "zod": "^3.24.1"
   },
   "peerDependencies": {
+    "next": "^16",
     "react": "^19"
   },
   "devDependencies": {
-    "@types/node": "^22",
     "@types/react": "^19",
     "typescript": "^5.7.3",
     "vitest": "^4.1.10"

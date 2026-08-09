@@ -6,13 +6,18 @@ import { HERO_WIDGET_ID } from "@pulse/widget-hero";
 import { NOTES_WIDGET_ID } from "@pulse/widget-notes";
 import { NOTEBOOK_WIDGET_ID } from "@pulse/widget-notebook";
 import { READING_WIDGET_ID } from "@pulse/widget-reading";
+import { MEALS_WIDGET_ID } from "@pulse/widget-meals";
+import { NUTRITION_WIDGET_ID } from "@pulse/widget-nutrition";
 import { WIDGET_ID as RSS_WIDGET_ID } from "@pulse/widget-rss";
 import { WIDGET_ID as STEAM_WIDGET_ID } from "@pulse/widget-steam";
 import { TASKS_WIDGET_ID } from "@pulse/widget-tasks";
+import { WEIGHT_WIDGET_ID } from "@pulse/widget-weight";
 import { auth, signIn } from "@/auth";
 import { cycleHeroQuoteAction } from "./actions/hero";
+import { toggleMealAction } from "./actions/meals";
 import { addNoteAction, deleteNoteAction, updateNoteAction } from "./actions/notes";
 import { addEntryAction, updateEntryAction } from "./actions/notebook";
+import { logAmountAction, setAmountAction } from "./actions/nutrition";
 import {
   addBookAction,
   deleteBookAction,
@@ -20,6 +25,11 @@ import {
   updateProgressAction,
 } from "./actions/reading";
 import { addTaskAction, deleteTaskAction, toggleTaskAction } from "./actions/tasks";
+import {
+  createWeightGoalAction,
+  deleteWeightLogAction,
+  logWeightAction,
+} from "./actions/weight";
 import { refreshWidgetAction, updateWidgetSettingsAction } from "./actions/widgets";
 import { ProfileMenu } from "./profile-menu";
 import { RefreshAllTitle } from "./refresh-all-title";
@@ -56,6 +66,18 @@ const CUSTOM_ACTIONS: Record<string, Record<string, WidgetAction>> = {
     updateProgress: updateProgressAction,
     markFinished: markFinishedAction,
     deleteBook: deleteBookAction,
+  },
+  [WEIGHT_WIDGET_ID]: {
+    logWeight: logWeightAction,
+    deleteWeightLog: deleteWeightLogAction,
+    createWeightGoal: createWeightGoalAction,
+  },
+  [NUTRITION_WIDGET_ID]: {
+    logAmount: logAmountAction,
+    setAmount: setAmountAction,
+  },
+  [MEALS_WIDGET_ID]: {
+    toggleMeal: toggleMealAction,
   },
 };
 
@@ -211,6 +233,15 @@ function WidgetCell({
  * Spotify is intentionally not looked up/rendered here — see
  * docs/DECISIONS.md. It stays registered (so its cache still refreshes
  * on schedule) but no longer appears on the dashboard.
+ *
+ * Row 0 (Body & Health, docs/DECISIONS.md's Body & Health entry): Weight,
+ * Nutrition, Meals, directly under the hero banner — the "morning command
+ * center" the pillar's request described is this row plus the existing
+ * hero banner (Weather/Quote), not a new widget that re-fetches
+ * hero/GitHub data itself. Workout has no card here on purpose: it's a
+ * Phase 2 module with no real widget behind it yet, and this repo
+ * deliberately doesn't ship placeholder cards for unbuilt features (see
+ * the Habits removal above).
  */
 function WidgetGrid({ userId }: { userId: string }) {
   // See WidgetCell's own resetKey comment for why this is called here —
@@ -234,7 +265,13 @@ function WidgetGrid({ userId }: { userId: string }) {
   const steamWidget = nonHeroWidgets.find((widget) => widget.id === STEAM_WIDGET_ID);
   const rssWidget = nonHeroWidgets.find((widget) => widget.id === RSS_WIDGET_ID);
   const readingWidget = nonHeroWidgets.find((widget) => widget.id === READING_WIDGET_ID);
+  const weightWidget = nonHeroWidgets.find((widget) => widget.id === WEIGHT_WIDGET_ID);
+  const nutritionWidget = nonHeroWidgets.find((widget) => widget.id === NUTRITION_WIDGET_ID);
+  const mealsWidget = nonHeroWidgets.find((widget) => widget.id === MEALS_WIDGET_ID);
 
+  const rowHealthWidgets = [weightWidget, nutritionWidget, mealsWidget].filter(
+    (widget): widget is Widget => Boolean(widget),
+  );
   const rowTopWidgets = [tasksWidget, notesWidget, notebookWidget].filter(
     (widget): widget is Widget => Boolean(widget),
   );
@@ -255,6 +292,14 @@ function WidgetGrid({ userId }: { userId: string }) {
         </div>
       )}
       <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-5 px-4 pb-4 sm:gap-6 sm:px-6 sm:pb-6">
+        {rowHealthWidgets.length > 0 && (
+          <div className={ROW_GRID}>
+            {rowHealthWidgets.map((widget) => (
+              <WidgetCell key={widget.id} widget={widget} userId={userId} resetKey={resetKey} />
+            ))}
+          </div>
+        )}
+
         <div className={ROW_GRID}>
           {rowTopWidgets.map((widget, index) => (
             <div

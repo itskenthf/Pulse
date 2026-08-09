@@ -136,9 +136,32 @@ Only use the accent for:
 - icon badges
 - borders/underlines on interactive elements
 - focus rings
-- progress indicators (e.g. Steam's achievement bar)
+- progress indicators (e.g. Steam's achievement bar, `ProgressRing`,
+  `TrendLine`)
 
 Never as a large fill. Never more than one accent.
+
+### Progress indicators: two sanctioned shapes
+
+- **Filled bar** (Steam's achievement bar, Reading's progress bar): a
+  thin `rounded-full` track with a solid `bg-[var(--color-accent)]`
+  inner fill sized via `width: %`. The one place a large accent fill is
+  sanctioned, for a small, low-visual-weight element.
+- **`ProgressRing`** (`packages/ui/src/progress-ring.tsx`, added
+  2026-08-09 for the Weight Tracker widget): a *stroked arc*, not a
+  filled donut — two concentric `<circle>` elements, both `fill="none"`,
+  the progress arc drawn via `stroke-dasharray`/`stroke-dashoffset`.
+  Deliberately stricter than the filled-bar exception above: the ring is
+  a larger, more prominent element (the Weight card, `/health/weight`),
+  where a filled interior would read as much heavier than this system's
+  flat, hairline aesthetic intends. Never fill the ring's interior.
+- **`TrendLine`** (`packages/ui/src/trend-line.tsx`, added 2026-08-09): a
+  single hairline `<polyline>` (`stroke-width: 1.5`, `fill="none"`) for a
+  trend graph (e.g. Weight's history). No gradient area-under-curve — a
+  filled area chart is a typical charting-library default and exactly
+  the look the no-fills rule above prohibits. An optional dashed
+  `--color-divider` reference line marks a goal value, not a second
+  accent-colored data series.
 
 ---
 

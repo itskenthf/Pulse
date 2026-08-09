@@ -4382,3 +4382,45 @@ whenever a widget declares `parseSettingsForm`:
   blank-slot skipping, whitespace trimming, half-filled-slot rejection,
   invalid URL, non-http(s) scheme, invalid priority, fully-empty-form
   rejection, and slots beyond the fixed count being ignored).
+
+## 2026-08-08 — First keyboard shortcut: "r" for global refresh
+
+`UX_AUDIT.md`'s K1 and `FEATURE_GAP_REPORT.md`'s #6 findings: zero
+keyboard-driven workflow existed anywhere in the app (beyond Escape-to-
+close on menus/modals) — every action, including the single
+highest-frequency one (refresh), required a mouse/touch click. For a
+personal tool opened daily by one specific person, that's a real
+missed opportunity every prior audit agreed on, but a genuinely new
+interaction surface, not a fix — deliberately scoped to just one
+shortcut for this pass rather than a full palette, per explicit
+discussion before writing any code.
+
+Added `useKeyboardShortcut` (`packages/ui/src/use-keyboard-shortcut.ts`):
+fires on a bare, unmodified keypress of a given key (case-insensitive).
+Two guards, both required for this to be safe to ship at all:
+
+- **Never fires with a modifier held** (Cmd/Ctrl/Alt) — so a
+  single-letter shortcut can never shadow a real browser/OS shortcut.
+- **Never fires while focus is inside a text input/textarea/select/
+  contenteditable** — so typing the letter itself into a note or task
+  title never accidentally triggers it. Checked via `event.target`
+  against the actual focused element, not a global "is any modal open"
+  flag, so it holds for every current and future text field without
+  needing to be told about each one individually.
+
+Wired into `RefreshAllTitle` (`apps/web/src/app/refresh-all-title.tsx`)
+as `r`, calling the exact same `formRef.current?.requestSubmit()` the
+existing logo-tap click handler and pull-to-refresh gesture already
+use — a third trigger for an action that already had two, not new
+refresh logic. Disabled (`enabled: !isPending`) while a refresh is
+already in flight, so a held or repeated keypress can't queue up
+redundant submissions.
+
+**Deliberately no visible discoverability affordance** (no hint text,
+no `?`-triggered cheat sheet) — single-user app, the one person who'll
+ever use this already knows it exists. Revisit only if more shortcuts
+get added later and remembering all of them stops being reasonable.
+
+Scope explicitly limited to this one shortcut for now; add-task/add-note
+shortcuts and any broader palette were discussed and deferred, not
+ruled out — see `IMPLEMENTATION_PLAN.md`'s deferred section.

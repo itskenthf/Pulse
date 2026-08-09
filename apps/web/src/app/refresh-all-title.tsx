@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import type { WidgetActionState } from "@pulse/sdk";
-import { usePullToRefresh } from "@pulse/ui";
+import { useKeyboardShortcut, usePullToRefresh } from "@pulse/ui";
 import { refreshAllWidgetsAction } from "./actions/widgets";
 
 const initialState: WidgetActionState = {};
@@ -93,6 +93,19 @@ export function RefreshAllTitle() {
     },
     pending: isPending,
   });
+
+  // Keyboard shortcut for the same trigger — "r", the single
+  // highest-frequency dashboard action (see FEATURE_GAP_REPORT.md #6 /
+  // UX_AUDIT.md K1). Disabled while a refresh is already pending so a
+  // held/repeated keypress can't queue up redundant submissions.
+  useKeyboardShortcut(
+    "r",
+    () => {
+      lastRefreshRef.current = Date.now();
+      formRef.current?.requestSubmit();
+    },
+    { enabled: !isPending },
+  );
 
   return (
     <form ref={formRef} action={formAction}>

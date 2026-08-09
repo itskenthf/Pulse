@@ -596,12 +596,14 @@ Phase 1 usage first. Real status:
   (untitled, autosaving stream) widgets, each with their own table and a
   full history page
 - [x] Reading — `packages/widgets/reading`: manual entry, own `reading`
-  table (one row per user, no history — starting a new book overwrites
-  it). Title/author/total pages set via a "start a new book" action;
-  current page updated via a separate daily "update progress" action;
-  an explicit "Clear" action (with the same undo-window safety net as
-  Tasks/Notes' delete) empties it back out. No cover art, no detail
-  page. See `docs/DECISIONS.md`'s 2026-08-09 entry.
+  table, now list-based (multiple books can be "reading" at once, plus
+  finished-book history — reworked from the original one-row-per-user
+  design the same day it shipped, see `docs/DECISIONS.md`'s 2026-08-09
+  entries). Dashboard card is a pure summary (count + up to 3 in-progress
+  previews, no forms); a `/reading` page (matching `/tasks`' shell)
+  handles adding books, updating progress, marking finished, and
+  deleting, each row with the same undo-window safety net Tasks/Notes
+  use. No cover art.
 - [ ] Habit check-ins logged to `habits` — not started; the "Coming
   soon" placeholder card was removed from the dashboard 2026-08-08, not
   built — see docs/DECISIONS.md

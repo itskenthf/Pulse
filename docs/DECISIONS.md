@@ -4478,3 +4478,47 @@ the design rather than reproducing one):
 No `deriveMemories` yet (a "book started"/"finished" memory event is a
 reasonable future addition, not required for this pass — noted rather
 than silently added as scope creep).
+
+## 2026-08-09 — Reworked Reading same-day: multi-book list + /reading page
+
+Live feedback right after the initial Reading build shipped: cramming
+"start a book"/"update progress"/"clear" forms directly into the
+dashboard card made it the odd one out next to Tasks/Notes/Notebook,
+which all follow "compact summary card + a full `/tasks`-style page
+for everything else." This reverses the original "current book only,
+no history" decision (this doc's earlier 2026-08-09 entry, same day)
+in favor of that dominant convention. Confirmed via chat before any
+code changed:
+
+- **Status becomes explicit** (`reading`/`finished`), not inferred
+  from `current_page >= total_page`.
+- **Multiple books can be "reading" at once** — adding a book no
+  longer auto-finishes an existing one, so the `unique(user_id)`
+  constraint from the original `reading` table had to go.
+- **"Mark finished" is its own button**, and finished books keep a
+  `finished_at` date, shown on their row.
+- **Dashboard card is now forms-free** — a stat line ("N in
+  progress"), up to 3 in-progress books previewed (title + thin
+  progress bar), and a "View all →" footer link, matching Tasks/Notes/
+  Notebook's card shape exactly. `EmptyState`'s action links to
+  `/reading` when nothing's in progress.
+- **New `/reading` page**, identical shell to `/tasks`/`/notes` (same
+  fonts, same flat paper background — no new visual language, this is
+  the existing design system applied to a new route). An "Add a book"
+  form up top, then two grouped sections mirroring `/tasks`'
+  Incomplete/Completed pattern (`Reading`, `Finished`), each row
+  wired through `useUndoableDelete` like `TaskRow`.
+
+Schema migration: `supabase/migrations/0008_reading_rework.sql` alters
+the already-applied `0007` table in place (`drop constraint
+reading_user_id_key`, add `status`/`finished_at`) rather than a
+destructive drop-and-recreate, since `0007` had already been applied
+manually in production by the time this landed.
+
+`packages/database/src/reading.ts`'s API changed shape entirely
+(`getCurrentBook`/`startBook`/`clearBook` → `listBooks`/`addBook`/
+`markBookFinished`/`deleteBook`, all but `addBook` now taking a
+`bookId`), and `packages/widgets/reading/src/types.ts`'s
+`readingDataSchema` went from a single nullable record back to a list
+(`books: z.array(...)`) — same shape Tasks/Notes use, since there's
+real history to represent now.

@@ -1,0 +1,29 @@
+{
+  "name": "@pulse/widget-insights",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@pulse/database": "workspace:*",
+    "@pulse/health": "workspace:*",
+    "@pulse/sdk": "workspace:*",
+    "@pulse/ui": "workspace:*",
+    "lucide-react": "^1.26.0",
+    "zod": "^3.24.1"
+  },
+  "peerDependencies": {
+    "next": "^16",
+    "react": "^19"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "typescript": "^5.7.3",
+    "vitest": "^4.1.10"
+  }
+}

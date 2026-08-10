@@ -22,6 +22,8 @@ export { getTodayMeals, setMealChecked, listMealHistory } from "./meals";
 export type { MealCheck, Meal } from "./meals";
 export { listGoals, createGoal, deactivateGoal } from "./goals";
 export type { Goal, GoalMetric, GoalComparator, GoalCadence } from "./goals";
+export { getCurrentWeekReview, upsertCurrentWeekReview, listWeeklyReviews } from "./weekly-review";
+export type { WeeklyReview } from "./weekly-review";
 export {
   readProviderAccessToken,
   readProviderAccount,

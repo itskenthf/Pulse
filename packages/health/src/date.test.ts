@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isoWeekKey, todayInTimeZone } from "./date";
+import { currentWeekStart, isSundayInTimeZone, isoWeekKey, todayInTimeZone } from "./date";
 
 describe("todayInTimeZone", () => {
   it("formats a given instant as YYYY-MM-DD", () => {
@@ -23,5 +23,36 @@ describe("isoWeekKey", () => {
 
   it("handles the year-boundary edge case correctly", () => {
     expect(isoWeekKey("2026-01-01")).toBe("2026-W01");
+  });
+});
+
+describe("currentWeekStart", () => {
+  // 2026-08-09 is a Sunday, 2026-08-03 the Monday before it.
+  it("returns the Monday of the current week for a Sunday", () => {
+    expect(currentWeekStart(new Date("2026-08-09T10:00:00Z"))).toBe("2026-08-03");
+  });
+
+  it("returns the same date when given a Monday", () => {
+    expect(currentWeekStart(new Date("2026-08-10T10:00:00Z"))).toBe("2026-08-10");
+  });
+
+  it("agrees with isoWeekKey on which week a date falls in", () => {
+    const weekStart = currentWeekStart(new Date("2026-08-09T10:00:00Z"));
+    expect(isoWeekKey(weekStart)).toBe(isoWeekKey("2026-08-09"));
+  });
+});
+
+describe("isSundayInTimeZone", () => {
+  it("is true on a Sunday", () => {
+    expect(isSundayInTimeZone(new Date("2026-08-09T10:00:00Z"))).toBe(true);
+  });
+
+  it("is false on a non-Sunday", () => {
+    expect(isSundayInTimeZone(new Date("2026-08-10T10:00:00Z"))).toBe(false);
+  });
+
+  it("resolves to the user's time zone, not UTC, near a day boundary", () => {
+    // 2026-08-08T23:30:00Z (Saturday UTC) is already Sunday in Asia/Kuching (UTC+8).
+    expect(isSundayInTimeZone(new Date("2026-08-08T23:30:00Z"))).toBe(true);
   });
 });

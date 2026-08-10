@@ -1,6 +1,7 @@
 import { registerWidget } from "@pulse/sdk";
 import { heroWidget } from "@pulse/widget-hero";
 import { githubWidget } from "@pulse/widget-github";
+import { insightsWidget } from "@pulse/widget-insights";
 import { notesWidget } from "@pulse/widget-notes";
 import { notebookWidget } from "@pulse/widget-notebook";
 import { readingWidget } from "@pulse/widget-reading";
@@ -10,6 +11,7 @@ import { spotifyWidget } from "@pulse/widget-spotify";
 import { mealsWidget } from "@pulse/widget-meals";
 import { nutritionWidget } from "@pulse/widget-nutrition";
 import { tasksWidget } from "@pulse/widget-tasks";
+import { weeklyReviewWidget } from "@pulse/widget-weekly-review";
 import { weightWidget } from "@pulse/widget-weight";
 
 // Side-effect import target: the shell only ever calls registerWidget(),
@@ -26,3 +28,5 @@ registerWidget(rssWidget);
 registerWidget(weightWidget);
 registerWidget(nutritionWidget);
 registerWidget(mealsWidget);
+registerWidget(weeklyReviewWidget);
+registerWidget(insightsWidget);

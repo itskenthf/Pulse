@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { getAllWidgets, type Widget, type WidgetAction } from "@pulse/sdk";
 import { Skeleton, SPRING_PRESS, WidgetErrorBoundary } from "@pulse/ui";
+import { DAILY_DIGEST_WIDGET_ID } from "@pulse/widget-daily-digest";
 import { WIDGET_ID as GITHUB_WIDGET_ID } from "@pulse/widget-github";
 import { HERO_WIDGET_ID } from "@pulse/widget-hero";
 import { INSIGHTS_WIDGET_ID } from "@pulse/widget-insights";
@@ -241,6 +242,14 @@ function WidgetCell({
  * docs/DECISIONS.md. It stays registered (so its cache still refreshes
  * on schedule) but no longer appears on the dashboard.
  *
+ * Row -1 (Daily Digest, Memory Roadmap M2 — docs/MEMORY_ROADMAP.md):
+ * directly under the hero banner, above Body & Health — a cross-widget
+ * rollup of today's memory events (the same `memories` table the
+ * Timeline page reads), grouped by source. Alone in its row rather than
+ * folded into an existing one: it's conceptually different from every
+ * other card here (a summary *of* other widgets, not its own data
+ * source), and every existing row is already at capacity.
+ *
  * Row 0 (Body & Health, docs/DECISIONS.md's Body & Health entry): Weight,
  * Nutrition, Meals, directly under the hero banner — the "morning command
  * center" the pillar's request described is this row plus the existing
@@ -283,7 +292,9 @@ function WidgetGrid({ userId }: { userId: string }) {
   const mealsWidget = nonHeroWidgets.find((widget) => widget.id === MEALS_WIDGET_ID);
   const weeklyReviewWidget = nonHeroWidgets.find((widget) => widget.id === WEEKLY_REVIEW_WIDGET_ID);
   const insightsWidget = nonHeroWidgets.find((widget) => widget.id === INSIGHTS_WIDGET_ID);
+  const dailyDigestWidget = nonHeroWidgets.find((widget) => widget.id === DAILY_DIGEST_WIDGET_ID);
 
+  const rowDigestWidgets = [dailyDigestWidget].filter((widget): widget is Widget => Boolean(widget));
   const rowHealthWidgets = [weightWidget, nutritionWidget, mealsWidget].filter(
     (widget): widget is Widget => Boolean(widget),
   );
@@ -310,6 +321,14 @@ function WidgetGrid({ userId }: { userId: string }) {
         </div>
       )}
       <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-5 px-4 pb-4 sm:gap-6 sm:px-6 sm:pb-6">
+        {rowDigestWidgets.length > 0 && (
+          <div className={ROW_GRID}>
+            {rowDigestWidgets.map((widget) => (
+              <WidgetCell key={widget.id} widget={widget} userId={userId} resetKey={resetKey} />
+            ))}
+          </div>
+        )}
+
         {rowHealthWidgets.length > 0 && (
           <div className={ROW_GRID}>
             {rowHealthWidgets.map((widget) => (

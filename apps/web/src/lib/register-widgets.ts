@@ -1,5 +1,6 @@
 import { registerWidget } from "@pulse/sdk";
 import { heroWidget } from "@pulse/widget-hero";
+import { dailyDigestWidget } from "@pulse/widget-daily-digest";
 import { githubWidget } from "@pulse/widget-github";
 import { insightsWidget } from "@pulse/widget-insights";
 import { notesWidget } from "@pulse/widget-notes";
@@ -17,6 +18,7 @@ import { weightWidget } from "@pulse/widget-weight";
 // Side-effect import target: the shell only ever calls registerWidget(),
 // never imports a widget's internals directly (reference doc §5).
 registerWidget(heroWidget);
+registerWidget(dailyDigestWidget);
 registerWidget(githubWidget);
 registerWidget(steamWidget);
 registerWidget(spotifyWidget);

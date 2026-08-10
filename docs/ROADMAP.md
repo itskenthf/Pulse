@@ -665,11 +665,27 @@ see `docs/DECISIONS.md`'s second 2026-08-09 entry):
 
 ## Phase 3 — personal analytics
 
-Not started in its own right, though GitHub's streak computation
-(current/longest, `packages/widgets/github/src/streaks.ts`) and the
-separate Memory/Timeline milestone track (`docs/MEMORY_ROADMAP.md`) are
-both early analytics-flavored work already underway outside this phase's
-formal numbering.
+**Scoped down to shipping Memory Roadmap M2** — see
+`docs/DECISIONS.md`'s 2026-08-09 entry. The original three bullets
+("historical views, weekly summaries, night-mode reflection") turned
+out to overlap Weekly Review (already shipped, covers weekly
+reflection) and M2 (a closer match for "weekly summaries" than
+anything Phase 3 itself specified), so rather than build something
+redundant, this phase became: ship M2, skip the rest.
+
+- [x] Daily Digest — `packages/widgets/daily-digest`, no table of its
+  own (reads the existing `memories` table directly), a cross-widget
+  rollup of today's activity grouped by source. Scoped to counts/titles
+  only, not the richer quantified version M2's own illustrative example
+  implied — see `docs/MEMORY_ROADMAP.md`'s updated M2 entry for why.
+  Daily cadence, own dashboard row directly under the hero banner.
+- GitHub's streak computation (current/longest,
+  `packages/widgets/github/src/streaks.ts`) was already early
+  analytics-flavored work underway outside this phase's formal
+  numbering, and remains as-is.
+- Per-widget historical trend views (beyond what Weight/Nutrition
+  already have) and a weekly-cadence digest variant are real follow-ups
+  if wanted, not built ahead of need.
 
 ## Phase 4 — publish (optional)
 

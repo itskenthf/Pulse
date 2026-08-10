@@ -4772,3 +4772,40 @@ tested independently" discipline as Hero's `weather-tip.ts`/GitHub's
 Dashboard: a new row directly below the existing Weight/Nutrition/Meals
 row (that row is already full at 3 of 3 grid columns), holding Weekly
 Review and Insights — `apps/web/src/app/page.tsx`'s `WidgetGrid`.
+
+## 2026-08-09 — Phase 3, scoped to Daily Digest (Memory Roadmap M2)
+
+Phase 3 ("personal analytics") was originally three vague bullets in
+`docs/PROJECT_REFERENCE.md` §12 — "historical views, weekly summaries,
+an optional night-mode reflection" — that turned out to overlap two
+things already built or already planned: Weekly Review (just shipped)
+already covers weekly reflection, and the Memory Roadmap's own M2
+milestone ("daily/weekly summaries") is a closer, more concrete match
+for "weekly summaries" than anything in Phase 3's own bullets. Rather
+than build something redundant, Phase 3 was scoped down to just
+shipping M2, confirmed via chat before building:
+
+- **Skipped the "night mode reflection" idea entirely** — Weekly
+  Review already fills that role at a weekly cadence; a second daily
+  reflection view risked feeling like busywork rather than a distinct
+  feature.
+- **Scoped M2 down to a simple counts/title-list digest**, not the
+  richer quantified version the Memory Roadmap's own illustrative
+  example implied ("listened to Spotify for 2 hours"). That number
+  doesn't actually exist anywhere as structured data yet — see
+  `docs/MEMORY_ROADMAP.md`'s updated M2 entry for the full reasoning
+  and what a richer version would require.
+- **Daily cadence, not weekly** — a digest is relevant every day, not
+  just once a week, and matches the "Am I becoming better than
+  yesterday?" framing from the original Personal OS request better
+  than a once-a-week rollup would.
+
+New widget `packages/widgets/daily-digest`: no table of its own (reads
+the existing `memories` table directly, same "no dedicated table"
+shape as Insights), a pure `groupTodaysMemories` function
+(`src/group.ts`, independently unit tested) groups today's rows by
+source and sorts busiest-first. Placed in its own dashboard row
+directly under the hero banner, above Body & Health — it's a summary
+*of* other widgets' activity, not its own data source, so it doesn't
+belong grouped with either Body & Health row or the Tasks/Notes/
+Notebook row.

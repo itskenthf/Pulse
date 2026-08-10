@@ -641,17 +641,27 @@ Growth), alongside the existing "External Life" widgets above.
   `cadence` model, shared by Weight/Nutrition/Meals now and Workout/
   Photos later.
 
-**Phase 2 — schema-anticipated, not built** (see the trailing comment in
-`supabase/migrations/0009_body_health_core.sql` for the exact planned
-shape of each):
+**Phase 2 — partial, by explicit request** (Progress Photos and Workout
+were deliberately excluded from this pass, not just not-yet-reached —
+see `docs/DECISIONS.md`'s second 2026-08-09 entry):
 
+- [x] Weekly Review — `packages/widgets/weekly-review`, own
+  `weekly_reviews` table (`supabase/migrations/0010_weekly_reviews.sql`
+  — smaller than `0009`'s original trailing sketch; no `weight_kg` or
+  `summary` columns, see the decision entry for why), 1–5 ratings for
+  mood/energy/confidence/sleep quality plus achievement/struggle/notes,
+  a deterministic (non-LLM) generated summary, reachable any day with a
+  Sunday-only dashboard nudge, `/health/weekly-review` page with full
+  history.
+- [x] Insights — `packages/widgets/insights`, no table of its own
+  (reads `weight_logs`/`nutrition_logs`/`meal_checks`/`goals` directly,
+  as originally planned). Three deterministic rules: weight trend,
+  meal-skip-by-weekday pattern, nutrition goal adherence. No
+  workout-consistency insight — no `workouts` table exists to read.
 - [ ] Progress Photos — front/side/back monthly uploads, before/after
-  slider, Supabase Storage (this repo's first use of Storage).
-- [ ] Workout — upcoming workout, history, streak.
-- [ ] Weekly Review — Sunday prompt (weight, achievement, struggle, mood,
-  energy, confidence, sleep quality, notes) with a generated summary.
-- [ ] Insights — actionable cross-cutting observations, reading across
-  weight/nutrition/meals/workout data directly rather than its own table.
+  slider, Supabase Storage (this repo's first use of Storage). Still
+  not built.
+- [ ] Workout — upcoming workout, history, streak. Still not built.
 
 ## Phase 3 — personal analytics
 

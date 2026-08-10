@@ -25,3 +25,20 @@ export function isoWeekKey(dateStr: string): string {
   const week = 1 + Math.round((target.getTime() - firstThursday.getTime()) / (7 * 86400000));
   return `${target.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
 }
+
+/** "YYYY-MM-DD" for the Monday of the ISO week containing the given
+ *  instant (defaults to now), in the user's own time zone — the
+ *  `week_of` value Weekly Review keys off. */
+export function currentWeekStart(date: Date = new Date()): string {
+  const today = new Date(`${todayInTimeZone(date)}T00:00:00Z`);
+  const dayNumber = (today.getUTCDay() + 6) % 7; // Monday = 0
+  today.setUTCDate(today.getUTCDate() - dayNumber);
+  return today.toISOString().slice(0, 10);
+}
+
+/** Is it Sunday right now, in the user's own time zone? Weekly Review's
+ *  dashboard card only nudges on Sundays, and only if that week's review
+ *  isn't filled in yet — this is the "is it Sunday" half of that check. */
+export function isSundayInTimeZone(date: Date = new Date()): boolean {
+  return new Intl.DateTimeFormat("en-US", { timeZone: TIME_ZONE, weekday: "short" }).format(date) === "Sun";
+}

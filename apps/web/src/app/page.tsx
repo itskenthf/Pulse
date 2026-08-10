@@ -3,6 +3,7 @@ import { getAllWidgets, type Widget, type WidgetAction } from "@pulse/sdk";
 import { Skeleton, SPRING_PRESS, WidgetErrorBoundary } from "@pulse/ui";
 import { WIDGET_ID as GITHUB_WIDGET_ID } from "@pulse/widget-github";
 import { HERO_WIDGET_ID } from "@pulse/widget-hero";
+import { INSIGHTS_WIDGET_ID } from "@pulse/widget-insights";
 import { NOTES_WIDGET_ID } from "@pulse/widget-notes";
 import { NOTEBOOK_WIDGET_ID } from "@pulse/widget-notebook";
 import { READING_WIDGET_ID } from "@pulse/widget-reading";
@@ -11,6 +12,7 @@ import { NUTRITION_WIDGET_ID } from "@pulse/widget-nutrition";
 import { WIDGET_ID as RSS_WIDGET_ID } from "@pulse/widget-rss";
 import { WIDGET_ID as STEAM_WIDGET_ID } from "@pulse/widget-steam";
 import { TASKS_WIDGET_ID } from "@pulse/widget-tasks";
+import { WEEKLY_REVIEW_WIDGET_ID } from "@pulse/widget-weekly-review";
 import { WEIGHT_WIDGET_ID } from "@pulse/widget-weight";
 import { auth, signIn } from "@/auth";
 import { cycleHeroQuoteAction } from "./actions/hero";
@@ -25,6 +27,7 @@ import {
   updateProgressAction,
 } from "./actions/reading";
 import { addTaskAction, deleteTaskAction, toggleTaskAction } from "./actions/tasks";
+import { saveReviewAction } from "./actions/weekly-review";
 import {
   createWeightGoalAction,
   deleteWeightLogAction,
@@ -79,6 +82,9 @@ const CUSTOM_ACTIONS: Record<string, Record<string, WidgetAction>> = {
   },
   [MEALS_WIDGET_ID]: {
     toggleMeal: toggleMealAction,
+  },
+  [WEEKLY_REVIEW_WIDGET_ID]: {
+    saveReview: saveReviewAction,
   },
 };
 
@@ -243,6 +249,12 @@ function WidgetCell({
  * Phase 2 module with no real widget behind it yet, and this repo
  * deliberately doesn't ship placeholder cards for unbuilt features (see
  * the Habits removal above).
+ *
+ * Row 0.5 (Body & Health Phase 2, partial — Progress Photos/Workout
+ * excluded by explicit request): Weekly Review and Insights, directly
+ * below Row 0 rather than folded into it — that row is already full at
+ * 3 of 3 columns. Insights only draws on Weight/Nutrition/Meals data;
+ * no workout-related observation runs since that module doesn't exist.
  */
 function WidgetGrid({ userId }: { userId: string }) {
   // See WidgetCell's own resetKey comment for why this is called here —
@@ -269,8 +281,13 @@ function WidgetGrid({ userId }: { userId: string }) {
   const weightWidget = nonHeroWidgets.find((widget) => widget.id === WEIGHT_WIDGET_ID);
   const nutritionWidget = nonHeroWidgets.find((widget) => widget.id === NUTRITION_WIDGET_ID);
   const mealsWidget = nonHeroWidgets.find((widget) => widget.id === MEALS_WIDGET_ID);
+  const weeklyReviewWidget = nonHeroWidgets.find((widget) => widget.id === WEEKLY_REVIEW_WIDGET_ID);
+  const insightsWidget = nonHeroWidgets.find((widget) => widget.id === INSIGHTS_WIDGET_ID);
 
   const rowHealthWidgets = [weightWidget, nutritionWidget, mealsWidget].filter(
+    (widget): widget is Widget => Boolean(widget),
+  );
+  const rowHealthWidgets2 = [weeklyReviewWidget, insightsWidget].filter(
     (widget): widget is Widget => Boolean(widget),
   );
   const rowTopWidgets = [tasksWidget, notesWidget, notebookWidget].filter(
@@ -296,6 +313,14 @@ function WidgetGrid({ userId }: { userId: string }) {
         {rowHealthWidgets.length > 0 && (
           <div className={ROW_GRID}>
             {rowHealthWidgets.map((widget) => (
+              <WidgetCell key={widget.id} widget={widget} userId={userId} resetKey={resetKey} />
+            ))}
+          </div>
+        )}
+
+        {rowHealthWidgets2.length > 0 && (
+          <div className={ROW_GRID}>
+            {rowHealthWidgets2.map((widget) => (
               <WidgetCell key={widget.id} widget={widget} userId={userId} resetKey={resetKey} />
             ))}
           </div>

@@ -4703,3 +4703,72 @@ becomes optional, output stays required), failing typecheck. Fixing
 `refresh-widget.ts` solves the actual production failure (refresh
 being permanently blocked) generally, for every widget, without
 fighting Zod/TypeScript variance for one field on one schema.
+
+## 2026-08-09 — Body & Health Phase 2 (partial): Weekly Review + Insights, Progress Photos/Workout explicitly excluded
+
+Explicit user request to build two of Phase 2's four modules —
+**Progress Photos and Workout were deliberately not built**, cutting
+Phase 2 down further than the original Phase 1 plan anticipated (that
+plan expected all four together later). This is a real scope decision,
+not an oversight: Insights' "workout consistency" observation from the
+original request has no data to run against as a result, and isn't
+built — see its own note below.
+
+**`weekly_reviews`** (`supabase/migrations/0010_weekly_reviews.sql`),
+new table, deliberately smaller than the trailing sketch in `0009`'s
+comment (`reflection text` was a rough placeholder, not the real
+shape):
+
+- **No `weight_kg` column.** That week's weigh-in already lives in
+  `weight_logs` (0009) — `packages/widgets/weekly-review/src/fetch.ts`
+  reads the latest one instead of duplicating it into a second column,
+  avoiding two sources of truth for the same number (same reasoning
+  the original Body & Health entry gave for not storing a redundant
+  goal-progress value).
+- **No `summary` column.** The weekly summary
+  (`packages/widgets/weekly-review/src/summary.ts`'s
+  `generateWeeklySummary`) is generated on read from the row's own
+  fields, not stored — same "compute on read, don't persist a derived
+  value" pattern `goals`' met/not-met status already uses. A summary
+  that's never written can't go stale.
+- **Deterministic, rule-based summary — no LLM call.** Confirmed
+  against Hero's `weather-tip.ts`, which already documents this as
+  Ken's explicit preference ("no AI assistant... no external cost").
+  `generateWeeklySummary` is a pure function (rating number → word,
+  same one-input-one-output shape as `weatherTip`), fully unit tested.
+- **Ratings are 1–5, not 1–10** — fast enough to fill in on a phone,
+  matching the "under 10 seconds to log" UX principle from the
+  original Body & Health request better than a wider scale would.
+- **Reachable any day, not gated to Sunday** — the dashboard card only
+  *nudges* on Sundays (`isSundayInTimeZone`, new in
+  `packages/health/src/date.ts`, alongside a new `currentWeekStart`
+  helper for computing `week_of`) when that week's review isn't filled
+  in yet; the `/health/weekly-review` page itself works any day, so a
+  missed Sunday doesn't lose the week's entry.
+
+**Insights** (`packages/widgets/insights`) gets no table of its own,
+exactly as `0009`'s trailing comment already planned — it reads
+`weight_logs`/`meal_checks`/`nutrition_logs`/`goals` directly. Three
+deterministic rule functions, each in its own file under `src/rules/`
+with its own unit tests (same "pure function, no side effects, unit
+tested independently" discipline as Hero's `weather-tip.ts`/GitHub's
+`streaks.ts`):
+
+- Weight trend over the trailing 30 days ("You've lost 1kg this
+  month.").
+- A meal-skipping-by-weekday pattern, checked across all four meals
+  (not just breakfast, since the underlying `meal_checks` data
+  supports it equally well) — only reported when a weekday has been
+  seen at least twice and skipped at least half the time, so one
+  missed Monday doesn't read as a "pattern."
+- Nutrition goal adherence ("You've hit your water goal 5 of the last
+  7 days") — only reported when an active goal actually exists for
+  that metric; no goal, no claim.
+- **No workout-consistency insight** — the original request's example
+  ("Workout consistency dropped this week") needs a `workouts` table
+  that doesn't exist, since Workout was excluded from this pass. Not
+  faked with unrelated data; simply absent until Workout is built.
+
+Dashboard: a new row directly below the existing Weight/Nutrition/Meals
+row (that row is already full at 3 of 3 grid columns), holding Weekly
+Review and Insights — `apps/web/src/app/page.tsx`'s `WidgetGrid`.

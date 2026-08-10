@@ -48,12 +48,28 @@ table. See the 2026-07-27 DECISIONS.md entry for the full reasoning.
 AI assistant. Adding a new widget after M1 ships means adding its own
 `deriveMemories` — no other plumbing changes.
 
-## M2 — Daily / weekly summaries
+## M2 — Daily / weekly summaries (shipped, scoped down)
 
-Generate a rollup from M1's raw events — e.g. "Today you made 5 commits,
-listened to Spotify for 2 hours, and played Palworld." Exact mechanism
-(scheduled job vs. computed on read) to be decided when this milestone
-starts, informed by how M1's event volume actually looks in practice.
+Shipped as **Daily Digest** (`packages/widgets/daily-digest`) — a
+dashboard card reading M1's `memories` table directly (no new table),
+grouped by source, computed on read at fetch time (no scheduled job).
+
+**Scoped down from the original pitch**, by explicit request: the
+illustrative "listened to Spotify for 2 hours" implies structured
+duration data that doesn't exist — session lengths currently live in
+free-text `description` strings (e.g. Steam's "1.5h this session"), not
+parseable numeric metadata. Building a true quantified summary would
+mean widening every widget's `deriveMemories` to emit structured
+metadata (minutes, counts) — a cross-cutting SDK change touching
+GitHub/Steam/Spotify/Tasks/Notes/Notebook/Reading, not just a new
+widget. Deferred; what shipped instead is a simple counts + title-list
+digest ("GitHub (3): Opened PR #42, Merged PR #40 +1 more"), built
+entirely from data M1 already produces.
+
+Daily cadence only (not weekly) — see `docs/DECISIONS.md`'s entry for
+the reasoning. A weekly variant, or the richer quantified version, are
+both real follow-ups if the simple version doesn't hold up in daily
+use — not ruled out, just not built ahead of need.
 
 ## M3 — Embeddings + semantic search
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import type { ContributionWeek } from "@pulse/adapter-github";
 import { glassClass } from "@pulse/ui";
 import { formatMonthDay } from "./format";
@@ -39,7 +40,10 @@ export function Heatmap({
   year: number;
 }) {
   const { openDate, toggle, popoverRef } = useDayPopover();
-  const monthLabels = computeMonthLabels(weeks, year);
+  // Popover toggles re-render this component on every tap — recomputing
+  // month labels from scratch each time was pure re-work (see
+  // docs/DECISIONS.md's 2026-08-12 entry).
+  const monthLabels = useMemo(() => computeMonthLabels(weeks, year), [weeks, year]);
   const columnCount = weeks.length;
   // One cell's edge length, expressed as a CSS calc() using container
   // query width units (cqw). `cqw` resolves against the nearest ancestor

@@ -40,6 +40,13 @@ export async function fetchInsightsData(context: WidgetFetchContext): Promise<In
   await ensureWidgetRegistered(WIDGET_ID, WIDGET_NAME, WIDGET_DESCRIPTION);
 
   const [weightLogs, mealHistory, nutritionHistory, goals] = await Promise.all([
+    // 60, not WEIGHT_TREND_DAYS (30) — weight_logs has no unique-per-day
+    // constraint (multiple weigh-ins on the same day are allowed, see
+    // packages/database/src/weight.ts), so a row-count limit exactly equal
+    // to the day window could under-fetch on a day with more than one log.
+    // The 2x buffer is deliberate, not waste — see docs/DECISIONS.md's
+    // 2026-08-12 entry (this was flagged as a possible one-line trim by an
+    // earlier perf pass, investigated, and kept as-is).
     listWeightLogs(context.userId, 60),
     listMealHistory(context.userId, MEAL_HISTORY_DAYS),
     listNutritionHistory(context.userId, NUTRITION_HISTORY_DAYS),

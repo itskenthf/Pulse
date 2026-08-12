@@ -4,10 +4,16 @@
  *  setting is the appropriate scope here. */
 const TIME_ZONE = "Asia/Kuching";
 
+const DAY_FORMATTER = new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE });
+
 /** "YYYY-MM-DD" for the given instant (defaults to now) in the user's own
- *  time zone — the calendar date nutrition/meals/weight logs key off. */
+ *  time zone — the calendar date nutrition/meals/weight logs key off.
+ *  Reuses one hoisted `Intl.DateTimeFormat` rather than constructing a new
+ *  one per call — daily-digest calls this once per memory in a lookback
+ *  window of up to 200 (see docs/DECISIONS.md's 2026-08-12 entry), and
+ *  every other caller benefits too, for free. */
 export function todayInTimeZone(date: Date = new Date()): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE }).format(date);
+  return DAY_FORMATTER.format(date);
 }
 
 /** ISO 8601 week label ("2026-W32") for a "YYYY-MM-DD" date string — used

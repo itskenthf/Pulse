@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export interface UseKeyboardShortcutOptions {
   /** Set to `false` to temporarily stop listening without unmounting the
@@ -29,6 +29,19 @@ export function useKeyboardShortcut(
   handler: () => void,
   { enabled = true }: UseKeyboardShortcutOptions = {},
 ): void {
+  // A caller re-rendering for reasons unrelated to this hook (e.g.
+  // RefreshAllTitle's hover/focus state) previously passed a new `handler`
+  // identity every time, which tore down and re-added the document
+  // listener on every one of those renders — see docs/DECISIONS.md's
+  // 2026-08-12 entry. Stashing it in a ref (same pattern as
+  // usePullToRefresh's onRefreshRef) lets the listener effect depend only
+  // on `[key, enabled]`, which change rarely if ever.
+  const handlerRef = useRef(handler);
+
+  useEffect(() => {
+    handlerRef.current = handler;
+  }, [handler]);
+
   useEffect(() => {
     if (!enabled) return;
 
@@ -38,10 +51,10 @@ export function useKeyboardShortcut(
       if (isTypingTarget(event.target)) return;
 
       event.preventDefault();
-      handler();
+      handlerRef.current();
     }
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [key, handler, enabled]);
+  }, [key, enabled]);
 }

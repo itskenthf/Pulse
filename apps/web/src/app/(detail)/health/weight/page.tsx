@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { readWidgetCache } from "@pulse/database";
+import { listWeightLogs, readWidgetCache } from "@pulse/database";
 import { EmptyState, SectionLabel, TrendLine } from "@pulse/ui";
 import {
   LogWeightForm,
@@ -24,8 +24,15 @@ export default async function WeightPage() {
     redirect("/");
   }
 
-  const cached = await readWidgetCache(session.user.id, WEIGHT_WIDGET_ID, weightDataSchema);
-  const logs = cached?.data.logs ?? [];
+  // Unlike the dashboard card (capped to RECENT_LOG_LIMIT for the cache
+  // row), this is the dedicated history page — read every weigh-in
+  // directly, same unbounded-read pattern /notebook already uses, so
+  // "full history" here means all of it, not just the cache's recent
+  // window.
+  const [cached, logs] = await Promise.all([
+    readWidgetCache(session.user.id, WEIGHT_WIDGET_ID, weightDataSchema),
+    listWeightLogs(session.user.id),
+  ]);
   const goal = cached?.data.goal ?? null;
   const chronological = [...logs].reverse();
 

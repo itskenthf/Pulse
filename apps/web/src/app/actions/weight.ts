@@ -1,6 +1,6 @@
 "use server";
 
-import { createGoal, deleteWeightLog, logWeight } from "@pulse/database";
+import { createGoal, deactivateGoal, deleteWeightLog, listGoals, logWeight } from "@pulse/database";
 import type { WidgetActionState } from "@pulse/sdk";
 import { WEIGHT_WIDGET_ID } from "@pulse/widget-weight";
 import { runWidgetWriteAction } from "@/lib/run-widget-write-action";
@@ -68,6 +68,12 @@ export async function createWeightGoalAction(
       if (comparator !== "at_least" && comparator !== "at_most") {
         return { error: "Invalid goal direction" };
       }
+
+      // Replace, don't accumulate: same one-active-goal-per-metric guard
+      // createNutritionGoalAction already uses, so a double-submit can't
+      // leave a stale weight goal silently active alongside the new one.
+      const existing = await listGoals(userId, { activeOnly: true, metric: "weight_kg" });
+      await Promise.all(existing.map((goal) => deactivateGoal(userId, goal.id)));
 
       await createGoal(userId, {
         title: title.trim(),

@@ -5087,3 +5087,66 @@ chrome wasn't possible in this environment — no real Supabase/GitHub
 OAuth credentials to actually sign in with — so that's confirmed by
 `pnpm build`/typecheck/lint/test passing and code review, not a live
 screenshot.
+
+## 2026-08-12 — New packages/ui primitives: Button, IconButton, UndoableDeleteRow, ViewAllLink, SectionLabel, FIELD_CLASS
+
+A styling/consistency audit found six patterns duplicated across widget
+components — some byte-for-byte identical, independently redefined
+rather than shared, despite `packages/ui` already being the established
+home for exactly this (`glassClass()`/`GLASS_CHIP` already work this
+way). Added to `packages/ui` and swapped every real call site over:
+
+- **`FIELD_CLASS`** (`field.ts`) — the text input/select/textarea style,
+  previously a byte-for-byte-identical local `const FIELD_CLASS` in 4
+  files (`weight-goal-form.tsx`, `review-form.tsx`, `add-book-form.tsx`,
+  `nutrition-goal-form.tsx`) plus inline duplicates in 3 more
+  (`log-weight-form.tsx`, `add-task-form.tsx`, `note-modal.tsx`'s title
+  input/textarea, `book-row.tsx`'s page-progress input). A plain string
+  constant, not a component — matches `glassClass()`'s own shape, since
+  call sites vary in element type/props too much for one polymorphic
+  component to be worth it.
+- **`Button`** (`button.tsx`) — the outlined accent button (design
+  system's "outlined, never solid-filled" rule), previously hand-rolled
+  in 11 files. A thin `<button>` wrapper so `type`/`disabled`/`onClick`
+  pass through normally; callers needing a different size/alignment
+  (`w-fit px-4`, `shrink-0`, `self-start`) append it via `className`,
+  relying on Tailwind's deterministic same-scale utility ordering
+  (verified directly: the built CSS puts `.px-4{...}` after
+  `.px-3{...}`, so a later same-property utility class reliably wins,
+  not a source-order assumption).
+- **`IconButton`** (`icon-button.tsx`) — the 44px round delete/trash
+  button, previously duplicated in `task-row.tsx`/`book-row.tsx`/
+  `weight-log-row.tsx`. Narrowly named for what every existing call site
+  actually is (a danger action), not a speculative variant system.
+- **`UndoableDeleteRow`** (`undoable-delete-row.tsx`) — the whole
+  pending-delete-with-Undo row (label + Undo button + hidden delete
+  form), independently duplicated in four files even though the
+  `useUndoableDelete` hook it wraps was already shared. Settles three
+  minor inconsistencies the four copies had drifted into (`task-row.tsx`
+  used `py-1.5` where the other three used `py-2`; `note-modal.tsx` used
+  `gap-3` where the other three used `gap-2`) onto one value — a
+  deliberate, tiny visual normalization, not something anyone would have
+  noticed as inconsistent before extracting the shared component made it
+  obvious.
+- **`ViewAllLink`** (`view-all-link.tsx`) — the "View all →" footer link
+  on Tasks/Notes/Notebook/Reading's dashboard cards. Added `next` as a
+  peer dependency to `@pulse/ui` for this (first `next/link` use in the
+  package).
+- **`SectionLabel`** (`section-label.tsx`) — the uppercase tracked
+  sub-section heading ("History", "Today", "Set a goal", ...), duplicated
+  across `TaskGroup`/`BookGroup` and every multi-section detail page
+  (7 files).
+
+**Deliberately not consolidated:** `nutrition-correction-form.tsx`'s and
+`quick-log-buttons.tsx`'s compact `Set`/`+250kcal` buttons (`px-2
+text-xs`, not `Button`'s `px-3 text-sm`) — a real, intentional size
+variant for a dense grid layout, not accidental duplication; `notes-
+card.tsx`'s "Write a note..." trigger (styled like a field but is a
+`<button>`, and needs a different text color than `FIELD_CLASS`'s base,
+which arbitrary-value `text-[...]` utilities can't be relied on to
+override predictably the way scale-based utilities like `px-*` can).
+Verified with `pnpm lint`/`typecheck`/`test`/`build`, the e2e suite, and
+a local dev server screenshot of the signed-out shell (no console
+errors) — the same live-verification limitation as the previous entry
+applies to the actual widget forms these touch, since signing in isn't
+possible in this environment.

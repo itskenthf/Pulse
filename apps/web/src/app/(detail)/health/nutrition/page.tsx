@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { listNutritionHistory, readWidgetCache } from "@pulse/database";
+import { SectionLabel } from "@pulse/ui";
 import {
   NUTRITION_WIDGET_ID,
   NutritionCorrectionForm,
@@ -59,16 +60,12 @@ export default async function NutritionPage() {
       </h1>
 
       <div className="flex flex-col gap-2">
-        <h2 className="font-heading text-sm font-semibold tracking-[0.08em] text-[var(--color-accent-700)] uppercase">
-          Today
-        </h2>
+        <SectionLabel>Today</SectionLabel>
         <NutritionCorrectionForm today={today} action={setAmountAction} />
       </div>
 
       <div className="flex flex-col gap-2">
-        <h2 className="font-heading text-sm font-semibold tracking-[0.08em] text-[var(--color-accent-700)] uppercase">
-          Daily targets
-        </h2>
+        <SectionLabel>Daily targets</SectionLabel>
         {goals.length > 0 && (
           <ul className="flex flex-col gap-1 text-sm text-[var(--color-neutral-600)]">
             {goals.map((goal) => (
@@ -82,9 +79,7 @@ export default async function NutritionPage() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <h2 className="font-heading text-sm font-semibold tracking-[0.08em] text-[var(--color-accent-700)] uppercase">
-          History
-        </h2>
+        <SectionLabel>History</SectionLabel>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[420px] text-left text-sm">
             <thead>

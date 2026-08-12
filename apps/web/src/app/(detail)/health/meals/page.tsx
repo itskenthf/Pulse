@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { listMealHistory, readWidgetCache } from "@pulse/database";
+import { SectionLabel } from "@pulse/ui";
 import { MEALS_WIDGET_ID, MealToggleRow, MealsSummary, mealsDataSchema } from "@pulse/widget-meals";
 import { auth } from "@/auth";
 import { toggleMealAction } from "@/app/actions/meals";
@@ -50,9 +51,7 @@ export default async function MealsPage() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <h2 className="font-heading text-sm font-semibold tracking-[0.08em] text-[var(--color-accent-700)] uppercase">
-          History
-        </h2>
+        <SectionLabel>History</SectionLabel>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[360px] text-left text-sm">
             <thead>

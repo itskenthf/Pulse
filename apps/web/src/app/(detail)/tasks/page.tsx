@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { readWidgetCache } from "@pulse/database";
-import { EmptyState } from "@pulse/ui";
+import { EmptyState, SectionLabel } from "@pulse/ui";
 import { AddTaskForm, TASKS_WIDGET_ID, TaskRow, taskDataSchema, type Task } from "@pulse/widget-tasks";
 import { auth } from "@/auth";
 import { addTaskAction, deleteTaskAction, toggleTaskAction } from "@/app/actions/tasks";
@@ -19,9 +19,7 @@ function TaskGroup({
 
   return (
     <div className="flex flex-col gap-2">
-      <h2 className="font-heading text-sm font-semibold tracking-[0.08em] text-[var(--color-accent-700)] uppercase">
-        {label}
-      </h2>
+      <SectionLabel>{label}</SectionLabel>
       <div className="flex flex-col divide-y divide-[var(--color-divider)] border-y border-[var(--color-divider)]">
         {tasks.map((task) => (
           <TaskRow

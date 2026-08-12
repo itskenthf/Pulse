@@ -1,9 +1,9 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
-import { Trash2, Undo2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import type { WidgetAction, WidgetActionState } from "@pulse/sdk";
-import { Modal, useUndoableDelete } from "@pulse/ui";
+import { Button, FIELD_CLASS, IconButton, Modal, UndoableDeleteRow, useUndoableDelete } from "@pulse/ui";
 import type { Note } from "./types";
 
 const initialState: WidgetActionState = {};
@@ -63,19 +63,14 @@ export function NoteModal({
     <Modal open={open} onClose={onClose} title={isEdit ? "Edit note" : "New note"}>
       <div className="flex flex-col gap-3">
         {pendingDelete ? (
-          <div className="flex items-center justify-between gap-3 py-2 text-sm text-[var(--color-neutral-500)]">
-            <span className="truncate">&ldquo;{note?.title}&rdquo; deleted</span>
-            <button
-              type="button"
-              onClick={undo}
-              className="flex min-h-11 shrink-0 items-center gap-1.5 px-2 text-sm font-medium text-[var(--color-accent)] hover:underline"
-            >
-              <Undo2 className="h-3.5 w-3.5" aria-hidden="true" /> Undo
-            </button>
-            <form ref={deleteFormRef} action={deleteFormAction} className="hidden">
-              {note && <input type="hidden" name="noteId" value={note.id} />}
-            </form>
-          </div>
+          <UndoableDeleteRow
+            label={<>&ldquo;{note?.title}&rdquo; deleted</>}
+            onUndo={undo}
+            formRef={deleteFormRef}
+            deleteAction={deleteFormAction}
+          >
+            {note && <input type="hidden" name="noteId" value={note.id} />}
+          </UndoableDeleteRow>
         ) : (
           <>
             <form ref={formRef} action={saveFormAction} className="flex flex-col gap-3">
@@ -86,7 +81,7 @@ export function NoteModal({
                 defaultValue={note?.title}
                 required
                 disabled={isSaving}
-                className="min-h-11 rounded-[4px] border border-[var(--color-divider)] bg-transparent px-3 py-2 text-sm font-medium text-[var(--foreground)] placeholder:font-normal placeholder:text-[var(--color-neutral-400)] focus-visible:border-[var(--color-accent)] focus-visible:outline-none"
+                className={`${FIELD_CLASS} font-medium placeholder:font-normal`}
               />
               <textarea
                 name="body"
@@ -100,7 +95,7 @@ export function NoteModal({
                     formRef.current?.requestSubmit();
                   }
                 }}
-                className="rounded-[4px] border border-[var(--color-divider)] bg-transparent px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--color-neutral-400)] focus-visible:border-[var(--color-accent)] focus-visible:outline-none"
+                className={FIELD_CLASS}
               />
               {note && (
                 <p className="text-xs text-[var(--color-neutral-400)]">
@@ -109,24 +104,19 @@ export function NoteModal({
                     ` · Edited ${DATE_FORMATTER.format(new Date(note.updatedAt))}`}
                 </p>
               )}
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="min-h-11 self-start rounded-[4px] border border-[var(--color-accent)] px-3 text-sm font-medium text-[var(--color-accent)] hover:bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)] disabled:opacity-50"
-              >
+              <Button type="submit" disabled={isSaving} className="self-start">
                 {isSaving ? "Saving…" : "Save"}
-              </button>
+              </Button>
               {saveError && <p className="text-xs text-red-600">{saveError}</p>}
             </form>
             {isEdit && (
-              <button
-                type="button"
+              <IconButton
                 onClick={requestDelete}
                 aria-label={`Delete "${note!.title}"`}
-                className="flex h-11 w-11 items-center justify-center self-end rounded-full text-[var(--color-neutral-400)] hover:bg-current/10 hover:text-red-600"
+                className="self-end"
               >
                 <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-              </button>
+              </IconButton>
             )}
           </>
         )}

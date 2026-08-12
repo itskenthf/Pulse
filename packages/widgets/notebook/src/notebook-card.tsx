@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NotebookPen } from "lucide-react";
-import Link from "next/link";
-import { WidgetCard, WidgetMenu } from "@pulse/ui";
+import { ViewAllLink, WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { NotebookWidgetActions } from "./actions";
 import { NotebookInput } from "./notebook-input";
 
@@ -53,14 +52,7 @@ export function NotebookCard({
         </div>
       }
       compact
-      footer={
-        <Link
-          href="/notebook"
-          className="text-sm font-medium text-[var(--color-accent)] hover:underline"
-        >
-          View all →
-        </Link>
-      }
+      footer={<ViewAllLink href="/notebook" />}
     >
       <NotebookInput actions={actions} onPendingChange={handlePendingChange} />
     </WidgetCard>

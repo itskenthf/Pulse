@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { readWidgetCache } from "@pulse/database";
-import { EmptyState, TrendLine } from "@pulse/ui";
+import { EmptyState, SectionLabel, TrendLine } from "@pulse/ui";
 import {
   LogWeightForm,
   WEIGHT_WIDGET_ID,
@@ -54,17 +54,13 @@ export default async function WeightPage() {
         </p>
       ) : (
         <div className="flex flex-col gap-2">
-          <h2 className="font-heading text-sm font-semibold tracking-[0.08em] text-[var(--color-accent-700)] uppercase">
-            Set a goal
-          </h2>
+          <SectionLabel>Set a goal</SectionLabel>
           <WeightGoalForm action={createWeightGoalAction} />
         </div>
       )}
 
       <div className="flex flex-col gap-2">
-        <h2 className="font-heading text-sm font-semibold tracking-[0.08em] text-[var(--color-accent-700)] uppercase">
-          History
-        </h2>
+        <SectionLabel>History</SectionLabel>
         {logs.length === 0 ? (
           <EmptyState message="No weigh-ins yet — log one above." />
         ) : (

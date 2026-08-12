@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Memory } from "@pulse/database";
 import { listMemories } from "@pulse/database";
-import { ACCENT_BADGE, EmptyState, RADIUS } from "@pulse/ui";
+import { ACCENT_BADGE, EmptyState, RADIUS, SectionLabel } from "@pulse/ui";
 import { HERO_TIME_ZONE } from "@pulse/widget-hero";
 import { auth } from "@/auth";
 import { groupMemoriesByRecency } from "@/lib/group-memories";
@@ -105,9 +105,9 @@ export default async function TimelinePage() {
         <div className="flex flex-col gap-8">
           {groups.map((group) => (
             <div key={group.label} className="flex flex-col gap-3">
-              <h2 className="font-heading text-sm font-semibold tracking-[0.08em] text-[var(--color-accent-700)] uppercase">
+              <SectionLabel>
                 {group.label} · {group.memories.length}
-              </h2>
+              </SectionLabel>
               <div className="flex flex-col divide-y divide-[var(--color-divider)] border-y border-[var(--color-divider)]">
                 {group.memories.map((memory) => (
                   <MemoryRow key={memory.id} memory={memory} />

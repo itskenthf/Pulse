@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { listWeeklyReviews, readWidgetCache } from "@pulse/database";
-import { EmptyState } from "@pulse/ui";
+import { EmptyState, SectionLabel } from "@pulse/ui";
 import {
   ReviewForm,
   WEEKLY_REVIEW_WIDGET_ID,
@@ -60,9 +60,7 @@ export default async function WeeklyReviewPage() {
       <ReviewForm review={currentReview} action={saveReviewAction} />
 
       <div className="flex flex-col gap-2">
-        <h2 className="font-heading text-sm font-semibold tracking-[0.08em] text-[var(--color-accent-700)] uppercase">
-          Past reviews
-        </h2>
+        <SectionLabel>Past reviews</SectionLabel>
         {pastReviews.length === 0 ? (
           <EmptyState message="No past reviews yet." />
         ) : (

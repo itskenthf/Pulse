@@ -391,6 +391,11 @@ UI is built from reusable primitives in `packages/ui`:
 - `RADIUS` (`tokens.ts`)
 - `WidgetCard`, `WidgetMenu`, `ActionForm`, `Metric`, `Skeleton`,
   `EmptyState`, `ErrorState`, `useDismissableMenu`
+- `Button` (outlined accent button), `IconButton` (danger/delete round
+  button), `UndoableDeleteRow` (pairs with `useUndoableDelete`),
+  `ViewAllLink`, `SectionLabel`, `FIELD_CLASS` (added 2026-08-12 —
+  consolidating patterns previously hand-rolled per widget; see
+  docs/DECISIONS.md)
 
 Design tokens (CSS variables in `apps/web/src/app/globals.css`) should
 power the interface instead of hardcoded hex/rgba values wherever a

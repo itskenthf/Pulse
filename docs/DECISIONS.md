@@ -4850,3 +4850,33 @@ for unrecognized sources. Historical narrative in `docs/DECISIONS.md`
 and `docs/ROADMAP.md`'s changelog-style entries predating this one is
 also left alone — this is a removal decision, not a rewrite of what
 was actually built and why at the time.
+
+## 2026-08-12 — `formatRelativeDay` consolidated into `packages/health`
+
+The same architecture review noted `packages/widgets/github/src/format.ts`
+and `packages/widgets/steam/src/format.ts` each independently implemented
+an identical "Today"/"Yesterday"/"N days/months/years ago" day-bucketing
+function, verified byte-for-byte identical apart from their input's
+units (an ISO date string vs. Unix seconds) — a real, exact duplication,
+not just "same category of concern."
+
+Moved the shared logic to `packages/health/src/date.ts` as
+`formatRelativeDay(epochMs: number)`, taking epoch milliseconds so it
+doesn't need to guess a caller's units. Each widget's own
+`formatRelativeDay` is now a thin wrapper converting its existing input
+type to epoch ms and delegating — call sites in both widgets are
+unchanged, only the day-math body moved. Added `@pulse/health` as a
+dependency to `widget-github`/`widget-steam` (neither previously used
+it). The day-bucketing test matrix moved to `packages/health/src/date.test.ts`;
+each widget's own test file keeps just enough coverage to confirm its
+input-unit conversion is correct, not a duplicate of the bucketing
+logic's own tests.
+
+**Deliberately not touched:** the per-widget date formatters in
+`notebook/src/format.ts`, `notes/src/note-modal.tsx`, and
+`weight/src/weight-log-row.tsx` use three genuinely different
+`Intl.DateTimeFormat` specs (long month+day; medium date+time style;
+short month+day+year) — same category of concern as each other, but not
+literal duplicates, so consolidating them would be a premature
+abstraction rather than a real fix (see CLAUDE.md's "three similar
+lines beat a speculative shared helper").

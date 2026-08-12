@@ -29,27 +29,12 @@ describe("formatRelativeDay", () => {
     vi.useRealTimers();
   });
 
-  function daysAgo(days: number): number {
-    return Math.floor(new Date("2026-07-27T12:00:00Z").getTime() / 1000) - days * 86400;
-  }
-
-  it("says Today for the same day", () => {
-    expect(formatRelativeDay(daysAgo(0))).toBe("Today");
-  });
-
-  it("says Yesterday for one day back", () => {
-    expect(formatRelativeDay(daysAgo(1))).toBe("Yesterday");
-  });
-
-  it("says N days ago under a month", () => {
-    expect(formatRelativeDay(daysAgo(5))).toBe("5 days ago");
-  });
-
-  it("says N months ago under a year", () => {
-    expect(formatRelativeDay(daysAgo(65))).toBe("2 months ago");
-  });
-
-  it("says N years ago at a year or more", () => {
-    expect(formatRelativeDay(daysAgo(400))).toBe("1 year ago");
+  // Day-bucketing behavior ("Today"/"Yesterday"/"N days/months/years ago")
+  // is covered by @pulse/health's own formatRelativeDay tests — this just
+  // confirms the Unix-seconds-to-epoch-ms conversion at this function's
+  // boundary is correct.
+  it("converts Unix seconds to the shared epoch-ms formatter", () => {
+    const yesterday = Math.floor(new Date("2026-07-26T12:00:00Z").getTime() / 1000);
+    expect(formatRelativeDay(yesterday)).toBe("Yesterday");
   });
 });

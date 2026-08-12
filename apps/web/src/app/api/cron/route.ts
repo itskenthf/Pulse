@@ -35,7 +35,9 @@ export async function GET(request: Request) {
   const userIds = await listUserIds();
 
   const results = await Promise.allSettled(
-    userIds.flatMap((userId) => widgets.map((widget) => refreshWidget(widget.id, userId))),
+    userIds.flatMap((userId) =>
+      widgets.map((widget) => refreshWidget(widget.id, userId, { force: false })),
+    ),
   );
 
   const failures = results.filter(

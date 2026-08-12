@@ -89,8 +89,8 @@ describe("refreshAllWidgetsAction", () => {
 
     const result = await refreshAllWidgetsAction({}, new FormData());
 
-    expect(refreshWidget).toHaveBeenCalledWith("github", "user-1");
-    expect(refreshWidget).toHaveBeenCalledWith("notes", "user-1");
+    expect(refreshWidget).toHaveBeenCalledWith("github", "user-1", { force: false });
+    expect(refreshWidget).toHaveBeenCalledWith("notes", "user-1", { force: false });
     expect(revalidatePath).toHaveBeenCalledWith("/");
     expect(result).toEqual({});
   });
@@ -147,7 +147,7 @@ describe("refreshAllWidgetsAction", () => {
 
     await refreshAllWidgetsAction({}, new FormData());
 
-    expect(refreshWidget).toHaveBeenCalledWith("notes", "user-1");
+    expect(refreshWidget).toHaveBeenCalledWith("notes", "user-1", { force: false });
   });
 });
 

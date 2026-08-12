@@ -1,16 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getWidget, readWidgetCache, writeWidgetCache, writeMemories, revalidateWidgetTag } =
-  vi.hoisted(() => ({
-    getWidget: vi.fn(),
-    readWidgetCache: vi.fn(),
-    writeWidgetCache: vi.fn(),
-    writeMemories: vi.fn(),
-    revalidateWidgetTag: vi.fn(),
-  }));
+const {
+  getWidget,
+  readWidgetCache,
+  readWidgetCacheUpdatedAt,
+  writeWidgetCache,
+  writeMemories,
+  revalidateWidgetTag,
+} = vi.hoisted(() => ({
+  getWidget: vi.fn(),
+  readWidgetCache: vi.fn(),
+  readWidgetCacheUpdatedAt: vi.fn(),
+  writeWidgetCache: vi.fn(),
+  writeMemories: vi.fn(),
+  revalidateWidgetTag: vi.fn(),
+}));
 
 vi.mock("@pulse/sdk", () => ({ getWidget }));
-vi.mock("@pulse/database", () => ({ readWidgetCache, writeWidgetCache, writeMemories }));
+vi.mock("@pulse/database", () => ({
+  readWidgetCache,
+  readWidgetCacheUpdatedAt,
+  writeWidgetCache,
+  writeMemories,
+}));
 vi.mock("./widget-data-cache", () => ({
   revalidateWidgetTag,
   widgetCacheTag: (userId: string, widgetId: string) => `widget-cache:${userId}:${widgetId}`,
@@ -37,7 +49,8 @@ describe("refreshWidget", () => {
 
   it("reads the previous cache and fetches new data concurrently, then writes the cache with a readAsOf guard", async () => {
     const fetchData = vi.fn().mockResolvedValueOnce({ tasks: ["new"] });
-    getWidget.mockReturnValueOnce({ id: "tasks", dataSchema: undefined, fetchData });
+    const deriveMemories = vi.fn().mockReturnValueOnce([]);
+    getWidget.mockReturnValueOnce({ id: "tasks", dataSchema: undefined, fetchData, deriveMemories });
     readWidgetCache.mockResolvedValueOnce({ data: { tasks: [] }, updatedAt: "2026-07-01T00:00:00Z" });
     writeWidgetCache.mockResolvedValueOnce(undefined);
 
@@ -144,5 +157,69 @@ describe("refreshWidget", () => {
 
     await expect(refreshWidget("github", "user-1")).rejects.toThrow("GitHub API rate limited");
     expect(writeWidgetCache).not.toHaveBeenCalled();
+  });
+
+  it("never reads the previous cache for a widget with no deriveMemories — it would only be discarded", async () => {
+    const fetchData = vi.fn().mockResolvedValueOnce({ tracks: [] });
+    getWidget.mockReturnValueOnce({ id: "hero", fetchData });
+    writeWidgetCache.mockResolvedValueOnce(undefined);
+
+    await refreshWidget("hero", "user-1");
+
+    expect(readWidgetCache).not.toHaveBeenCalled();
+    expect(writeWidgetCache).toHaveBeenCalled();
+  });
+
+  describe("force: false", () => {
+    it("skips fetchData/write entirely when the cache is younger than the widget's refreshInterval", async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-08-12T12:00:00Z"));
+      const fetchData = vi.fn();
+      getWidget.mockReturnValueOnce({ id: "steam", refreshInterval: 10_800, fetchData });
+      readWidgetCacheUpdatedAt.mockResolvedValueOnce("2026-08-12T11:00:00Z"); // 1h old, interval is 3h
+
+      await refreshWidget("steam", "user-1", { force: false });
+
+      expect(fetchData).not.toHaveBeenCalled();
+      expect(writeWidgetCache).not.toHaveBeenCalled();
+      vi.useRealTimers();
+    });
+
+    it("proceeds when the cache is older than the widget's refreshInterval", async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-08-12T12:00:00Z"));
+      const fetchData = vi.fn().mockResolvedValueOnce({ games: [] });
+      getWidget.mockReturnValueOnce({ id: "steam", refreshInterval: 10_800, fetchData });
+      readWidgetCacheUpdatedAt.mockResolvedValueOnce("2026-08-12T08:00:00Z"); // 4h old, interval is 3h
+      writeWidgetCache.mockResolvedValueOnce(undefined);
+
+      await refreshWidget("steam", "user-1", { force: false });
+
+      expect(fetchData).toHaveBeenCalled();
+      expect(writeWidgetCache).toHaveBeenCalled();
+      vi.useRealTimers();
+    });
+
+    it("proceeds when there is no previous cache row at all (first-ever refresh)", async () => {
+      const fetchData = vi.fn().mockResolvedValueOnce({ games: [] });
+      getWidget.mockReturnValueOnce({ id: "steam", refreshInterval: 10_800, fetchData });
+      readWidgetCacheUpdatedAt.mockResolvedValueOnce(null);
+      writeWidgetCache.mockResolvedValueOnce(undefined);
+
+      await refreshWidget("steam", "user-1", { force: false });
+
+      expect(fetchData).toHaveBeenCalled();
+    });
+
+    it("never checks freshness at all when force is left at its true default", async () => {
+      const fetchData = vi.fn().mockResolvedValueOnce({ games: [] });
+      getWidget.mockReturnValueOnce({ id: "steam", refreshInterval: 10_800, fetchData });
+      writeWidgetCache.mockResolvedValueOnce(undefined);
+
+      await refreshWidget("steam", "user-1");
+
+      expect(readWidgetCacheUpdatedAt).not.toHaveBeenCalled();
+      expect(fetchData).toHaveBeenCalled();
+    });
   });
 });

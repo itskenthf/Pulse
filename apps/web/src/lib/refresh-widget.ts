@@ -1,5 +1,10 @@
 import { getWidget } from "@pulse/sdk";
-import { readWidgetCache, writeMemories, writeWidgetCache } from "@pulse/database";
+import {
+  readWidgetCache,
+  readWidgetCacheUpdatedAt,
+  writeMemories,
+  writeWidgetCache,
+} from "@pulse/database";
 import { revalidateWidgetTag, widgetCacheTag } from "./widget-data-cache";
 import "./register-widgets";
 
@@ -11,6 +16,21 @@ import "./register-widgets";
  * instead, so one bad call only fails that one widget.
  */
 const FETCH_TIMEOUT_MS = 10_000;
+
+export interface RefreshWidgetOptions {
+  /**
+   * When false, skips the actual fetchData/cache write if the widget's
+   * cache is still younger than its own `refreshInterval` — for
+   * background/auto-triggered refreshes (cron, "refresh all") so they
+   * don't call a widget's external API more often than the widget itself
+   * says it needs (see docs/DECISIONS.md's 2026-08-12 entry — cron
+   * previously ignored refreshInterval entirely, over-calling Steam/RSS by
+   * up to 6x). Explicit single-widget actions (a user's own "Refresh"
+   * click, a settings save) default to true — they should always get
+   * real, current data, since the user asked for it directly.
+   */
+  force?: boolean;
+}
 
 /**
  * The scheduler-side half of the cron-first data flow (reference doc §5):
@@ -28,19 +48,39 @@ const FETCH_TIMEOUT_MS = 10_000;
  * cache from updating, and shouldn't make a healthy refresh report as
  * "failed" to the manual refresh-all action).
  */
-export async function refreshWidget(widgetId: string, userId: string): Promise<void> {
+export async function refreshWidget(
+  widgetId: string,
+  userId: string,
+  options: RefreshWidgetOptions = {},
+): Promise<void> {
+  const { force = true } = options;
   const widget = getWidget(widgetId);
   if (!widget) throw new Error(`Unknown widget "${widgetId}"`);
 
-  // Captured before either read starts — see writeWidgetCache's readAsOf
+  // Captured before any read starts — see writeWidgetCache's readAsOf
   // doc comment for why this guards against a concurrent stale write.
   const readAsOf = new Date().toISOString();
+
+  if (!force) {
+    const lastUpdatedAt = await readWidgetCacheUpdatedAt(userId, widgetId).catch((err) => {
+      console.error(`Failed to read cache freshness for widget "${widgetId}":`, err);
+      return null;
+    });
+    if (lastUpdatedAt) {
+      const ageMs = Date.now() - new Date(lastUpdatedAt).getTime();
+      if (ageMs < widget.refreshInterval * 1000) return;
+    }
+  }
+
   // `previous` (used below only for deriveMemories) doesn't depend on
   // fetchData's result or vice versa — reading both concurrently instead
-  // of sequentially roughly halves this function's own latency. Its read
-  // is validated through the widget's own dataSchema, so a widget whose
-  // data contract changed across a deploy can find its *own* previously
-  // written row no longer parses (see Widget.dataSchema's doc comment in
+  // of sequentially roughly halves this function's own latency. Only read
+  // at all for widgets that actually implement deriveMemories — for every
+  // other widget this used to be a full row fetched and immediately
+  // discarded (see docs/DECISIONS.md's 2026-08-12 entry). Its read is
+  // validated through the widget's own dataSchema, so a widget whose data
+  // contract changed across a deploy can find its *own* previously written
+  // row no longer parses (see Widget.dataSchema's doc comment in
   // @pulse/sdk) — caught and treated as "no previous data" rather than
   // failing the whole refresh, same "best-effort, never regress the real
   // refresh" principle as the memory write below. Without this, that
@@ -49,10 +89,12 @@ export async function refreshWidget(widgetId: string, userId: string): Promise<v
   // replace the stale one, since this same read runs before fetchData/
   // writeWidgetCache on every attempt.
   const [previous, data] = await Promise.all([
-    readWidgetCache(userId, widgetId, widget.dataSchema).catch((err) => {
-      console.error(`Failed to read previous cache for widget "${widgetId}":`, err);
-      return null;
-    }),
+    widget.deriveMemories
+      ? readWidgetCache(userId, widgetId, widget.dataSchema).catch((err) => {
+          console.error(`Failed to read previous cache for widget "${widgetId}":`, err);
+          return null;
+        })
+      : Promise.resolve(null),
     widget.fetchData({ userId, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) }),
   ]);
 

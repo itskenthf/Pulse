@@ -1,10 +1,8 @@
 "use client";
 
-import { useActionState, useRef } from "react";
-import type { WidgetAction, WidgetActionState } from "@pulse/sdk";
+import { useOptimistic, useTransition } from "react";
+import type { WidgetAction } from "@pulse/sdk";
 import type { Meal } from "@pulse/database";
-
-const initialState: WidgetActionState = {};
 
 const LABELS: Record<Meal, string> = {
   breakfast: "Breakfast",
@@ -16,7 +14,11 @@ const LABELS: Record<Meal, string> = {
 /** Toggling a meal off isn't destructive in the same undo-window sense as
  *  deleting a task or book — same reasoning that keeps Reading's "start a
  *  new book" out of `useUndoableDelete` — so this is a plain auto-submit
- *  checkbox, matching TaskRow's checkbox pattern exactly. */
+ *  checkbox, matching TaskRow's checkbox pattern exactly, including the
+ *  optimistic flip: calling `action` directly inside the same
+ *  startTransition as the optimistic update (rather than through
+ *  `<form action>`/useActionState) is what lets useOptimistic revert on a
+ *  failed write instead of leaving a stale checkmark on screen. */
 export function MealToggleRow({
   meal,
   checked,
@@ -26,29 +28,42 @@ export function MealToggleRow({
   checked: boolean;
   action: WidgetAction;
 }) {
-  const [, formAction, isPending] = useActionState(action, initialState);
-  const formRef = useRef<HTMLFormElement>(null);
+  const [optimisticChecked, setOptimisticChecked] = useOptimistic(checked);
+  const [isPending, startTransition] = useTransition();
+
+  function handleToggle() {
+    const next = !optimisticChecked;
+    startTransition(async () => {
+      setOptimisticChecked(next);
+      const formData = new FormData();
+      formData.set("meal", meal);
+      formData.set("checked", String(next));
+      try {
+        await action({}, formData);
+      } catch (err) {
+        console.error(`Failed to toggle ${meal}:`, err);
+      }
+    });
+  }
 
   return (
-    <form ref={formRef} action={formAction} className="flex min-h-11 items-center gap-2">
-      <input type="hidden" name="meal" value={meal} />
-      <input type="hidden" name="checked" value={(!checked).toString()} />
+    <div className="flex min-h-11 items-center gap-2">
       <span className="flex h-11 w-11 shrink-0 items-center justify-center">
         <input
           type="checkbox"
           id={`meal-${meal}`}
-          checked={checked}
+          checked={optimisticChecked}
           disabled={isPending}
-          onChange={() => formRef.current?.requestSubmit()}
+          onChange={handleToggle}
           className="h-4 w-4 accent-[var(--color-accent)]"
         />
       </span>
       <label
         htmlFor={`meal-${meal}`}
-        className={`flex-1 text-sm ${checked ? "text-[var(--color-neutral-400)] line-through" : "text-[var(--foreground)]"}`}
+        className={`flex-1 text-sm ${optimisticChecked ? "text-[var(--color-neutral-400)] line-through" : "text-[var(--foreground)]"}`}
       >
         {LABELS[meal]}
       </label>
-    </form>
+    </div>
   );
 }

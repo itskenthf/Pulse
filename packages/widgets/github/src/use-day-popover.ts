@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useOutsideDismiss } from "@pulse/ui";
 
 export interface UseDayPopoverResult {
   /** The date (YYYY-MM-DD) of the day whose popover is open, or null. */
@@ -21,39 +22,22 @@ export interface UseDayPopoverResult {
  * caller's own onMouseEnter/onMouseLeave (no listener needed for that);
  * this hook only handles the touch/click-to-pin behavior: tapping a cell
  * opens its popover and keeps it open until a tap lands outside it, or
- * Escape is pressed — the same `pointerdown`-not-`click` rationale as
- * `useDismissableMenu` (mobile Safari doesn't reliably fire
- * `:focus-within` on tap, so outside-dismiss needs its own listener
- * rather than relying on blur/focus).
+ * Escape is pressed — via `useOutsideDismiss`, the same shared listener
+ * `useDismissableMenu` uses (no per-trigger focus-return needed here,
+ * unlike a menu — there's no single trigger button to return focus to).
  */
 export function useDayPopover(): UseDayPopoverResult {
   const [openDate, setOpenDate] = useState<string | null>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!openDate) return;
+  const close = () => setOpenDate(null);
 
-    function handlePointerDown(event: PointerEvent) {
-      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
-        setOpenDate(null);
-      }
-    }
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpenDate(null);
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [openDate]);
+  useOutsideDismiss(openDate !== null, popoverRef, close);
 
   return {
     openDate,
     toggle: (date) => setOpenDate((current) => (current === date ? null : date)),
-    close: () => setOpenDate(null),
+    close,
     popoverRef,
   };
 }

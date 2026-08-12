@@ -18,6 +18,7 @@ export type { WidgetErrorBoundaryProps } from "./widget-error-boundary";
 export { Metric } from "./metric";
 export type { MetricProps } from "./metric";
 export { useDismissableMenu } from "./use-dismissable-menu";
+export { useOutsideDismiss } from "./use-outside-dismiss";
 export type { UseDismissableMenuResult } from "./use-dismissable-menu";
 export { usePullToRefresh } from "./use-pull-to-refresh";
 export type { UsePullToRefreshOptions, UsePullToRefreshResult } from "./use-pull-to-refresh";

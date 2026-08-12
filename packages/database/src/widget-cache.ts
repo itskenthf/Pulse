@@ -45,6 +45,28 @@ export async function readWidgetCache<T>(
 }
 
 /**
+ * Just the `updated_at` column, no `data` — for callers that only need to
+ * know how stale a widget's cache is (e.g. deciding whether a background
+ * refresh is actually due) without paying for the full row transfer and,
+ * when a schema is involved, its parse cost.
+ */
+export async function readWidgetCacheUpdatedAt(
+  userId: string,
+  widgetId: string,
+): Promise<string | null> {
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .from("widget_cache")
+    .select("updated_at")
+    .eq("user_id", userId)
+    .eq("widget_id", widgetId)
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to read widget cache: ${error.message}`);
+  return (data?.updated_at as string | undefined) ?? null;
+}
+
+/**
  * `readAsOf`, when given, guards against a stale concurrent write clobbering
  * a fresher one — a compare-and-swap idea applied to widget_cache. Two
  * overlapping `refreshWidget` calls for the same

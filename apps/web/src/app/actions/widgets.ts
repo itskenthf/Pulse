@@ -18,6 +18,9 @@ export async function refreshWidgetAction(
   if (!session?.user?.id) return { error: "Not signed in" };
 
   try {
+    // No { force: false } here, unlike refreshAllWidgetsAction below — a
+    // direct, single-widget "Refresh" click should always get real,
+    // current data regardless of the widget's own refreshInterval.
     await refreshWidget(widgetId, session.user.id);
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Refresh failed" };
@@ -33,7 +36,18 @@ export async function refreshWidgetAction(
  * api/cron/route.ts) — one slow/failing widget shouldn't block the rest
  * from refreshing. Triggered from the "Pulse" title itself (single-user
  * app, per Ken's request — no separate icon needed) rather than requiring
- * a per-widget click for every card.
+ * a per-widget click for every card — and also from the automatic
+ * tab-focus/visibility refresh (`refresh-all-title.tsx`), pull-to-refresh,
+ * and the "r" keyboard shortcut, all sharing this one action.
+ *
+ * `force: false`, same as cron: a widget whose cache is still younger
+ * than its own `refreshInterval` is skipped rather than re-fetched. This
+ * action fires far more often than cron (every auto-triggered tab focus,
+ * every pull-to-refresh), so without this a Steam/RSS widget with a long
+ * refreshInterval would get hit far harder than it needs — see
+ * docs/DECISIONS.md's 2026-08-12 entry. An individual widget's own
+ * "Refresh" button (refreshWidgetAction below) still always forces a real
+ * refresh, since that's a direct, single-widget request.
  */
 export async function refreshAllWidgetsAction(
   _prevState: WidgetActionState,
@@ -45,7 +59,7 @@ export async function refreshAllWidgetsAction(
 
   const widgets = getAllWidgets();
   const results = await Promise.allSettled(
-    widgets.map((widget) => refreshWidget(widget.id, userId)),
+    widgets.map((widget) => refreshWidget(widget.id, userId, { force: false })),
   );
 
   // Name the widgets that actually failed, and why — "1 of 4 failed" alone

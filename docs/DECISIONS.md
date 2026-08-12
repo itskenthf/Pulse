@@ -4912,3 +4912,53 @@ sites (weather, Steam ×4, RSS, GitHub GraphQL ×3) as a straight
 fails") needed updating: a 502 now retries before failing, so the test
 flushes fake timers with `vi.runAllTimersAsync()` before asserting the
 final thrown error, rather than asserting an immediate throw.
+
+## 2026-08-12 — `refreshWidget` respects each widget's own `refreshInterval`
+
+A performance investigation found the cron route (`apps/web/src/app/api/
+cron/route.ts`) called `refreshWidget` for every widget × every user on
+every 30-minute tick, with no check against `widget.refreshInterval` at
+all. Steam (`refreshInterval: 10800`, 3h) was getting refreshed 6x more
+often than it declares it needs; RSS (`3600`, 1h) 2x more often — real
+extra load against third-party APIs with their own rate limits, further
+amplified by `fetchWithRetry`'s up-to-3-attempts-per-call behavior on a
+degraded upstream. `refreshAllWidgetsAction` (`apps/web/src/app/actions/
+widgets.ts`) — the action behind the dashboard logo click, pull-to-
+refresh, the "r" keyboard shortcut, *and* the automatic tab-focus/
+visibility refresh (`refresh-all-title.tsx`, throttled only by a blunt
+5-minute cooldown) — had the identical gap, and fires far more often
+than cron during active use.
+
+Asked whether `refreshAllWidgetsAction` specifically should start
+respecting `refreshInterval` too, given the real trade-off: a manual
+refresh click on an already-fresh widget becomes a visible no-op for
+that widget. Chosen: yes, respect it — consistent with cron, and this
+action's automatic tab-focus trigger is the more frequent abuser of the
+two. `refreshWidgetAction` (an individual widget's own "Refresh" button)
+and the settings-save refresh in `updateWidgetSettingsAction` were
+**not** changed — those are direct, single-widget requests where the
+user asked for real current data specifically, and unlike refresh-all
+there's no bulk-call-volume concern from a single widget's button.
+
+**Implementation:** `refreshWidget(widgetId, userId, options?: { force?:
+boolean })`, default `force: true` (preserves existing behavior for the
+two action call sites above without changing their call sites at all).
+`{ force: false }` (cron, `refreshAllWidgetsAction`) reads just the
+cache row's `updated_at` via a new `readWidgetCacheUpdatedAt` — a
+column-narrow query for exactly this check, added to
+`packages/database/src/widget-cache.ts` — before deciding whether to
+call `fetchData` at all; skips entirely when the row is younger than
+`widget.refreshInterval`. A widget with no cache row yet always
+proceeds (first-ever refresh can't be "not due").
+
+**Folded into the same change** (found during the same investigation):
+`refreshWidget` previously read the widget's *previous* cache row on
+every single refresh purely to feed `deriveMemories(previous, next)` —
+but only 6 of 14 widgets (weight, tasks, steam, notes, notebook, github)
+implement `deriveMemories`; for the other 8, the read was fetched and
+immediately discarded. That read now only happens when
+`widget.deriveMemories` is defined. Hero was doubly affected: its own
+`fetch.ts` already does a separate `readWidgetCache` call for its quote
+history, so hero's refresh was reading the same row twice per call, one
+of them entirely wasted — now down to the one hero's own fetch actually
+needs.

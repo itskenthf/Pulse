@@ -22,7 +22,9 @@ vi.mock("./client", () => ({
   createServiceClient: () => ({ from }),
 }));
 
-const { readWidgetCache, writeWidgetCache } = await import("./widget-cache");
+const { readWidgetCache, readWidgetCacheUpdatedAt, writeWidgetCache } = await import(
+  "./widget-cache"
+);
 
 describe("readWidgetCache", () => {
   it("returns null when no row exists", async () => {
@@ -73,6 +75,33 @@ describe("readWidgetCache", () => {
     await expect(readWidgetCache("user-1", "hero", schema)).rejects.toThrow(
       /no longer matches its expected shape/,
     );
+  });
+});
+
+describe("readWidgetCacheUpdatedAt", () => {
+  it("returns null when no row exists", async () => {
+    maybeSingle.mockResolvedValueOnce({ data: null, error: null });
+
+    const result = await readWidgetCacheUpdatedAt("user-1", "hero");
+
+    expect(result).toBeNull();
+  });
+
+  it("returns just the updated_at timestamp, without touching the data column", async () => {
+    maybeSingle.mockResolvedValueOnce({
+      data: { updated_at: "2026-08-12T00:00:00Z" },
+      error: null,
+    });
+
+    const result = await readWidgetCacheUpdatedAt("user-1", "hero");
+
+    expect(result).toBe("2026-08-12T00:00:00Z");
+  });
+
+  it("throws when the query itself fails", async () => {
+    maybeSingle.mockResolvedValueOnce({ data: null, error: { message: "connection refused" } });
+
+    await expect(readWidgetCacheUpdatedAt("user-1", "hero")).rejects.toThrow("connection refused");
   });
 });
 

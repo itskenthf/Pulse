@@ -4880,3 +4880,35 @@ short month+day+year) — same category of concern as each other, but not
 literal duplicates, so consolidating them would be a premature
 abstraction rather than a real fix (see CLAUDE.md's "three similar
 lines beat a speculative shared helper").
+
+## 2026-08-12 — Shared `fetchWithRetry` for every adapter
+
+The same architecture review noted every adapter (weather, GitHub, Steam,
+RSS) did a single bare `fetch()` with no retry logic at all — a dropped
+connection or a transient 5xx failed that widget's entire refresh cycle
+for the interval, with nothing to fall back on until the next cron run
+or manual refresh.
+
+New leaf package `packages/http`, sitting alongside `packages/health` at
+the bottom of the dependency graph (zero internal deps, consumed by
+adapters): `fetchWithRetry(input, options)`, a drop-in `fetch()`
+replacement. Retries only network errors (the request never got a
+response) and 5xx responses, with exponential backoff (`baseDelayMs *
+2^attempt`, default 2 retries / 3 attempts total). Deliberately does
+*not* retry 4xx — a bad API key or malformed request fails the same way
+every time, and retrying it only delays surfacing the real error.
+Respects the caller's `AbortSignal`: aborts stop retrying immediately
+rather than sleeping through a cancelled request, which matters here
+since every widget's `fetchData()` already runs under a 10s total
+timeout (`FETCH_TIMEOUT_MS`, `apps/web/src/lib/refresh-widget.ts`) — a
+few hundred ms of backoff comfortably fits inside that budget without
+needing to plumb the remaining-time budget through the retry logic
+itself.
+
+Wired into all four adapters' `client.ts`/`contributions.ts` fetch call
+sites (weather, Steam ×4, RSS, GitHub GraphQL ×3) as a straight
+`fetch` → `fetchWithRetry` swap, same call signature. One existing test
+(`adapter-github`'s "throws a descriptive error when the request itself
+fails") needed updating: a 502 now retries before failing, so the test
+flushes fake timers with `vi.runAllTimersAsync()` before asserting the
+final thrown error, rather than asserting an immediate throw.

@@ -1,3 +1,5 @@
+import { fetchWithRetry } from "@pulse/http";
+
 export interface RecentlyPlayedGame {
   appId: number;
   name: string;
@@ -51,7 +53,7 @@ export async function fetchRecentlyPlayed(
   url.searchParams.set("steamid", steamId64);
   url.searchParams.set("format", "json");
 
-  const response = await fetch(url, { cache: "no-store", signal });
+  const response = await fetchWithRetry(url, { cache: "no-store", signal });
   if (!response.ok) {
     throw new Error(`Steam API request failed: ${response.status}`);
   }
@@ -96,7 +98,7 @@ export async function fetchLastPlayedMap(
   url.searchParams.set("include_appinfo", "0");
   url.searchParams.set("format", "json");
 
-  const response = await fetch(url, { cache: "no-store", signal });
+  const response = await fetchWithRetry(url, { cache: "no-store", signal });
   if (!response.ok) {
     throw new Error(`Steam API request failed: ${response.status}`);
   }
@@ -143,7 +145,7 @@ export async function fetchAppCoverArtUrl(
     url.searchParams.set("appids", String(appId));
     url.searchParams.set("filters", "basic");
 
-    const response = await fetch(url, { cache: "no-store", signal });
+    const response = await fetchWithRetry(url, { cache: "no-store", signal });
     if (!response.ok) return null;
 
     const body = (await response.json()) as AppDetailsApiResponse;
@@ -190,7 +192,7 @@ export async function fetchAchievementSummary(
   url.searchParams.set("l10n_lang", "english");
   url.searchParams.set("format", "json");
 
-  const response = await fetch(url, { cache: "no-store", signal });
+  const response = await fetchWithRetry(url, { cache: "no-store", signal });
   if (!response.ok) {
     // Steam specifically returns 400 for "this game has no stats" — the
     // one non-ok status that's a real, expected non-error case. Anything

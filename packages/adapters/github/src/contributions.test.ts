@@ -115,10 +115,17 @@ describe("fetchContributions", () => {
 
   it("throws a descriptive error when the request itself fails", async () => {
     vi.setSystemTime(new Date("2026-07-29T12:00:00Z"));
-    const fetchMock = vi.fn().mockResolvedValueOnce({ ok: false, status: 502 });
+    // A 502 is retried by @pulse/http's fetchWithRetry (see its own tests
+    // for the retry/backoff behavior) — mocked to fail every attempt so
+    // this test only asserts the final thrown error, not retry timing.
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 502 });
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(fetchContributions("token")).rejects.toThrow("GitHub GraphQL request failed: 502");
+    const assertion = expect(fetchContributions("token")).rejects.toThrow(
+      "GitHub GraphQL request failed: 502",
+    );
+    await vi.runAllTimersAsync();
+    await assertion;
   });
 });
 

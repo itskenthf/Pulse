@@ -1,10 +1,3 @@
-import { formatRelativeDay as formatRelativeDayFromEpoch } from "@pulse/health";
-
-/** "2 days ago" / "Today" for a latest-commit timestamp. */
-export function formatRelativeDay(isoDate: string): string {
-  return formatRelativeDayFromEpoch(new Date(isoDate).getTime());
-}
-
 const MONTH_DAY_FORMATTER = new Intl.DateTimeFormat("en-US", {
   month: "long",
   day: "numeric",

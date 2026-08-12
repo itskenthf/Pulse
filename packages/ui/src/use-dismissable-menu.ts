@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useRef, useState, type RefObject } from "react";
+import { useOutsideDismiss } from "./use-outside-dismiss";
 
 export interface UseDismissableMenuResult<T extends HTMLElement, TTrigger extends HTMLElement> {
   open: boolean;
@@ -21,15 +22,18 @@ export interface UseDismissableMenuResult<T extends HTMLElement, TTrigger extend
 
 /**
  * Open/close state for a dropdown, closed by a `pointerdown` listener
- * outside its root element — not CSS `:focus-within`, which relies on a
- * tap reliably moving DOM focus onto a `<button>`. Mobile/iPad Safari
- * doesn't always do that on tap, so `:focus-within` silently made a menu
- * unopenable on touch devices (see docs/DECISIONS.md). `pointerdown` (not
- * `click`) covers touch and mouse identically.
+ * outside its root element (via `useOutsideDismiss`) — not CSS
+ * `:focus-within`, which relies on a tap reliably moving DOM focus onto a
+ * `<button>`. Mobile/iPad Safari doesn't always do that on tap, so
+ * `:focus-within` silently made a menu unopenable on touch devices (see
+ * docs/DECISIONS.md). `pointerdown` (not `click`) covers touch and mouse
+ * identically.
  *
  * Also closes on Escape (returning focus to the trigger, via `close()`)
  * — previously missing entirely, so a keyboard user had no way to
- * dismiss an open menu without tabbing all the way through it.
+ * dismiss an open menu without tabbing all the way through it. An outside
+ * pointerdown deliberately does *not* return focus to the trigger — see
+ * `close`'s own doc comment.
  *
  * Was hand-rolled identically in both WidgetMenu and ProfileMenu; this is
  * that logic in one place.
@@ -42,33 +46,12 @@ export function useDismissableMenu<
   const rootRef = useRef<T>(null);
   const triggerRef = useRef<TTrigger>(null);
 
-  useEffect(() => {
-    if (!open) return;
-
-    function handlePointerDown(event: PointerEvent) {
-      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setOpen(false);
-        triggerRef.current?.focus();
-      }
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [open]);
-
   function close() {
     setOpen(false);
     triggerRef.current?.focus();
   }
+
+  useOutsideDismiss(open, rootRef, () => setOpen(false), close);
 
   return { open, setOpen, close, rootRef, triggerRef };
 }

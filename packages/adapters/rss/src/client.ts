@@ -1,3 +1,4 @@
+import { fetchWithRetry } from "@pulse/http";
 import { XMLParser } from "fast-xml-parser";
 
 export interface NormalizedFeedItem {
@@ -68,7 +69,7 @@ export async function fetchFeed(url: string, signal?: AbortSignal): Promise<Norm
   // Some feed hosts reject requests with no User-Agent or an obviously
   // non-browser one (a bare Node/undici default) — sending a normal
   // browser-looking one avoids that class of false "feed is down".
-  const response = await fetch(url, {
+  const response = await fetchWithRetry(url, {
     signal,
     headers: {
       Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml",

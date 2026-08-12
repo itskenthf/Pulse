@@ -4809,3 +4809,106 @@ directly under the hero banner, above Body & Health — it's a summary
 *of* other widgets' activity, not its own data source, so it doesn't
 belong grouped with either Body & Health row or the Tasks/Notes/
 Notebook row.
+
+## 2026-08-12 — Spotify integration removed entirely
+
+An architecture review flagged `apps/web`'s direct import of
+`@pulse/adapter-spotify` in the connect/callback OAuth routes as an
+undocumented breach of the "shell only depends on `@pulse/sdk`" rule —
+Spotify's own OAuth connect flow (2026-07-23 entry above) sits outside
+the `fetchData`/`render` widget lifecycle entirely, so there was no
+clean SDK seam for it to go through. Asked whether to paper over this
+with a documented exception (as Steam's detail page already is) or
+build a real SDK seam for widget-owned OAuth flows; the answer was
+neither — Spotify is no longer wanted in Pulse at all, so the fix is
+deletion, not a boundary fix.
+
+**Removed:**
+- `packages/adapters/spotify` and `packages/widgets/spotify` in full.
+- `apps/web/src/app/api/connect/spotify` and
+  `.../api/auth/callback/spotify` route handlers.
+- The `@pulse/adapter-spotify`/`@pulse/widget-spotify` dependencies from
+  `apps/web/package.json`, and the widget's registration from
+  `apps/web/src/lib/register-widgets.ts`.
+- `readProviderAccount`, `upsertProviderAccount`, and
+  `updateProviderAccountTokenIfCurrent` from `packages/database/src/accounts.ts`
+  — confirmed via grep that Spotify's token-refresh flow was their only
+  caller; `readProviderAccessToken` (used by GitHub) stays.
+- `AUTH_SPOTIFY_ID`/`AUTH_SPOTIFY_SECRET` from `turbo.json`'s `build.env`
+  and `.env.example`.
+- Spotify's entry from `apps/web/src/lib/memory-sources.tsx` and its
+  Setup Notes section in `docs/ROADMAP.md`.
+
+**Not touched:** `supabase/migrations/0003_memories_table.sql`'s
+`source` column comment (`-- widget id ("github", "spotify", "steam")`)
+— an applied migration's comments aren't rewritten after the fact, and
+existing `memories` rows with `source = "spotify"` are left in place
+rather than backfilled or deleted; they'll simply stop accumulating new
+entries and still render correctly on the Timeline page via their
+stored `title`/`description`, since `memoryHref` already returns `null`
+for unrecognized sources. Historical narrative in `docs/DECISIONS.md`
+and `docs/ROADMAP.md`'s changelog-style entries predating this one is
+also left alone — this is a removal decision, not a rewrite of what
+was actually built and why at the time.
+
+## 2026-08-12 — `formatRelativeDay` consolidated into `packages/health`
+
+The same architecture review noted `packages/widgets/github/src/format.ts`
+and `packages/widgets/steam/src/format.ts` each independently implemented
+an identical "Today"/"Yesterday"/"N days/months/years ago" day-bucketing
+function, verified byte-for-byte identical apart from their input's
+units (an ISO date string vs. Unix seconds) — a real, exact duplication,
+not just "same category of concern."
+
+Moved the shared logic to `packages/health/src/date.ts` as
+`formatRelativeDay(epochMs: number)`, taking epoch milliseconds so it
+doesn't need to guess a caller's units. Each widget's own
+`formatRelativeDay` is now a thin wrapper converting its existing input
+type to epoch ms and delegating — call sites in both widgets are
+unchanged, only the day-math body moved. Added `@pulse/health` as a
+dependency to `widget-github`/`widget-steam` (neither previously used
+it). The day-bucketing test matrix moved to `packages/health/src/date.test.ts`;
+each widget's own test file keeps just enough coverage to confirm its
+input-unit conversion is correct, not a duplicate of the bucketing
+logic's own tests.
+
+**Deliberately not touched:** the per-widget date formatters in
+`notebook/src/format.ts`, `notes/src/note-modal.tsx`, and
+`weight/src/weight-log-row.tsx` use three genuinely different
+`Intl.DateTimeFormat` specs (long month+day; medium date+time style;
+short month+day+year) — same category of concern as each other, but not
+literal duplicates, so consolidating them would be a premature
+abstraction rather than a real fix (see CLAUDE.md's "three similar
+lines beat a speculative shared helper").
+
+## 2026-08-12 — Shared `fetchWithRetry` for every adapter
+
+The same architecture review noted every adapter (weather, GitHub, Steam,
+RSS) did a single bare `fetch()` with no retry logic at all — a dropped
+connection or a transient 5xx failed that widget's entire refresh cycle
+for the interval, with nothing to fall back on until the next cron run
+or manual refresh.
+
+New leaf package `packages/http`, sitting alongside `packages/health` at
+the bottom of the dependency graph (zero internal deps, consumed by
+adapters): `fetchWithRetry(input, options)`, a drop-in `fetch()`
+replacement. Retries only network errors (the request never got a
+response) and 5xx responses, with exponential backoff (`baseDelayMs *
+2^attempt`, default 2 retries / 3 attempts total). Deliberately does
+*not* retry 4xx — a bad API key or malformed request fails the same way
+every time, and retrying it only delays surfacing the real error.
+Respects the caller's `AbortSignal`: aborts stop retrying immediately
+rather than sleeping through a cancelled request, which matters here
+since every widget's `fetchData()` already runs under a 10s total
+timeout (`FETCH_TIMEOUT_MS`, `apps/web/src/lib/refresh-widget.ts`) — a
+few hundred ms of backoff comfortably fits inside that budget without
+needing to plumb the remaining-time budget through the retry logic
+itself.
+
+Wired into all four adapters' `client.ts`/`contributions.ts` fetch call
+sites (weather, Steam ×4, RSS, GitHub GraphQL ×3) as a straight
+`fetch` → `fetchWithRetry` swap, same call signature. One existing test
+(`adapter-github`'s "throws a descriptive error when the request itself
+fails") needed updating: a 502 now retries before failing, so the test
+flushes fake timers with `vi.runAllTimersAsync()` before asserting the
+final thrown error, rather than asserting an immediate throw.

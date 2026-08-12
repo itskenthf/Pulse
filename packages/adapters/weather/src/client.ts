@@ -1,3 +1,4 @@
+import { fetchWithRetry } from "@pulse/http";
 import { describeWeatherCode } from "./weather-codes";
 
 export interface WeatherLocation {
@@ -39,7 +40,7 @@ export async function fetchCurrentWeather(
   url.searchParams.set("wind_speed_unit", "kmh");
   url.searchParams.set("timezone", "auto");
 
-  const response = await fetch(url, { cache: "no-store", signal });
+  const response = await fetchWithRetry(url, { cache: "no-store", signal });
   if (!response.ok) {
     throw new Error(`Open-Meteo request failed: ${response.status}`);
   }

@@ -12,6 +12,10 @@ apps/
 packages/
   ui/                 Shared design system components (WidgetCard, ActionForm)
   sdk/                Widget interface/contract — what the shell depends on
+  health/             Shared date/goal-evaluation utilities (todayInTimeZone,
+                      formatRelativeDay, isGoalMet, progressPercent, ...)
+  http/               fetchWithRetry — a fetch() drop-in with exponential
+                      backoff on network errors/5xx, used by every adapter
   auth/               Auth.js configuration
   database/           Supabase client, widget_cache/widget_settings/registry/account/user helpers
   widgets/
@@ -22,12 +26,10 @@ packages/
                       (reuses your GitHub login token)
     steam/            Cover-art + title cards; hours/last-played/achievements
                       live on a per-game detail page (apps/web/src/app/steam/[appId])
-    spotify/          Top tracks, custom OAuth connect flow
   adapters/
     weather/          Open-Meteo client (used by widgets/hero)
     github/           GitHub GraphQL contributions client
     steam/            Steam Web API client
-    spotify/          Spotify Web API client + OAuth token exchange
 supabase/
   migrations/         SQL migrations, applied in order
 docs/                 Architecture, roadmap, design system, decisions
@@ -65,8 +67,7 @@ dependency graph (`turbo.json`'s `dependsOn: ["^build"]`).
   `widgets/hero`). `readProviderAccessToken(userId, provider)`
   reads a stored OAuth token from `next_auth.accounts` — this is how a
   widget gets API access for a service the user already signed in with
-  (the GitHub widget uses this; Spotify will too), without a second OAuth
-  connection.
+  (the GitHub widget uses this), without a second OAuth connection.
 - `packages/widgets/*` — one package per widget. `packages/widgets/steam`
   or `packages/widgets/github` are good reference implementations for a
   normal card widget — copy their shape for the next one.
@@ -81,7 +82,11 @@ dependency graph (`turbo.json`'s `dependsOn: ["^build"]`).
   widget-owned pieces, no widget-specific business logic added to the shell).
 - `packages/adapters/*` — one package per external service. Owns the actual
   HTTP call and response normalization; widgets never fetch raw API
-  responses themselves.
+  responses themselves. Every adapter's `fetch()` call goes through
+  `@pulse/http`'s `fetchWithRetry` (exponential backoff on network errors
+  and 5xx responses only — 4xx isn't retried, since a bad key or malformed
+  request won't succeed on a second try) rather than a bare `fetch()` —
+  see docs/DECISIONS.md's 2026-08-12 entry.
 - `packages/ui` — shared design system components: `glass.ts` (`glassClass(level)`
   — the light/medium/heavy glass materials every surface builds on, plus
   `GLASS_HOVER` — a static border/ring brightening on hover, no movement —

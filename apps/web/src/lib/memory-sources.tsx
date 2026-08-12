@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { GitHubIcon, WIDGET_ID as GITHUB_WIDGET_ID } from "@pulse/widget-github";
 import { NOTEBOOK_WIDGET_ID } from "@pulse/widget-notebook";
 import { NOTES_WIDGET_ID } from "@pulse/widget-notes";
-import { SpotifyIcon, WIDGET_ID as SPOTIFY_WIDGET_ID } from "@pulse/widget-spotify";
 import { SteamIcon, WIDGET_ID as STEAM_WIDGET_ID } from "@pulse/widget-steam";
 import { TASKS_WIDGET_ID } from "@pulse/widget-tasks";
 
@@ -14,13 +13,12 @@ interface SourceMeta {
 
 /** Each widget's own icon, sized to fill whatever fixed-size wrapper the
  *  caller puts it in (Timeline's per-entry badge) regardless of the
- *  icon component's own hardcoded width/height — GitHub/Steam/Spotify's
- *  icons don't take a size prop, so `h-full w-full` on the lucide icons
+ *  icon component's own hardcoded width/height — GitHub/Steam's icons
+ *  don't take a size prop, so `h-full w-full` on the lucide icons
  *  and a wrapper wrapping all three keeps them visually consistent. */
 export const MEMORY_SOURCE_META: Record<string, SourceMeta> = {
   [GITHUB_WIDGET_ID]: { label: "GitHub", icon: <GitHubIcon /> },
   [STEAM_WIDGET_ID]: { label: "Steam", icon: <SteamIcon /> },
-  [SPOTIFY_WIDGET_ID]: { label: "Spotify", icon: <SpotifyIcon /> },
   [NOTEBOOK_WIDGET_ID]: {
     label: "Notebook",
     icon: <NotebookPen className="h-full w-full" aria-hidden="true" />,
@@ -37,7 +35,7 @@ export const MEMORY_SOURCE_META: Record<string, SourceMeta> = {
  * detail page when the event's own metadata identifies one item (a
  * GitHub PR's URL, a Steam game's appId — see each widget's
  * deriveMemories), otherwise the source's own list page. `null` means
- * the entry isn't clickable — Spotify has no dedicated page to link to.
+ * the entry isn't clickable.
  */
 export function memoryHref(source: string, metadata: Record<string, unknown>): string | null {
   if (source === GITHUB_WIDGET_ID && typeof metadata.url === "string") {

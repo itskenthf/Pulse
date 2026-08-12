@@ -1,3 +1,5 @@
+import { fetchWithRetry } from "@pulse/http";
+
 // Matches @pulse/widget-hero's HERO_TIME_ZONE — duplicated as a literal
 // rather than imported, since adapters sit below widgets in the
 // dependency graph. Used only to compute "today" much closer to this
@@ -184,7 +186,7 @@ async function queryCalendar(
   to: Date,
   signal?: AbortSignal,
 ): Promise<{ total: number; weeks: ContributionWeek[] }> {
-  const response = await fetch("https://api.github.com/graphql", {
+  const response = await fetchWithRetry("https://api.github.com/graphql", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -290,7 +292,7 @@ export async function fetchActivitySummary(
   const now = new Date();
   const periodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
 
-  const response = await fetch("https://api.github.com/graphql", {
+  const response = await fetchWithRetry("https://api.github.com/graphql", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -350,7 +352,7 @@ export async function fetchRecentPullRequests(
   const now = new Date();
   const windowStart = new Date(now.getTime() - PULL_REQUEST_WINDOW_DAYS * 24 * 60 * 60 * 1000);
 
-  const response = await fetch("https://api.github.com/graphql", {
+  const response = await fetchWithRetry("https://api.github.com/graphql", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,

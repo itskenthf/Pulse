@@ -12,6 +12,7 @@
   "dependencies": {
     "@pulse/adapter-github": "workspace:*",
     "@pulse/database": "workspace:*",
+    "@pulse/health": "workspace:*",
     "@pulse/sdk": "workspace:*",
     "@pulse/ui": "workspace:*",
     "lucide-react": "^1.26.0",

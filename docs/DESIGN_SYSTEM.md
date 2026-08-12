@@ -352,7 +352,7 @@ Text-only in the accent color, tinted background on hover.
 # Icons
 
 Use Lucide throughout, plus each widget's own hand-drawn brand mark
-(GitHub/Spotify/Steam) rendered in `currentColor` so it always matches
+(GitHub/Steam) rendered in `currentColor` so it always matches
 whatever badge/text color it sits in — never a fixed brand color.
 
 Consistent size, consistent stroke width.

@@ -477,9 +477,9 @@ background) are superseded by `docs/DESIGN_SYSTEM.md` v2.0:
   above Reading in a 2-col×2-row area, beside a Steam+RSS side column
   spanning both rows); see docs/DECISIONS.md's layout-regroup and
   2026-08-09 (Reading) entries and `apps/web/src/app/page.tsx`'s
-  `WidgetGrid`. Spotify no longer renders on the dashboard (still
-  registered, still refreshes in the background) — Steam now pairs with
-  RSS instead. The Habits "Coming soon" placeholder was removed
+  `WidgetGrid`. Spotify was removed entirely (see docs/DECISIONS.md's
+  2026-08-12 entry) — Steam now pairs with RSS instead. The Habits
+  "Coming soon" placeholder was removed
   2026-08-08, not built. Superseded 2026-08-09: a Body & Health row
   (Weight/Nutrition/Meals) now sits above Row 1, directly under the hero
   banner — see docs/DECISIONS.md's Body & Health entry.

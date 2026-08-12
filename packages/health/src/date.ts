@@ -42,3 +42,21 @@ export function currentWeekStart(date: Date = new Date()): string {
 export function isSundayInTimeZone(date: Date = new Date()): boolean {
   return new Intl.DateTimeFormat("en-US", { timeZone: TIME_ZONE, weekday: "short" }).format(date) === "Sun";
 }
+
+/** "2 days ago" / "Today" — coarse, day-level granularity, used for
+ *  "latest activity" timestamps (a commit, a last-played session) across
+ *  widgets; exact hours/minutes precision isn't needed for these. Takes
+ *  an epoch-milliseconds instant so callers with an ISO string or Unix
+ *  seconds convert once at the call site rather than this function
+ *  guessing their input's units. */
+export function formatRelativeDay(epochMs: number): string {
+  const days = Math.floor((Date.now() - epochMs) / (1000 * 60 * 60 * 24));
+
+  if (days <= 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 30) return `${days} days ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} month${months === 1 ? "" : "s"} ago`;
+  const years = Math.floor(months / 12);
+  return `${years} year${years === 1 ? "" : "s"} ago`;
+}

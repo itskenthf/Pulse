@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { currentWeekStart, isSundayInTimeZone, isoWeekKey, todayInTimeZone } from "./date";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { currentWeekStart, formatRelativeDay, isSundayInTimeZone, isoWeekKey, todayInTimeZone } from "./date";
 
 describe("todayInTimeZone", () => {
   it("formats a given instant as YYYY-MM-DD", () => {
@@ -54,5 +54,40 @@ describe("isSundayInTimeZone", () => {
   it("resolves to the user's time zone, not UTC, near a day boundary", () => {
     // 2026-08-08T23:30:00Z (Saturday UTC) is already Sunday in Asia/Kuching (UTC+8).
     expect(isSundayInTimeZone(new Date("2026-08-08T23:30:00Z"))).toBe(true);
+  });
+});
+
+describe("formatRelativeDay", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-27T12:00:00Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  function daysAgo(days: number): number {
+    return new Date("2026-07-27T12:00:00Z").getTime() - days * 86400000;
+  }
+
+  it("says Today for the same day", () => {
+    expect(formatRelativeDay(daysAgo(0))).toBe("Today");
+  });
+
+  it("says Yesterday for one day back", () => {
+    expect(formatRelativeDay(daysAgo(1))).toBe("Yesterday");
+  });
+
+  it("says N days ago under a month", () => {
+    expect(formatRelativeDay(daysAgo(5))).toBe("5 days ago");
+  });
+
+  it("says N months ago under a year", () => {
+    expect(formatRelativeDay(daysAgo(65))).toBe("2 months ago");
+  });
+
+  it("says N years ago at a year or more", () => {
+    expect(formatRelativeDay(daysAgo(400))).toBe("1 year ago");
   });
 });

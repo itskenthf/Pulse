@@ -12,8 +12,8 @@ const initialState: WidgetActionState = {};
  * Minimum time between visibility-triggered refreshes. Comfortably below
  * the 30-minute cron interval (docs/DECISIONS.md) so returning to the app
  * after a real gap catches up quickly, but well above a quick tab/app
- * switch-and-back — every adapter here (GitHub, Spotify, Steam, weather)
- * has its own rate limit, and the cron job already keeps data fresh in
+ * switch-and-back — every adapter here (GitHub, Steam, weather) has its
+ * own rate limit, and the cron job already keeps data fresh in
  * the background regardless of client activity.
  */
 const AUTO_REFRESH_THRESHOLD_MS = 5 * 60 * 1000;

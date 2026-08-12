@@ -36,9 +36,6 @@ importers:
 
   apps/web:
     dependencies:
-      '@pulse/adapter-spotify':
-        specifier: workspace:*
-        version: link:../../packages/adapters/spotify
       '@pulse/auth':
         specifier: workspace:*
         version: link:../../packages/auth
@@ -81,9 +78,6 @@ importers:
       '@pulse/widget-rss':
         specifier: workspace:*
         version: link:../../packages/widgets/rss
-      '@pulse/widget-spotify':
-        specifier: workspace:*
-        version: link:../../packages/widgets/spotify
       '@pulse/widget-steam':
         specifier: workspace:*
         version: link:../../packages/widgets/steam
@@ -147,6 +141,10 @@ importers:
         version: 4.1.10(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0))
 
   packages/adapters/github:
+    dependencies:
+      '@pulse/http':
+        specifier: workspace:*
+        version: link:../../http
     devDependencies:
       '@types/node':
         specifier: ^22
@@ -160,6 +158,9 @@ importers:
 
   packages/adapters/rss:
     dependencies:
+      '@pulse/http':
+        specifier: workspace:*
+        version: link:../../http
       fast-xml-parser:
         specifier: ^4.5.0
         version: 4.5.7
@@ -171,25 +172,21 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0))
 
-  packages/adapters/spotify:
-    devDependencies:
-      '@types/node':
-        specifier: ^22
-        version: 22.20.1
-      typescript:
-        specifier: ^5.7.3
-        version: 5.9.3
-      vitest:
-        specifier: ^4.1.10
-        version: 4.1.10(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0))
-
   packages/adapters/steam:
+    dependencies:
+      '@pulse/http':
+        specifier: workspace:*
+        version: link:../../http
     devDependencies:
       typescript:
         specifier: ^5.7.3
         version: 5.9.3
 
   packages/adapters/weather:
+    dependencies:
+      '@pulse/http':
+        specifier: workspace:*
+        version: link:../../http
     devDependencies:
       typescript:
         specifier: ^5.7.3
@@ -240,6 +237,15 @@ importers:
         version: 4.1.10(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0))
 
   packages/health:
+    devDependencies:
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0))
+
+  packages/http:
     devDependencies:
       typescript:
         specifier: ^5.7.3
@@ -349,6 +355,9 @@ importers:
       '@pulse/database':
         specifier: workspace:*
         version: link:../../database
+      '@pulse/health':
+        specifier: workspace:*
+        version: link:../../health
       '@pulse/sdk':
         specifier: workspace:*
         version: link:../../sdk
@@ -671,37 +680,6 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0))
 
-  packages/widgets/spotify:
-    dependencies:
-      '@pulse/adapter-spotify':
-        specifier: workspace:*
-        version: link:../../adapters/spotify
-      '@pulse/database':
-        specifier: workspace:*
-        version: link:../../database
-      '@pulse/sdk':
-        specifier: workspace:*
-        version: link:../../sdk
-      '@pulse/ui':
-        specifier: workspace:*
-        version: link:../../ui
-      react:
-        specifier: ^19
-        version: 19.2.4
-      zod:
-        specifier: ^3.24.1
-        version: 3.25.76
-    devDependencies:
-      '@types/react':
-        specifier: ^19
-        version: 19.2.17
-      typescript:
-        specifier: ^5.7.3
-        version: 5.9.3
-      vitest:
-        specifier: ^4.1.10
-        version: 4.1.10(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@8.1.5(@types/node@22.20.1)(jiti@2.7.0))
-
   packages/widgets/steam:
     dependencies:
       '@pulse/adapter-steam':
@@ -710,6 +688,9 @@ importers:
       '@pulse/database':
         specifier: workspace:*
         version: link:../../database
+      '@pulse/health':
+        specifier: workspace:*
+        version: link:../../health
       '@pulse/sdk':
         specifier: workspace:*
         version: link:../../sdk

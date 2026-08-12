@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { WidgetAction } from "@pulse/sdk";
-import { EmptyState } from "@pulse/ui";
+import { Button, EmptyState } from "@pulse/ui";
 import { NoteListRow } from "./note-list-row";
 import { NoteModal } from "./note-modal";
 import type { Note } from "./types";
@@ -26,13 +26,9 @@ export function NotesPageBody({
 
   return (
     <div className="flex flex-col gap-4">
-      <button
-        type="button"
-        onClick={() => setMode({ type: "create" })}
-        className="min-h-11 self-start rounded-[4px] border border-[var(--color-accent)] px-3 text-sm font-medium text-[var(--color-accent)] hover:bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)]"
-      >
+      <Button type="button" onClick={() => setMode({ type: "create" })} className="self-start">
         + New note
-      </button>
+      </Button>
 
       {notes.length === 0 ? (
         <EmptyState message="No notes yet — click “+ New note” above." />

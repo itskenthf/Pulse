@@ -1,6 +1,6 @@
 import { BookOpen } from "lucide-react";
 import Link from "next/link";
-import { EmptyState, WidgetCard, WidgetMenu } from "@pulse/ui";
+import { EmptyState, ViewAllLink, WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { WidgetRenderProps } from "@pulse/sdk";
 import type { ReadingWidgetActions } from "./actions";
 import type { ReadingBook, ReadingData } from "./types";
@@ -33,14 +33,7 @@ export function ReadingComponent({
       icon={<BookOpen className="h-4 w-4" aria-hidden="true" />}
       action={<WidgetMenu id="reading" actions={actions} />}
       compact
-      footer={
-        <Link
-          href="/reading"
-          className="text-sm font-medium text-[var(--color-accent)] hover:underline"
-        >
-          View all →
-        </Link>
-      }
+      footer={<ViewAllLink href="/reading" />}
     >
       {inProgress.length === 0 ? (
         <EmptyState

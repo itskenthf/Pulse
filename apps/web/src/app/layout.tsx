@@ -15,7 +15,7 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
-  title: "Pulse",
+  title: { default: "Pulse", template: "%s · Pulse" },
   description: "Personal command center",
   manifest: "/manifest.json",
   icons: {

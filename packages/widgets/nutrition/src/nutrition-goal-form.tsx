@@ -2,11 +2,9 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import type { WidgetAction, WidgetActionState } from "@pulse/sdk";
+import { Button, FIELD_CLASS } from "@pulse/ui";
 
 const initialState: WidgetActionState = {};
-
-const FIELD_CLASS =
-  "min-h-11 rounded-[4px] border border-[var(--color-divider)] bg-transparent px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--color-neutral-400)] focus-visible:border-[var(--color-accent)] focus-visible:outline-none";
 
 const METRIC_OPTIONS: { value: string; label: string }[] = [
   { value: "calories", label: "Calories" },
@@ -53,13 +51,9 @@ export function NutritionGoalForm({ action }: { action: WidgetAction }) {
         <option value="at_least">At least</option>
         <option value="at_most">At most</option>
       </select>
-      <button
-        type="submit"
-        disabled={isPending}
-        className="min-h-11 shrink-0 rounded-[4px] border border-[var(--color-accent)] px-3 text-sm font-medium text-[var(--color-accent)] hover:bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)] disabled:opacity-50"
-      >
+      <Button type="submit" disabled={isPending} className="shrink-0">
         Set target
-      </button>
+      </Button>
       {state?.error && <p className="text-xs text-red-600">{state.error}</p>}
     </form>
   );

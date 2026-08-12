@@ -1,9 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
-import { Trash2, Undo2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import type { WidgetAction, WidgetActionState } from "@pulse/sdk";
-import { useUndoableDelete } from "@pulse/ui";
+import { IconButton, UndoableDeleteRow, useUndoableDelete } from "@pulse/ui";
 import type { WeightLogEntry } from "./types";
 
 const initialState: WidgetActionState = {};
@@ -30,19 +30,14 @@ export function WeightLogRow({
 
   if (pending) {
     return (
-      <div className="flex items-center justify-between gap-2 py-2 text-sm text-[var(--color-neutral-500)]">
-        <span>{log.weightKg.toFixed(1)}kg deleted</span>
-        <button
-          type="button"
-          onClick={undo}
-          className="flex min-h-11 shrink-0 items-center gap-1.5 px-2 text-sm font-medium text-[var(--color-accent)] hover:underline"
-        >
-          <Undo2 className="h-3.5 w-3.5" aria-hidden="true" /> Undo
-        </button>
-        <form ref={formRef} action={deleteFormAction} className="hidden">
-          <input type="hidden" name="logId" value={log.id} />
-        </form>
-      </div>
+      <UndoableDeleteRow
+        label={`${log.weightKg.toFixed(1)}kg deleted`}
+        onUndo={undo}
+        formRef={formRef}
+        deleteAction={deleteFormAction}
+      >
+        <input type="hidden" name="logId" value={log.id} />
+      </UndoableDeleteRow>
     );
   }
 
@@ -52,14 +47,12 @@ export function WeightLogRow({
         <p className="font-medium text-[var(--foreground)]">{log.weightKg.toFixed(1)}kg</p>
         <p className="text-xs text-[var(--color-neutral-500)]">{formatDate(log.loggedOn)}</p>
       </div>
-      <button
-        type="button"
+      <IconButton
         onClick={requestDelete}
         aria-label={`Delete weigh-in from ${formatDate(log.loggedOn)}`}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--color-neutral-400)] hover:bg-current/10 hover:text-red-600"
       >
         <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-      </button>
+      </IconButton>
     </div>
   );
 }

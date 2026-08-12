@@ -1,9 +1,9 @@
 "use client";
 
 import { useActionState, useRef } from "react";
-import { Undo2, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import type { WidgetAction, WidgetActionState } from "@pulse/sdk";
-import { useUndoableDelete } from "@pulse/ui";
+import { IconButton, UndoableDeleteRow, useUndoableDelete } from "@pulse/ui";
 import type { Task } from "./types";
 
 const initialState: WidgetActionState = {};
@@ -24,19 +24,14 @@ export function TaskRow({
 
   if (pendingDelete) {
     return (
-      <div className="flex items-center justify-between gap-2 py-1.5 text-sm text-[var(--color-neutral-500)]">
-        <span className="truncate">&ldquo;{task.title}&rdquo; deleted</span>
-        <button
-          type="button"
-          onClick={undo}
-          className="flex min-h-11 shrink-0 items-center gap-1.5 px-2 text-sm font-medium text-[var(--color-accent)] hover:underline"
-        >
-          <Undo2 className="h-3.5 w-3.5" aria-hidden="true" /> Undo
-        </button>
-        <form ref={deleteFormRef} action={deleteFormAction} className="hidden">
-          <input type="hidden" name="taskId" value={task.id} />
-        </form>
-      </div>
+      <UndoableDeleteRow
+        label={<>&ldquo;{task.title}&rdquo; deleted</>}
+        onUndo={undo}
+        formRef={deleteFormRef}
+        deleteAction={deleteFormAction}
+      >
+        <input type="hidden" name="taskId" value={task.id} />
+      </UndoableDeleteRow>
     );
   }
 
@@ -63,14 +58,9 @@ export function TaskRow({
       >
         {task.title}
       </span>
-      <button
-        type="button"
-        onClick={requestDelete}
-        aria-label={`Delete "${task.title}"`}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--color-neutral-400)] hover:bg-current/10 hover:text-red-600"
-      >
+      <IconButton onClick={requestDelete} aria-label={`Delete "${task.title}"`}>
         <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-      </button>
+      </IconButton>
     </div>
   );
 }

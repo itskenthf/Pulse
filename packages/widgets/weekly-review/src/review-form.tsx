@@ -2,12 +2,10 @@
 
 import { useActionState } from "react";
 import type { WidgetAction, WidgetActionState } from "@pulse/sdk";
+import { Button, FIELD_CLASS } from "@pulse/ui";
 import type { WeeklyReviewEntry } from "./types";
 
 const initialState: WidgetActionState = {};
-
-const FIELD_CLASS =
-  "min-h-11 rounded-[4px] border border-[var(--color-divider)] bg-transparent px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--color-neutral-400)] focus-visible:border-[var(--color-accent)] focus-visible:outline-none";
 
 const RATING_FIELDS: { name: keyof Pick<WeeklyReviewEntry, "mood" | "energy" | "confidence" | "sleepQuality">; label: string }[] = [
   { name: "mood", label: "Mood" },
@@ -91,13 +89,9 @@ export function ReviewForm({ review, action }: { review: WeeklyReviewEntry | nul
         />
       </div>
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="min-h-11 w-fit rounded-[4px] border border-[var(--color-accent)] px-4 text-sm font-medium text-[var(--color-accent)] hover:bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)] disabled:opacity-50"
-      >
+      <Button type="submit" disabled={isPending} className="w-fit px-4">
         Save review
-      </button>
+      </Button>
       {state?.error && <p className="text-xs text-red-600">{state.error}</p>}
     </form>
   );

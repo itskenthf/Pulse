@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { Book } from "lucide-react";
-import Link from "next/link";
-import { WidgetCard, WidgetMenu } from "@pulse/ui";
+import { ViewAllLink, WidgetCard, WidgetMenu } from "@pulse/ui";
 import type { NoteWidgetActions } from "./actions";
 import { NoteModal } from "./note-modal";
 
@@ -28,14 +27,7 @@ export function NotesCard({ actions }: { actions: NoteWidgetActions }) {
       icon={<Book className="h-4 w-4" aria-hidden="true" />}
       action={<WidgetMenu id="notes" actions={actions} />}
       compact
-      footer={
-        <Link
-          href="/notes"
-          className="text-sm font-medium text-[var(--color-accent)] hover:underline"
-        >
-          View all →
-        </Link>
-      }
+      footer={<ViewAllLink href="/notes" />}
     >
       <button
         type="button"

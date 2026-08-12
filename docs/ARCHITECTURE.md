@@ -25,7 +25,8 @@ packages/
     github/           Contribution counts, blue heatmap, latest repo/commit
                       (reuses your GitHub login token)
     steam/            Cover-art + title cards; hours/last-played/achievements
-                      live on a per-game detail page (apps/web/src/app/steam/[appId])
+                      live on a per-game detail page
+                      (apps/web/src/app/(detail)/steam/[appId])
   adapters/
     weather/          Open-Meteo client (used by widgets/hero)
     github/           GitHub GraphQL contributions client
@@ -47,7 +48,15 @@ dependency graph (`turbo.json`'s `dependsOn: ["^build"]`).
   `registerWidget` / `getAllWidgets`, plus each widget's single top-level
   export (e.g. `heroWidget` from `@pulse/widget-hero`). No navigation chrome
   beyond the navbar (Sidebar/Dock/BottomNav were deleted 2026-07-25, by
-  explicit request — see docs/DECISIONS.md); the widget grid
+  explicit request — see docs/DECISIONS.md).
+  `src/proxy.ts` (Next.js 16's renamed `middleware.ts` convention) is the
+  actual auth boundary for every non-dashboard route — a matcher list of
+  protected path prefixes, redirecting to `/` before any page code runs.
+  `src/app/(detail)/` is a route group (doesn't affect any URL) holding
+  every detail route's shared wrapper/back-link chrome in one `layout.tsx`,
+  so `/tasks`, `/notes`, `/notebook`, `/timeline`, `/reading`,
+  `/steam/[appId]`, and `/health/*` don't each repeat it — see
+  docs/DECISIONS.md's 2026-08-12 entry. The widget grid
   (`grid ... items-start`) intentionally doesn't stretch cards to match
   their row's tallest neighbor — each card sizes to its own content.
 - `packages/sdk` — the `Widget` interface (see below) and the in-memory

@@ -1,9 +1,10 @@
 import { glassClass, RADIUS } from "@pulse/ui";
-import { DetailPageSkeleton, SkeletonLine } from "@/app/detail-page-skeleton";
+import { SkeletonHeading, SkeletonLine } from "@/app/(detail)/skeleton";
 
 export default function SteamGameLoading() {
   return (
-    <DetailPageSkeleton>
+    <>
+      <SkeletonHeading />
       <div className={`flex flex-col gap-6 ${RADIUS.card} p-6 ${glassClass("light")}`}>
         <div
           aria-hidden="true"
@@ -18,6 +19,6 @@ export default function SteamGameLoading() {
           </div>
         </div>
       </div>
-    </DetailPageSkeleton>
+    </>
   );
 }

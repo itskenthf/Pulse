@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { TouchEvent } from "react";
+import Image from "next/image";
 import { RADIUS } from "@pulse/ui";
 
 /** Update whenever a new batch of images lands in apps/web/public/hero-gifs/. */
@@ -143,8 +144,16 @@ export function GifStack() {
               isMain ? `${SHADOW_MEDIUM} ${SHADOW_HEAVY_HOVER}` : SHADOW_LIGHT
             } transition-[top,left,width,height,opacity,box-shadow] duration-[280ms] ease-out motion-reduce:transition-none ${SLOT_CLASSES[role]}`}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={GIF_PATHS[i]} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            <Image
+              src={GIF_PATHS[i]!}
+              alt=""
+              fill
+              // Largest slot (main) is 184px square — no role here ever
+              // renders bigger, so this is the real upper bound, not a
+              // generic guess.
+              sizes="184px"
+              className="object-cover"
+            />
             {isTinted && <div className={`absolute inset-0 ${TINT_NEUTRAL}`} />}
           </button>
         );

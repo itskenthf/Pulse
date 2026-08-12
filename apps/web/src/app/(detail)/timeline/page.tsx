@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Memory } from "@pulse/database";
@@ -8,6 +8,8 @@ import { HERO_TIME_ZONE } from "@pulse/widget-hero";
 import { auth } from "@/auth";
 import { groupMemoriesByRecency } from "@/lib/group-memories";
 import { isExternalHref, memoryHref, MEMORY_SOURCE_META } from "@/lib/memory-sources";
+
+export const metadata: Metadata = { title: "Timeline" };
 
 // timeZone: without it, this renders in the server's own timezone
 // (UTC on Vercel) instead of the reference timezone the rest of the
@@ -92,38 +94,29 @@ export default async function TimelinePage() {
   const groups = groupMemoriesByRecency(memories);
 
   return (
-    <div className="relative flex min-h-screen bg-[var(--background)]">
-      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 p-4 sm:p-6">
-        <Link
-          href="/"
-          className="flex w-fit items-center gap-1.5 text-sm font-medium text-[var(--color-neutral-600)] hover:text-[var(--foreground)]"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Dashboard
-        </Link>
+    <>
+      <h1 className="font-heading text-2xl font-semibold tracking-tight text-[var(--foreground)]">
+        Timeline
+      </h1>
 
-        <h1 className="font-heading text-2xl font-semibold tracking-tight text-[var(--foreground)]">
-          Timeline
-        </h1>
-
-        {groups.length === 0 ? (
-          <EmptyState message="No memories yet — they'll show up here as widgets detect meaningful changes." />
-        ) : (
-          <div className="flex flex-col gap-8">
-            {groups.map((group) => (
-              <div key={group.label} className="flex flex-col gap-3">
-                <h2 className="font-heading text-sm font-semibold tracking-[0.08em] text-[var(--color-accent-700)] uppercase">
-                  {group.label} · {group.memories.length}
-                </h2>
-                <div className="flex flex-col divide-y divide-[var(--color-divider)] border-y border-[var(--color-divider)]">
-                  {group.memories.map((memory) => (
-                    <MemoryRow key={memory.id} memory={memory} />
-                  ))}
-                </div>
+      {groups.length === 0 ? (
+        <EmptyState message="No memories yet — they'll show up here as widgets detect meaningful changes." />
+      ) : (
+        <div className="flex flex-col gap-8">
+          {groups.map((group) => (
+            <div key={group.label} className="flex flex-col gap-3">
+              <h2 className="font-heading text-sm font-semibold tracking-[0.08em] text-[var(--color-accent-700)] uppercase">
+                {group.label} · {group.memories.length}
+              </h2>
+              <div className="flex flex-col divide-y divide-[var(--color-divider)] border-y border-[var(--color-divider)]">
+                {group.memories.map((memory) => (
+                  <MemoryRow key={memory.id} memory={memory} />
+                ))}
               </div>
-            ))}
-          </div>
-        )}
-      </main>
-    </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
   );
 }

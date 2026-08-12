@@ -5018,3 +5018,72 @@ already shipped separately):
   page, capped read for the widget) would fix this properly, but touches
   6 files for a Low-severity, "slow burn, not active" finding — deferred
   rather than done as a drive-by change alongside everything else here.
+
+## 2026-08-12 — App Router audit fixes: proxy.ts, shared (detail) layout, next/image, per-route metadata
+
+A follow-up App Router audit (layouts, middleware, route handlers,
+caching/streaming, metadata, image optimization, fonts, edge
+compatibility) found most of these clean, but four concrete gaps:
+
+**No `middleware.ts`/`proxy.ts` at all.** Every one of the 10 protected
+routes (`/tasks`, `/notes`, `/notebook`, `/timeline`, `/reading`,
+`/steam/[appId]`, `/health/*`) repeated `const session = await auth(); if
+(!session?.user?.id) redirect("/")` by hand — a new route added without
+that exact snippet would simply be unprotected, with nothing structural
+catching the omission. Added `apps/web/src/proxy.ts` (not `middleware.ts`
+— Next.js 16 renamed the file convention the same release this app
+targets; `middleware.ts` still works but logs a build-time deprecation
+warning, confirmed by trying it first) wrapping Auth.js's `auth()` as the
+actual security boundary, with a `matcher` covering the 10 protected path
+prefixes. Each page still calls `auth()` itself too — it needs
+`session.user.id` for its own data fetch, and TypeScript needs the null
+check to narrow that — but the redirect proxy.ts performs is now the real
+gate; the page's own check is now just type-narrowing, not the thing
+standing between an unauthenticated request and rendered data.
+
+**10 pages duplicated their own wrapper/back-link chrome** — the exact
+markup `apps/web/src/app/detail-page-skeleton.tsx` had *already* extracted
+for the matching `loading.tsx` fallbacks, with a doc comment stating
+outright that all these pages "share the exact same wrapper/back-link/
+heading markup." The same reasoning was never applied to the real pages.
+Moved all 10 detail routes into a route group,
+`apps/web/src/app/(detail)/` (folders in parens don't add a URL segment —
+`/tasks` is still `/tasks`), with a new `(detail)/layout.tsx` holding the
+wrapper + back-link once. Each page now returns just its own `<h1>` +
+body content. `detail-page-skeleton.tsx` moved to `(detail)/skeleton.tsx`
+and shrank to just `SkeletonHeading`/`SkeletonLine` — the wrapper it used
+to duplicate a *third* time is now redundant, since the layout renders
+live and isn't part of the Suspense boundary each route's `loading.tsx`
+creates (a segment's own `layout.tsx` renders immediately; only
+`page.tsx` below it suspends).
+
+**`GifStack`'s local hero photos never went through `next/image`.**
+Three other plain-`<img>` cases in the codebase (profile avatar, the
+logo, Steam's external CDN cover art) all have a comment justifying the
+choice (small/external/decorative, not worth the optimizer). The
+hero-gif photos (`apps/web/public/hero-gifs/{1..61}.jpg`, real local
+JPEGs) had no such justification and are exactly the case `next/image`
+exists for. Switched to `<Image fill sizes="184px" />` (184px is the
+largest any slot in `SLOT_CLASSES` ever renders) — the existing
+`position: absolute` + `overflow-hidden` wrapper `<button>` already gives
+`fill` a valid sized ancestor. Added `next` as a peer dependency to
+`@pulse/widget-hero` (steam's widget package already had this pattern).
+
+**No route set its own page title.** Root `layout.tsx`'s `metadata.title`
+changed from a bare string to `{ default: "Pulse", template: "%s ·
+Pulse" }`, and each detail page now exports `metadata = { title: "..." }`
+(e.g. "Tasks" → "Tasks · Pulse"). The Steam per-game page uses
+`generateMetadata` instead of a static title, since the real title needs
+the game's name — wrapped the shared `widget_cache` read in React's
+`cache()` so `generateMetadata` and the page component's own read of the
+same game dedupe within one request rather than querying twice.
+
+Verified: `pnpm build` shows all 10 routes unchanged in the route table
+(confirms the route group is URL-transparent) and no proxy deprecation
+warning; a local dev server confirms every protected path 307-redirects
+to `/` when signed out, and the signed-out homepage renders correctly.
+Full signed-in verification of the new `(detail)` layout's rendered
+chrome wasn't possible in this environment — no real Supabase/GitHub
+OAuth credentials to actually sign in with — so that's confirmed by
+`pnpm build`/typecheck/lint/test passing and code review, not a live
+screenshot.

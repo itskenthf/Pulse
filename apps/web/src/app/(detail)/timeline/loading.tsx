@@ -1,8 +1,9 @@
-import { DetailPageSkeleton, SkeletonLine } from "@/app/detail-page-skeleton";
+import { SkeletonHeading, SkeletonLine } from "@/app/(detail)/skeleton";
 
 export default function TimelineLoading() {
   return (
-    <DetailPageSkeleton>
+    <>
+      <SkeletonHeading />
       <div className="flex flex-col gap-3">
         <SkeletonLine className="w-24" />
         <div className="flex flex-col divide-y divide-[var(--color-divider)] border-y border-[var(--color-divider)]">
@@ -11,6 +12,6 @@ export default function TimelineLoading() {
           <SkeletonLine className="my-3 w-3/5" />
         </div>
       </div>
-    </DetailPageSkeleton>
+    </>
   );
 }

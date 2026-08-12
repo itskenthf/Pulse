@@ -44,7 +44,21 @@ export async function fetchHeroData(context: WidgetFetchContext): Promise<HeroDa
 
   const now = new Date();
   const period = periodForHour(hourInTimeZone(HERO_TIME_ZONE, now));
-  const name = await readUserName(context.userId);
+
+  // None of these three depends on either of the others' results — reading
+  // them concurrently instead of sequentially roughly cuts this function's
+  // own latency to the slowest of the three instead of their sum (see
+  // docs/DECISIONS.md's 2026-08-12 entry).
+  const [name, weather, previous] = await Promise.all([
+    readUserName(context.userId),
+    fetchCurrentWeather({ latitude: WEATHER_LATITUDE, longitude: WEATHER_LONGITUDE }, context.signal),
+    // Unvalidated on purpose: this is a soft best-effort read (avoid
+    // repeating recent quotes), not data reaching render() — worst case on
+    // a shape mismatch is a repeated quote, not worth failing this whole
+    // fetch over the way a validated read legitimately should elsewhere.
+    readWidgetCache<HeroData>(context.userId, WIDGET_ID),
+  ]);
+
   const greeting = name ? `${GREETINGS[period]}, ${name}` : GREETINGS[period];
 
   // "Friday · 24 July" — short and conversational, not the full
@@ -62,16 +76,6 @@ export async function fetchHeroData(context: WidgetFetchContext): Promise<HeroDa
   }).format(now);
   const dateFormatted = `${weekday} · ${day} ${month}`;
 
-  const weather = await fetchCurrentWeather(
-    { latitude: WEATHER_LATITUDE, longitude: WEATHER_LONGITUDE },
-    context.signal,
-  );
-
-  // Unvalidated on purpose: this is a soft best-effort read (avoid
-  // repeating recent quotes), not data reaching render() — worst case on
-  // a shape mismatch is a repeated quote, not worth failing this whole
-  // fetch over the way a validated read legitimately should elsewhere.
-  const previous = await readWidgetCache<HeroData>(context.userId, WIDGET_ID);
   const quotePick = pickQuote(previous?.data.recentQuotes ?? []);
 
   return {

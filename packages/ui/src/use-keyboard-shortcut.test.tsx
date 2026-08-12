@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { useKeyboardShortcut } from "./use-keyboard-shortcut";
@@ -63,5 +64,42 @@ describe("useKeyboardShortcut", () => {
     fireEvent.keyDown(document, { key: "r" });
 
     expect(onShortcut).not.toHaveBeenCalled();
+  });
+
+  it("keeps a single listener across re-renders that pass a new handler identity, and always calls the latest one", () => {
+    const addSpy = vi.spyOn(document, "addEventListener");
+    const calls: number[] = [];
+
+    function Page() {
+      const [count, setCount] = useState(0);
+      // A fresh closure every render, deliberately — this is the case
+      // that used to tear down and re-add the document listener on every
+      // render (see docs/DECISIONS.md's 2026-08-12 entry).
+      useKeyboardShortcut("r", () => calls.push(count));
+      return (
+        <button type="button" onClick={() => setCount((c) => c + 1)}>
+          Bump
+        </button>
+      );
+    }
+    render(<Page />);
+
+    const keydownCallsAfterMount = addSpy.mock.calls.filter(([type]) => type === "keydown").length;
+    expect(keydownCallsAfterMount).toBe(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Bump" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bump" }));
+
+    // Still exactly one "keydown" listener ever added, despite two
+    // re-renders each passing a brand-new handler closure.
+    expect(addSpy.mock.calls.filter(([type]) => type === "keydown").length).toBe(1);
+
+    fireEvent.keyDown(document, { key: "r" });
+
+    // And the listener still calls the *latest* handler, closing over the
+    // up-to-date `count`, not the one from mount.
+    expect(calls).toEqual([2]);
+
+    addSpy.mockRestore();
   });
 });

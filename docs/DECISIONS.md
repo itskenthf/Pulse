@@ -4962,3 +4962,59 @@ immediately discarded. That read now only happens when
 history, so hero's refresh was reading the same row twice per call, one
 of them entirely wasted — now down to the one hero's own fetch actually
 needs.
+
+## 2026-08-12 — Remaining Low/Medium perf findings: fixed, investigated-and-kept, or skipped
+
+Working through the rest of the earlier performance investigation's
+findings (the High one — cron/refresh-all ignoring `refreshInterval` —
+already shipped separately):
+
+**Fixed:**
+- `Heatmap`'s `computeMonthLabels(weeks, year)` (`packages/widgets/github/
+  src/heatmap.tsx`) now runs inside `useMemo`, keyed on `[weeks, year]` —
+  it was re-running its ~371-iteration scan from scratch on every day-
+  popover toggle, uninvalidated.
+- `useKeyboardShortcut` (`packages/ui/src/use-keyboard-shortcut.ts`) now
+  stashes `handler` in a ref, same pattern `usePullToRefresh` already
+  used correctly, so its listener effect depends only on `[key, enabled]`
+  instead of tearing down/re-adding a `document` `keydown` listener on
+  every render of a caller like `RefreshAllTitle` (which re-renders on
+  every hover/focus).
+- Hero's `fetch.ts` now reads `readUserName`, `fetchCurrentWeather`, and
+  `readWidgetCache` concurrently via `Promise.all` instead of three
+  serial awaits — none depended on another's result.
+- `ensureWidgetRegistered` (`packages/database/src/widget-registry.ts`)
+  now short-circuits on a module-level `Set` of ids already confirmed
+  registered this server instance's lifetime, instead of an unconditional
+  upsert on every single widget fetch, forever. Only populated after a
+  successful upsert, so a failure never poisons the cache into skipping a
+  registration that hasn't actually landed.
+- `todayInTimeZone` (`packages/health/src/date.ts`) now reuses one
+  hoisted `Intl.DateTimeFormat` instead of constructing a new one per
+  call — daily-digest calls this once per memory in a lookback window of
+  up to 200 (`packages/widgets/daily-digest/src/fetch.ts`), and every
+  other caller (weight, nutrition, meals, weekly-review) benefits too,
+  for free, since the fix lives inside the shared function itself.
+
+**Investigated and kept as-is (not a real issue):**
+- Insights' `listWeightLogs(context.userId, 60)` vs. `WEIGHT_TREND_DAYS`
+  (30) looked like fetching 2x what's used. It isn't: `weight_logs` has
+  no unique-per-day constraint (multiple weigh-ins on the same day are
+  allowed), so a row-count limit exactly equal to the day window could
+  under-fetch on a day with more than one log. Trimming this would trade
+  a Low-severity query-size saving for a real, if rare, correctness bug.
+  Left the row count as-is, added a comment explaining why.
+
+**Explicitly skipped, by request:**
+- The unbounded `listNotes`/`listTasks`/`listBooks` queries
+  (`packages/database/src/{notes,tasks,reading}.ts`). Unlike notebook
+  (whose `/notebook` page queries the DB directly, unbounded, separate
+  from the dashboard widget's own limited read), `/notes`, `/tasks`, and
+  `/reading` all read from the *same* `widget_cache` row the dashboard
+  card populates. Capping the widget's own query would silently truncate
+  what those full-list pages show too — old completed tasks/notes/books
+  disappearing from view, not just off the dashboard card. Matching
+  notebook's pattern (separate unbounded direct-DB read for the full
+  page, capped read for the widget) would fix this properly, but touches
+  6 files for a Low-severity, "slow burn, not active" finding — deferred
+  rather than done as a drive-by change alongside everything else here.

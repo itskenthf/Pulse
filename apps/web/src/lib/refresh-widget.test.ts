@@ -170,6 +170,45 @@ describe("refreshWidget", () => {
     expect(writeWidgetCache).toHaveBeenCalled();
   });
 
+  describe("knownData", () => {
+    it("skips fetchData entirely and writes the given data directly when knownData is provided", async () => {
+      const fetchData = vi.fn();
+      const deriveMemories = vi.fn().mockReturnValueOnce([]);
+      getWidget.mockReturnValueOnce({ id: "meals", fetchData, deriveMemories });
+      // mockReset (not just the beforeEach's clearAllMocks) — several
+      // earlier tests in this file configure readWidgetCache for a widget
+      // that turns out to have no deriveMemories, so it's never actually
+      // called; clearAllMocks doesn't drain those queued once-values, so
+      // without this reset one of them would be consumed here instead of
+      // the one this test configures below.
+      readWidgetCache.mockReset();
+      readWidgetCache.mockResolvedValueOnce({ data: { today: { breakfast: false } }, updatedAt: "2026-07-01T00:00:00Z" });
+      writeWidgetCache.mockResolvedValueOnce(undefined);
+
+      await refreshWidget("meals", "user-1", { knownData: { today: { breakfast: true } } });
+
+      expect(fetchData).not.toHaveBeenCalled();
+      expect(writeWidgetCache).toHaveBeenCalledWith(
+        "user-1",
+        "meals",
+        { today: { breakfast: true } },
+        expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
+      );
+      expect(deriveMemories).toHaveBeenCalledWith({ today: { breakfast: false } }, { today: { breakfast: true } });
+    });
+
+    it("bypasses the force:false freshness check too, since there is no fetchData call left to skip", async () => {
+      const fetchData = vi.fn();
+      getWidget.mockReturnValueOnce({ id: "meals", refreshInterval: 900, fetchData });
+      writeWidgetCache.mockResolvedValueOnce(undefined);
+
+      await refreshWidget("meals", "user-1", { force: false, knownData: { today: {} } });
+
+      expect(readWidgetCacheUpdatedAt).not.toHaveBeenCalled();
+      expect(writeWidgetCache).toHaveBeenCalled();
+    });
+  });
+
   describe("force: false", () => {
     it("skips fetchData/write entirely when the cache is younger than the widget's refreshInterval", async () => {
       vi.useFakeTimers();

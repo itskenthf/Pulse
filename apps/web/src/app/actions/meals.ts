@@ -2,7 +2,7 @@
 
 import { setMealChecked, type Meal } from "@pulse/database";
 import type { WidgetActionState } from "@pulse/sdk";
-import { MEALS_WIDGET_ID } from "@pulse/widget-meals";
+import { MEALS_WIDGET_ID, type MealsData } from "@pulse/widget-meals";
 import { runWidgetWriteAction } from "@/lib/run-widget-write-action";
 
 const REVALIDATE_PATHS = ["/", "/health/meals"];
@@ -27,7 +27,13 @@ export async function toggleMealAction(
         return { error: "Invalid value" };
       }
 
-      await setMealChecked(userId, meal as Meal, checked === "true");
+      // setMealChecked's own upsert already returns the full resulting
+      // row (see its own doc comment) — that's the entirety of what
+      // fetchMealsData composes, so it's handed straight to refreshWidget
+      // as knownData instead of a separate getTodayMeals re-read.
+      const today = await setMealChecked(userId, meal as Meal, checked === "true");
+      const refreshData: MealsData = { today, fetchedAt: new Date().toISOString() };
+      return { refreshData };
     },
   });
 }

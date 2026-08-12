@@ -30,6 +30,20 @@ export interface RefreshWidgetOptions {
    * real, current data, since the user asked for it directly.
    */
   force?: boolean;
+  /**
+   * Skips `widget.fetchData()`'s own DB re-read entirely and writes this
+   * directly as the widget's new cache value instead — for a write action
+   * whose own mutation already determined the widget's full next state
+   * (e.g. Meals' setMealChecked returning the row its own upsert just
+   * wrote), where fetchData's normal re-read would just re-derive
+   * something already known a moment ago. Left unset, behavior is
+   * unchanged: fetchData() runs as usual. Not a general substitute for
+   * fetchData — most widgets' data is composed from more than the one
+   * thing a given write touches (e.g. Nutrition's goals/history), so this
+   * only makes sense for a caller that has assembled the *complete*
+   * TData shape itself.
+   */
+  knownData?: unknown;
 }
 
 /**
@@ -53,7 +67,7 @@ export async function refreshWidget(
   userId: string,
   options: RefreshWidgetOptions = {},
 ): Promise<void> {
-  const { force = true } = options;
+  const { force = true, knownData } = options;
   const widget = getWidget(widgetId);
   if (!widget) throw new Error(`Unknown widget "${widgetId}"`);
 
@@ -61,7 +75,10 @@ export async function refreshWidget(
   // doc comment for why this guards against a concurrent stale write.
   const readAsOf = new Date().toISOString();
 
-  if (!force) {
+  // The freshness check exists to avoid an unnecessary fetchData() call —
+  // moot when there's no fetchData() call to avoid, since knownData is
+  // already the write's own real, current result.
+  if (!force && knownData === undefined) {
     const lastUpdatedAt = await readWidgetCacheUpdatedAt(userId, widgetId).catch((err) => {
       console.error(`Failed to read cache freshness for widget "${widgetId}":`, err);
       return null;
@@ -95,7 +112,9 @@ export async function refreshWidget(
           return null;
         })
       : Promise.resolve(null),
-    widget.fetchData({ userId, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) }),
+    knownData !== undefined
+      ? Promise.resolve(knownData)
+      : widget.fetchData({ userId, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) }),
   ]);
 
   await writeWidgetCache(userId, widgetId, data, readAsOf);

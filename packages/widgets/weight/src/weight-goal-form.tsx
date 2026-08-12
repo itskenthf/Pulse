@@ -1,24 +1,12 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
-import type { WidgetAction, WidgetActionState } from "@pulse/sdk";
-import { Button, FIELD_CLASS } from "@pulse/ui";
-
-const initialState: WidgetActionState = {};
+import type { WidgetAction } from "@pulse/sdk";
+import { Button, FIELD_CLASS, useResettableForm } from "@pulse/ui";
 
 /** Only shown on /health/weight when no active weight goal exists yet —
  *  metric is fixed to weight_kg, only target/direction are user input. */
 export function WeightGoalForm({ action }: { action: WidgetAction }) {
-  const [state, formAction, isPending] = useActionState(action, initialState);
-  const formRef = useRef<HTMLFormElement>(null);
-  const wasPending = useRef(false);
-
-  useEffect(() => {
-    if (wasPending.current && !isPending && !state?.error) {
-      formRef.current?.reset();
-    }
-    wasPending.current = isPending;
-  }, [isPending, state?.error]);
+  const { state, formAction, isPending, formRef } = useResettableForm(action);
 
   return (
     <form ref={formRef} action={formAction} className="flex flex-col gap-2 sm:flex-row">

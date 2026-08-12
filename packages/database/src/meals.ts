@@ -39,16 +39,29 @@ export async function getTodayMeals(userId: string): Promise<MealCheck> {
   return data ? mapRow(data) : emptyCheck(loggedOn);
 }
 
-export async function setMealChecked(userId: string, meal: Meal, checked: boolean): Promise<void> {
+/**
+ * Returns the full resulting row (via `.select()` on the same upsert
+ * statement — no separate read) so a caller that needs the widget's new
+ * complete state after this write doesn't have to re-query for it; Meals'
+ * fetchData is exactly this one row, so its refresh action can hand this
+ * straight to `refreshWidget`'s `knownData` instead of a redundant
+ * `getTodayMeals` re-read right after.
+ */
+export async function setMealChecked(userId: string, meal: Meal, checked: boolean): Promise<MealCheck> {
   const supabase = createServiceClient();
   const loggedOn = todayInTimeZone();
 
-  const { error } = await supabase.from("meal_checks").upsert(
-    { user_id: userId, logged_on: loggedOn, [meal]: checked, updated_at: new Date().toISOString() },
-    { onConflict: "user_id,logged_on" },
-  );
+  const { data, error } = await supabase
+    .from("meal_checks")
+    .upsert(
+      { user_id: userId, logged_on: loggedOn, [meal]: checked, updated_at: new Date().toISOString() },
+      { onConflict: "user_id,logged_on" },
+    )
+    .select("logged_on, breakfast, lunch, dinner, snack")
+    .single();
 
   if (error) throw new Error(`Failed to update ${meal}: ${error.message}`);
+  return mapRow(data);
 }
 
 export async function listMealHistory(userId: string, days: number): Promise<MealCheck[]> {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef } from "react";
+import { useActionState, useOptimistic, useTransition } from "react";
 import { Trash2 } from "lucide-react";
 import type { WidgetAction, WidgetActionState } from "@pulse/sdk";
 import { IconButton, UndoableDeleteRow, useUndoableDelete } from "@pulse/ui";
@@ -17,10 +17,32 @@ export function TaskRow({
   toggleAction: WidgetAction;
   deleteAction: WidgetAction;
 }) {
-  const [, toggleFormAction, isToggling] = useActionState(toggleAction, initialState);
+  // Bypasses <form action> in favor of calling toggleAction directly inside
+  // the same startTransition as the optimistic flip — useOptimistic only
+  // reverts to the real `task.completed` once *its own* transition settles,
+  // so the update and the mutation have to share one transition rather than
+  // useActionState's separately-triggered one. A failed write's catch below
+  // is what makes that revert actually happen instead of leaving a lie on
+  // screen.
+  const [optimisticCompleted, setOptimisticCompleted] = useOptimistic(task.completed);
+  const [isToggling, startToggle] = useTransition();
   const [, deleteFormAction] = useActionState(deleteAction, initialState);
-  const toggleFormRef = useRef<HTMLFormElement>(null);
   const { pending: pendingDelete, requestDelete, undo, formRef: deleteFormRef } = useUndoableDelete();
+
+  function handleToggle() {
+    const next = !optimisticCompleted;
+    startToggle(async () => {
+      setOptimisticCompleted(next);
+      const formData = new FormData();
+      formData.set("taskId", task.id);
+      formData.set("completed", String(next));
+      try {
+        await toggleAction(initialState, formData);
+      } catch (err) {
+        console.error(`Failed to toggle task "${task.id}":`, err);
+      }
+    });
+  }
 
   if (pendingDelete) {
     return (
@@ -37,21 +59,19 @@ export function TaskRow({
 
   return (
     <div className="flex items-center gap-2 py-1.5">
-      <form ref={toggleFormRef} action={toggleFormAction} className="flex h-11 w-11 shrink-0 items-center justify-center">
-        <input type="hidden" name="taskId" value={task.id} />
-        <input type="hidden" name="completed" value={(!task.completed).toString()} />
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center">
         <input
           type="checkbox"
-          checked={task.completed}
+          checked={optimisticCompleted}
           disabled={isToggling}
-          onChange={() => toggleFormRef.current?.requestSubmit()}
-          aria-label={task.completed ? `Mark "${task.title}" incomplete` : `Complete "${task.title}"`}
+          onChange={handleToggle}
+          aria-label={optimisticCompleted ? `Mark "${task.title}" incomplete` : `Complete "${task.title}"`}
           className="h-4 w-4 accent-[var(--color-accent)]"
         />
-      </form>
+      </span>
       <span
         className={`flex-1 truncate text-sm transition-colors duration-150 ${
-          task.completed
+          optimisticCompleted
             ? "text-[var(--color-neutral-400)] line-through"
             : "text-[var(--foreground)]"
         }`}

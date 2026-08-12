@@ -1,4 +1,5 @@
 export { nutritionWidget } from "./widget";
+export { assembleNutritionDataFromToday } from "./fetch";
 export { WIDGET_ID as NUTRITION_WIDGET_ID } from "./constants";
 export { nutritionDataSchema } from "./types";
 export type { NutritionToday, NutritionGoal, NutritionHistoryPoint, NutritionData } from "./types";

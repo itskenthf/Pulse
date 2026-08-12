@@ -12,7 +12,12 @@ vi.mock("next/cache", () => ({ revalidatePath }));
 
 const { runWidgetWriteAction } = await import("./run-widget-write-action");
 
-function baseConfig(write: (userId: string, formData: FormData) => Promise<{ error?: string } | void>) {
+function baseConfig(
+  write: (
+    userId: string,
+    formData: FormData,
+  ) => Promise<({ error?: string; refreshData?: unknown } & Record<string, unknown>) | void>,
+) {
   return {
     widgetId: "tasks",
     revalidatePaths: ["/", "/tasks"],
@@ -79,6 +84,19 @@ describe("runWidgetWriteAction", () => {
 
     expect(result).toEqual({ error: "could not find the table" });
     expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("passes a write's refreshData through to refreshWidget as knownData, and strips it from the returned state", async () => {
+    auth.mockResolvedValueOnce({ user: { id: "user-1" } });
+    refreshWidget.mockResolvedValueOnce(undefined);
+    const write = vi.fn().mockResolvedValueOnce({ refreshData: { today: { breakfast: true } } });
+
+    const result = await runWidgetWriteAction(new FormData(), baseConfig(write));
+
+    expect(refreshWidget).toHaveBeenCalledWith("tasks", "user-1", {
+      knownData: { today: { breakfast: true } },
+    });
+    expect(result).toEqual({});
   });
 
   it("falls back to the configured errorMessage when refreshWidget throws a non-Error rejection", async () => {

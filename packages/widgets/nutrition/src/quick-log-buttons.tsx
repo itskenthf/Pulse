@@ -1,14 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
+import { useOptimistic, useTransition } from "react";
 import { Plus } from "lucide-react";
-import type { WidgetAction, WidgetActionState } from "@pulse/sdk";
+import type { WidgetAction } from "@pulse/sdk";
 import type { NutritionField } from "@pulse/database";
 import { progressPercent } from "@pulse/health";
 import { ProgressBar } from "@pulse/ui";
 import type { NutritionGoal, NutritionToday } from "./types";
-
-const initialState: WidgetActionState = {};
 
 interface RowConfig {
   field: NutritionField;
@@ -36,24 +34,46 @@ function QuickLogRow({
   goal: NutritionGoal | undefined;
   action: WidgetAction;
 }) {
-  const [, formAction, isPending] = useActionState(action, initialState);
   const current = row.value(today);
+  // Calls `action` directly inside the same startTransition as the
+  // optimistic bump — same reasoning as TaskRow/MealToggleRow: only
+  // sharing one transition lets useOptimistic revert the count back to the
+  // real value if the write actually fails, instead of a tap silently
+  // lying about the new total forever.
+  const [optimisticCurrent, addOptimisticAmount] = useOptimistic(
+    current,
+    (state: number, amount: number) => state + amount,
+  );
+  const [isPending, startTransition] = useTransition();
+
+  function handleClick() {
+    startTransition(async () => {
+      addOptimisticAmount(row.amount);
+      const formData = new FormData();
+      formData.set("field", row.field);
+      formData.set("amount", String(row.amount));
+      try {
+        await action({}, formData);
+      } catch (err) {
+        console.error(`Failed to log ${row.field}:`, err);
+      }
+    });
+  }
 
   return (
-    <form action={formAction} className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between gap-2">
         <span className="text-sm text-[var(--foreground)]">
           {row.label}{" "}
           <span className="tabular-nums text-[var(--color-neutral-500)]">
-            {current}
+            {optimisticCurrent}
             {goal ? ` / ${goal.targetValue}` : ""}
             {row.unit}
           </span>
         </span>
-        <input type="hidden" name="field" value={row.field} />
-        <input type="hidden" name="amount" value={row.amount} />
         <button
-          type="submit"
+          type="button"
+          onClick={handleClick}
           disabled={isPending}
           aria-label={`Add ${row.amount}${row.unit} ${row.label.toLowerCase()}`}
           className="flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-[4px] border border-[var(--color-accent)] px-2 text-xs font-medium text-[var(--color-accent)] hover:bg-[color-mix(in_srgb,var(--color-accent)_12%,transparent)] disabled:opacity-50"
@@ -64,11 +84,11 @@ function QuickLogRow({
       </div>
       {goal && (
         <ProgressBar
-          percent={progressPercent(current, goal.targetValue, goal.comparator)}
-          label={`${row.label}, ${current} of ${goal.targetValue}${row.unit}`}
+          percent={progressPercent(optimisticCurrent, goal.targetValue, goal.comparator)}
+          label={`${row.label}, ${optimisticCurrent} of ${goal.targetValue}${row.unit}`}
         />
       )}
-    </form>
+    </div>
   );
 }
 

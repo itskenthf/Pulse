@@ -24,10 +24,4 @@ export { listGoals, createGoal, deactivateGoal } from "./goals";
 export type { Goal, GoalMetric, GoalComparator, GoalCadence } from "./goals";
 export { getCurrentWeekReview, upsertCurrentWeekReview, listWeeklyReviews } from "./weekly-review";
 export type { WeeklyReview } from "./weekly-review";
-export {
-  readProviderAccessToken,
-  readProviderAccount,
-  updateProviderAccountTokenIfCurrent,
-  upsertProviderAccount,
-} from "./accounts";
-export type { ProviderAccount } from "./accounts";
+export { readProviderAccessToken } from "./accounts";

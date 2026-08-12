@@ -8,8 +8,8 @@ import type { NextAuthConfig } from "next-auth";
  * Postgres store for adapter data (next_auth schema) — Supabase's own
  * Auth product is not used. See docs/DECISIONS.md.
  *
- * GitHub is the first provider (Phase 0 login gate). Google and Spotify
- * are added as their respective widgets are built.
+ * GitHub is the first provider (Phase 0 login gate). Google is added as
+ * its widget is built.
  */
 export const authConfig: NextAuthConfig = {
   adapter: SupabaseAdapter({

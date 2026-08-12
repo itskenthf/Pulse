@@ -69,7 +69,7 @@ Per the reference doc's original widget development order (§9):
    the login token from `next_auth.accounts` (`readProviderAccessToken`
    in `packages/database`) — no scope change, no second OAuth flow, no
    settings. Establishes the "widget using the login provider's token"
-   pattern that Spotify/Google widgets will follow.
+   pattern that future OAuth-backed widgets can follow.
 
 Also shipped, pulled forward from the §10 backlog by explicit request:
 
@@ -108,16 +108,6 @@ min without manual clicks — confirmed working):
    profile uses a custom URL).
 4. Your Steam profile's **Game details** privacy must be Public — Steam
    silently returns an empty list otherwise, with no error.
-
-**Spotify widget**:
-1. Create an app at [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard).
-2. Add Redirect URI: `<your deployed URL>/api/auth/callback/spotify`
-   (click **Add**, not just type it in the field).
-3. Under "Which API/SDKs are you planning to use?", check **Web API** only.
-4. Save, then copy the **Client ID** and **Client Secret** from the app's dashboard.
-5. Add both as `AUTH_SPOTIFY_ID`/`AUTH_SPOTIFY_SECRET` in Vercel → Settings
-   → Environment Variables, redeploy.
-6. On the dashboard, click **Connect Spotify** on the card, authorize.
 
 ### Phase 1 rescoped (2026-07-22)
 
@@ -167,15 +157,16 @@ on building them in order:
    no longer exists; see `docs/DECISIONS.md`'s matching-dated entry for
    the full removal (no DB migration needed, since settings/cache are
    generic and keyed by `widget_id`).
-3. [x] Spotify — `packages/widgets/spotify` + `packages/adapters/spotify`:
+3. [x, later removed] Spotify — `packages/widgets/spotify` + `packages/adapters/spotify`:
    top 5 tracks (medium-term/~6-month window), `user-top-read` scope only.
    Third OAuth-backed widget, and the first where the OAuth provider isn't
    also the login provider — handled with a custom "Connect Spotify" flow
    (`/api/connect/spotify` + `/api/auth/callback/spotify`) rather than a
    NextAuth provider, plus token-refresh logic in the widget's own
-   `fetch.ts` since Spotify access tokens expire hourly. See
-   `docs/DECISIONS.md` for the full reasoning. Needs `AUTH_SPOTIFY_ID`/
-   `AUTH_SPOTIFY_SECRET` in Vercel — see "Setup notes" above.
+   `fetch.ts` since Spotify access tokens expire hourly.
+   **Removed entirely 2026-08-12 by explicit request** — no longer part of
+   Pulse; see `docs/DECISIONS.md`'s matching-dated entry for the full
+   removal.
 
 **Phase 1's rescoped target is now fully built: 8/8.**
 

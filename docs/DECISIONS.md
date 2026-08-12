@@ -4809,3 +4809,44 @@ directly under the hero banner, above Body & Health — it's a summary
 *of* other widgets' activity, not its own data source, so it doesn't
 belong grouped with either Body & Health row or the Tasks/Notes/
 Notebook row.
+
+## 2026-08-12 — Spotify integration removed entirely
+
+An architecture review flagged `apps/web`'s direct import of
+`@pulse/adapter-spotify` in the connect/callback OAuth routes as an
+undocumented breach of the "shell only depends on `@pulse/sdk`" rule —
+Spotify's own OAuth connect flow (2026-07-23 entry above) sits outside
+the `fetchData`/`render` widget lifecycle entirely, so there was no
+clean SDK seam for it to go through. Asked whether to paper over this
+with a documented exception (as Steam's detail page already is) or
+build a real SDK seam for widget-owned OAuth flows; the answer was
+neither — Spotify is no longer wanted in Pulse at all, so the fix is
+deletion, not a boundary fix.
+
+**Removed:**
+- `packages/adapters/spotify` and `packages/widgets/spotify` in full.
+- `apps/web/src/app/api/connect/spotify` and
+  `.../api/auth/callback/spotify` route handlers.
+- The `@pulse/adapter-spotify`/`@pulse/widget-spotify` dependencies from
+  `apps/web/package.json`, and the widget's registration from
+  `apps/web/src/lib/register-widgets.ts`.
+- `readProviderAccount`, `upsertProviderAccount`, and
+  `updateProviderAccountTokenIfCurrent` from `packages/database/src/accounts.ts`
+  — confirmed via grep that Spotify's token-refresh flow was their only
+  caller; `readProviderAccessToken` (used by GitHub) stays.
+- `AUTH_SPOTIFY_ID`/`AUTH_SPOTIFY_SECRET` from `turbo.json`'s `build.env`
+  and `.env.example`.
+- Spotify's entry from `apps/web/src/lib/memory-sources.tsx` and its
+  Setup Notes section in `docs/ROADMAP.md`.
+
+**Not touched:** `supabase/migrations/0003_memories_table.sql`'s
+`source` column comment (`-- widget id ("github", "spotify", "steam")`)
+— an applied migration's comments aren't rewritten after the fact, and
+existing `memories` rows with `source = "spotify"` are left in place
+rather than backfilled or deleted; they'll simply stop accumulating new
+entries and still render correctly on the Timeline page via their
+stored `title`/`description`, since `memoryHref` already returns `null`
+for unrecognized sources. Historical narrative in `docs/DECISIONS.md`
+and `docs/ROADMAP.md`'s changelog-style entries predating this one is
+also left alone — this is a removal decision, not a rewrite of what
+was actually built and why at the time.

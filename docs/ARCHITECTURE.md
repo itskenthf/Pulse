@@ -22,12 +22,10 @@ packages/
                       (reuses your GitHub login token)
     steam/            Cover-art + title cards; hours/last-played/achievements
                       live on a per-game detail page (apps/web/src/app/steam/[appId])
-    spotify/          Top tracks, custom OAuth connect flow
   adapters/
     weather/          Open-Meteo client (used by widgets/hero)
     github/           GitHub GraphQL contributions client
     steam/            Steam Web API client
-    spotify/          Spotify Web API client + OAuth token exchange
 supabase/
   migrations/         SQL migrations, applied in order
 docs/                 Architecture, roadmap, design system, decisions
@@ -65,8 +63,7 @@ dependency graph (`turbo.json`'s `dependsOn: ["^build"]`).
   `widgets/hero`). `readProviderAccessToken(userId, provider)`
   reads a stored OAuth token from `next_auth.accounts` — this is how a
   widget gets API access for a service the user already signed in with
-  (the GitHub widget uses this; Spotify will too), without a second OAuth
-  connection.
+  (the GitHub widget uses this), without a second OAuth connection.
 - `packages/widgets/*` — one package per widget. `packages/widgets/steam`
   or `packages/widgets/github` are good reference implementations for a
   normal card widget — copy their shape for the next one.

@@ -46,9 +46,8 @@ export async function readWidgetCache<T>(
 
 /**
  * `readAsOf`, when given, guards against a stale concurrent write clobbering
- * a fresher one — the same compare-and-swap idea as
- * `updateProviderAccountTokenIfCurrent` (accounts.ts), applied to
- * widget_cache. Two overlapping `refreshWidget` calls for the same
+ * a fresher one — a compare-and-swap idea applied to widget_cache. Two
+ * overlapping `refreshWidget` calls for the same
  * user/widget (e.g. the cron scheduler and a user's own post-mutation
  * refresh landing close together) can otherwise race: whichever write's
  * network round trip lands last in Postgres wins outright, even if it read

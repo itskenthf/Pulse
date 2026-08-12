@@ -26,10 +26,6 @@ describe("memoryHref", () => {
     expect(memoryHref("tasks", {})).toBe("/tasks");
   });
 
-  it("returns null for a source with no link target, like Spotify", () => {
-    expect(memoryHref("spotify", {})).toBeNull();
-  });
-
   it("returns null for an unknown source", () => {
     expect(memoryHref("unknown-widget", {})).toBeNull();
   });

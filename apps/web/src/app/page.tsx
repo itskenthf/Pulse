@@ -238,10 +238,6 @@ function WidgetCell({
  * was removed 2026-08-08 — see docs/DECISIONS.md's entry for why (unfinished
  * placeholders shown on every visit, no real logic behind them).
  *
- * Spotify is intentionally not looked up/rendered here — see
- * docs/DECISIONS.md. It stays registered (so its cache still refreshes
- * on schedule) but no longer appears on the dashboard.
- *
  * Row -1 (Daily Digest, Memory Roadmap M2 — docs/MEMORY_ROADMAP.md):
  * directly under the hero banner, above Body & Health — a cross-widget
  * rollup of today's memory events (the same `memories` table the

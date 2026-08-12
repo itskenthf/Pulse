@@ -12,7 +12,6 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@pulse/adapter-spotify": "workspace:*",
     "@pulse/auth": "workspace:*",
     "@pulse/database": "workspace:*",
     "@pulse/sdk": "workspace:*",
@@ -25,7 +24,6 @@
     "@pulse/widget-notes": "workspace:*",
     "@pulse/widget-reading": "workspace:*",
     "@pulse/widget-rss": "workspace:*",
-    "@pulse/widget-spotify": "workspace:*",
     "@pulse/widget-steam": "workspace:*",
     "@pulse/widget-meals": "workspace:*",
     "@pulse/widget-nutrition": "workspace:*",

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 export interface EmptyStateProps {
   message: string;
-  /** e.g. Spotify's "Connect Spotify" button — an empty state caused by
+  /** e.g. a "Connect account" button — an empty state caused by
    *  missing setup, not missing data, gets a way to fix it right there. */
   action?: ReactNode;
 }

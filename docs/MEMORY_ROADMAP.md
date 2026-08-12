@@ -37,9 +37,11 @@ table. See the 2026-07-27 DECISIONS.md entry for the full reasoning.
   settings-save, so every refresh path gets memory generation for free.
 - Initial coverage: GitHub (new repos, PRs opened, PRs merged — see
   docs/DECISIONS.md's 2026-08-02 entry; a commit-count signal was
-  considered but dropped, also per DECISIONS.md), Spotify (top artist
-  changes), Steam (new games, meaningful playtime sessions), Tasks/
-  Notes/Notebook (new items). Hero deliberately has no `deriveMemories`
+  considered but dropped, also per DECISIONS.md), Steam (new games,
+  meaningful playtime sessions), Tasks/Notes/Notebook (new items).
+  Spotify emitted top-artist-change events too until it was removed
+  entirely 2026-08-12 — see docs/DECISIONS.md. Hero deliberately has no
+  `deriveMemories`
   — greeting/weather/quote aren't memory-worthy content.
 - Timeline page (`apps/web/src/app/timeline/page.tsx`), grouped Today /
   Yesterday / Last Week / by month, linked from the profile menu.

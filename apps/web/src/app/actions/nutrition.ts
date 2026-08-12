@@ -10,7 +10,7 @@ import {
   type NutritionField,
 } from "@pulse/database";
 import type { WidgetActionState } from "@pulse/sdk";
-import { NUTRITION_WIDGET_ID } from "@pulse/widget-nutrition";
+import { assembleNutritionDataFromToday, NUTRITION_WIDGET_ID } from "@pulse/widget-nutrition";
 import { runWidgetWriteAction } from "@/lib/run-widget-write-action";
 
 const REVALIDATE_PATHS = ["/", "/health/nutrition"];
@@ -49,7 +49,14 @@ export async function logAmountAction(
         return { error: "Amount must be a number" };
       }
 
-      await incrementNutrition(userId, field, amountNum);
+      // incrementNutrition's own upsert already returns the new row (see
+      // its own doc comment) — assembling from that instead of a separate
+      // getTodayNutrition re-read skips one of fetchNutritionData's three
+      // reads; goals/history still need their own reads, since a single
+      // field's write doesn't determine either of those.
+      const today = await incrementNutrition(userId, field, amountNum);
+      const refreshData = await assembleNutritionDataFromToday(userId, today);
+      return { refreshData };
     },
   });
 }

@@ -1,6 +1,5 @@
 import { registerWidget } from "@pulse/sdk";
 import { heroWidget } from "@pulse/widget-hero";
-import { dailyDigestWidget } from "@pulse/widget-daily-digest";
 import { githubWidget } from "@pulse/widget-github";
 import { insightsWidget } from "@pulse/widget-insights";
 import { notesWidget } from "@pulse/widget-notes";
@@ -9,7 +8,6 @@ import { readingWidget } from "@pulse/widget-reading";
 import { rssWidget } from "@pulse/widget-rss";
 import { steamWidget } from "@pulse/widget-steam";
 import { mealsWidget } from "@pulse/widget-meals";
-import { nutritionWidget } from "@pulse/widget-nutrition";
 import { tasksWidget } from "@pulse/widget-tasks";
 import { weeklyReviewWidget } from "@pulse/widget-weekly-review";
 import { weightWidget } from "@pulse/widget-weight";
@@ -17,7 +15,6 @@ import { weightWidget } from "@pulse/widget-weight";
 // Side-effect import target: the shell only ever calls registerWidget(),
 // never imports a widget's internals directly (reference doc §5).
 registerWidget(heroWidget);
-registerWidget(dailyDigestWidget);
 registerWidget(githubWidget);
 registerWidget(steamWidget);
 registerWidget(tasksWidget);
@@ -26,7 +23,6 @@ registerWidget(notebookWidget);
 registerWidget(readingWidget);
 registerWidget(rssWidget);
 registerWidget(weightWidget);
-registerWidget(nutritionWidget);
 registerWidget(mealsWidget);
 registerWidget(weeklyReviewWidget);
 registerWidget(insightsWidget);

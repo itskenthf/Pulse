@@ -1,10 +1,11 @@
-import { Book, CheckSquare, NotebookPen } from "lucide-react";
+import { Book, CheckSquare, NotebookPen, Scale } from "lucide-react";
 import type { ReactNode } from "react";
 import { GitHubIcon, WIDGET_ID as GITHUB_WIDGET_ID } from "@pulse/widget-github";
 import { NOTEBOOK_WIDGET_ID } from "@pulse/widget-notebook";
 import { NOTES_WIDGET_ID } from "@pulse/widget-notes";
 import { SteamIcon, WIDGET_ID as STEAM_WIDGET_ID } from "@pulse/widget-steam";
 import { TASKS_WIDGET_ID } from "@pulse/widget-tasks";
+import { WEIGHT_WIDGET_ID } from "@pulse/widget-weight";
 
 interface SourceMeta {
   label: string;
@@ -28,6 +29,10 @@ export const MEMORY_SOURCE_META: Record<string, SourceMeta> = {
     label: "Tasks",
     icon: <CheckSquare className="h-full w-full" aria-hidden="true" />,
   },
+  [WEIGHT_WIDGET_ID]: {
+    label: "Weight",
+    icon: <Scale className="h-full w-full" aria-hidden="true" />,
+  },
 };
 
 /**
@@ -47,6 +52,7 @@ export function memoryHref(source: string, metadata: Record<string, unknown>): s
   if (source === NOTEBOOK_WIDGET_ID) return "/notebook";
   if (source === NOTES_WIDGET_ID) return "/notes";
   if (source === TASKS_WIDGET_ID) return "/tasks";
+  if (source === WEIGHT_WIDGET_ID) return "/health/weight";
   return null;
 }
 

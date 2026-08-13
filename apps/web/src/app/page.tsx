@@ -230,25 +230,25 @@ function WidgetCell({
  * was removed 2026-08-08 — see docs/DECISIONS.md's entry for why (unfinished
  * placeholders shown on every visit, no real logic behind them).
  *
- * Row 0 (Body & Health, docs/DECISIONS.md's Body & Health entry): Weight
- * and Meals, directly under the hero banner — the "morning command
- * center" the pillar's request described is this row plus the existing
- * hero banner (Weather/Quote), not a new widget that re-fetches
- * hero/GitHub data itself. Workout has no card here on purpose: it's a
- * Phase 2 module with no real widget behind it yet, and this repo
- * deliberately doesn't ship placeholder cards for unbuilt features (see
- * the Habits removal above). Nutrition and Daily Digest were both
- * removed entirely 2026-08-13 by explicit request — see
- * docs/DECISIONS.md's matching-dated entry. Insights still reads
- * `nutrition_logs`/`goals` directly (unaffected by the widget's removal,
- * same as Weight/Meals' own tables), so nutrition goal-adherence
- * observations keep working off whatever data already exists.
- *
- * Row 0.5 (Body & Health Phase 2, partial — Progress Photos/Workout
- * excluded by explicit request): Weekly Review and Insights, directly
- * below Row 0 rather than folded into it — that row is already full at
- * 3 of 3 columns. No workout-related observation runs since that module
- * doesn't exist.
+ * Row 0 (Body & Health, docs/DECISIONS.md's Body & Health entry): Insights,
+ * Weekly Review, Meals, Weight — directly under the hero banner, one
+ * compact row instead of two stacked rows (collapsed 2026-08-13 to cut
+ * the dead whitespace the two-row layout left below the fold — see
+ * docs/DECISIONS.md's matching-dated entry). Ordered by how the eye
+ * should land: observations (Insights) and the weekly rollup (Weekly
+ * Review) first as narrow, near-square cards since their content is
+ * mostly short text; Meals and Weight last, twice as wide (`lg:col-span-4`
+ * vs `lg:col-span-2` of 12) since they carry the actual daily-input UI
+ * (checklist, weigh-in field) and warrant the room. 2×2 at `sm`, single
+ * column on mobile. Workout has no card here on purpose: it's a Phase 2
+ * module with no real widget behind it yet, and this repo deliberately
+ * doesn't ship placeholder cards for unbuilt features (see the Habits
+ * removal above). Nutrition and Daily Digest were both removed entirely
+ * 2026-08-13 by explicit request — see docs/DECISIONS.md's matching-dated
+ * entry. Insights still reads `nutrition_logs`/`goals` directly
+ * (unaffected by the widget's removal, same as Weight/Meals' own tables),
+ * so nutrition goal-adherence observations keep working off whatever data
+ * already exists.
  */
 function WidgetGrid({ userId }: { userId: string }) {
   // See WidgetCell's own resetKey comment for why this is called here —
@@ -277,12 +277,10 @@ function WidgetGrid({ userId }: { userId: string }) {
   const weeklyReviewWidget = nonHeroWidgets.find((widget) => widget.id === WEEKLY_REVIEW_WIDGET_ID);
   const insightsWidget = nonHeroWidgets.find((widget) => widget.id === INSIGHTS_WIDGET_ID);
 
-  const rowHealthWidgets = [weightWidget, mealsWidget].filter(
+  const rowHealthWidgets = [insightsWidget, weeklyReviewWidget, mealsWidget, weightWidget].filter(
     (widget): widget is Widget => Boolean(widget),
   );
-  const rowHealthWidgets2 = [weeklyReviewWidget, insightsWidget].filter(
-    (widget): widget is Widget => Boolean(widget),
-  );
+  const WIDE_HEALTH_ROW_WIDGET_IDS: string[] = [MEALS_WIDGET_ID, WEIGHT_WIDGET_ID];
   const rowTopWidgets = [tasksWidget, notesWidget, notebookWidget].filter(
     (widget): widget is Widget => Boolean(widget),
   );
@@ -304,17 +302,14 @@ function WidgetGrid({ userId }: { userId: string }) {
       )}
       <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-5 px-4 pb-4 sm:gap-6 sm:px-6 sm:pb-6">
         {rowHealthWidgets.length > 0 && (
-          <div className={ROW_GRID}>
+          <div className="grid grid-cols-1 items-start gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-12">
             {rowHealthWidgets.map((widget) => (
-              <WidgetCell key={widget.id} widget={widget} userId={userId} resetKey={resetKey} />
-            ))}
-          </div>
-        )}
-
-        {rowHealthWidgets2.length > 0 && (
-          <div className={ROW_GRID}>
-            {rowHealthWidgets2.map((widget) => (
-              <WidgetCell key={widget.id} widget={widget} userId={userId} resetKey={resetKey} />
+              <div
+                key={widget.id}
+                className={WIDE_HEALTH_ROW_WIDGET_IDS.includes(widget.id) ? "lg:col-span-4" : "lg:col-span-2"}
+              >
+                <WidgetCell widget={widget} userId={userId} resetKey={resetKey} />
+              </div>
             ))}
           </div>
         )}

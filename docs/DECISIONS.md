@@ -5150,3 +5150,24 @@ a local dev server screenshot of the signed-out shell (no console
 errors) — the same live-verification limitation as the previous entry
 applies to the actual widget forms these touch, since signing in isn't
 possible in this environment.
+
+## 2026-08-13 — Body & Health: Insights/Weekly Review/Meals/Weight collapsed into one compact row
+
+Explicit request, following the Nutrition/Daily Digest removal above:
+the two stacked rows (Weight+Meals, then Weekly Review+Insights) left
+too much dead space below the fold once each row was down to two
+3-column-grid cards. Merged into a single row of all four, ordered
+Insights → Weekly Review → Meals → Weight.
+
+Widths aren't uniform quarters: Insights and Weekly Review render at
+`lg:col-span-2` (of 12) — near-square, since their content today is
+mostly short observation/summary text — while Meals and Weight render
+at `lg:col-span-4`, twice as wide, since they carry the actual
+daily-input UI (the 4-item meal checklist, the weigh-in field). Below
+`lg` the row is a plain 2×2 (`sm:grid-cols-2`), single column on
+mobile — same responsive pattern the rest of the dashboard's rows
+already use, just applied to four cards instead of two or three.
+
+`docs/DESIGN_SYSTEM.md`'s Layout section updated with the same
+reasoning: card width should track how much a widget needs to show,
+not a uniform column share.

@@ -298,6 +298,15 @@ Widgets may have different sizes — GitHub's wide card anchors a left
 column, everything else stacks in a narrower right column (see
 `apps/web/src/app/page.tsx`'s `WidgetGrid`).
 
+The Body & Health row (Insights, Weekly Review, Meals, Weight, directly
+under the hero banner) is one compact row rather than one card per
+column: Insights and Weekly Review render narrow/near-square since their
+content is short text, Meals and Weight render twice as wide since they
+carry the actual daily-input UI (checklist, weigh-in field). Card width
+should track how much a widget actually needs to show, not a uniform
+column share — avoid stacking near-empty cards at full column width when
+a narrower card would fit the same content without leftover whitespace.
+
 ---
 
 # Widget Rules

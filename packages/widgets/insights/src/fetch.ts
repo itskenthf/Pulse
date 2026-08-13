@@ -56,19 +56,22 @@ export async function fetchInsightsData(context: WidgetFetchContext): Promise<In
   const cutoff = daysAgo(WEIGHT_TREND_DAYS);
   const recentWeightLogs = weightLogs.filter((log) => log.loggedOn >= cutoff);
 
-  const nutritionGoalRow = goals.find((goal) => isNutritionMetric(goal.metric));
-  const nutritionGoal: NutritionGoalLike | null = nutritionGoalRow
-    ? {
-        metric: nutritionGoalRow.metric as NutritionGoalLike["metric"],
-        targetValue: nutritionGoalRow.targetValue,
-        comparator: nutritionGoalRow.comparator,
-      }
-    : null;
+  // Every active nutrition-metric goal gets its own adherence check, not
+  // just whichever one `goals.find` happened to pick first — a user with
+  // both a calorie goal and a water goal active should see both, not
+  // silently lose one to `.find`'s single-match behavior.
+  const nutritionGoals: NutritionGoalLike[] = goals
+    .filter((goal) => isNutritionMetric(goal.metric))
+    .map((goal) => ({
+      metric: goal.metric as NutritionGoalLike["metric"],
+      targetValue: goal.targetValue,
+      comparator: goal.comparator,
+    }));
 
   const insights = [
     weightTrendInsight(recentWeightLogs),
     mealSkipPatternInsight(mealHistory),
-    goalAdherenceInsight(nutritionHistory, nutritionGoal),
+    ...nutritionGoals.map((goal) => goalAdherenceInsight(nutritionHistory, goal)),
   ]
     .filter((insight): insight is string => insight !== null)
     .slice(0, MAX_INSIGHTS);

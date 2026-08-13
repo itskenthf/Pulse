@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { getAllWidgets, type Widget, type WidgetAction } from "@pulse/sdk";
 import { Skeleton, SPRING_PRESS, WidgetErrorBoundary } from "@pulse/ui";
-import { DAILY_DIGEST_WIDGET_ID } from "@pulse/widget-daily-digest";
 import { WIDGET_ID as GITHUB_WIDGET_ID } from "@pulse/widget-github";
 import { HERO_WIDGET_ID } from "@pulse/widget-hero";
 import { INSIGHTS_WIDGET_ID } from "@pulse/widget-insights";
@@ -9,7 +8,6 @@ import { NOTES_WIDGET_ID } from "@pulse/widget-notes";
 import { NOTEBOOK_WIDGET_ID } from "@pulse/widget-notebook";
 import { READING_WIDGET_ID } from "@pulse/widget-reading";
 import { MEALS_WIDGET_ID } from "@pulse/widget-meals";
-import { NUTRITION_WIDGET_ID } from "@pulse/widget-nutrition";
 import { WIDGET_ID as RSS_WIDGET_ID } from "@pulse/widget-rss";
 import { WIDGET_ID as STEAM_WIDGET_ID } from "@pulse/widget-steam";
 import { TASKS_WIDGET_ID } from "@pulse/widget-tasks";
@@ -20,7 +18,6 @@ import { cycleHeroQuoteAction } from "./actions/hero";
 import { toggleMealAction } from "./actions/meals";
 import { addNoteAction, deleteNoteAction, updateNoteAction } from "./actions/notes";
 import { addEntryAction, updateEntryAction } from "./actions/notebook";
-import { createNutritionGoalAction, logAmountAction, setAmountAction } from "./actions/nutrition";
 import {
   addBookAction,
   deleteBookAction,
@@ -75,11 +72,6 @@ const CUSTOM_ACTIONS: Record<string, Record<string, WidgetAction>> = {
     logWeight: logWeightAction,
     deleteWeightLog: deleteWeightLogAction,
     createWeightGoal: createWeightGoalAction,
-  },
-  [NUTRITION_WIDGET_ID]: {
-    logAmount: logAmountAction,
-    setAmount: setAmountAction,
-    createNutritionGoal: createNutritionGoalAction,
   },
   [MEALS_WIDGET_ID]: {
     toggleMeal: toggleMealAction,
@@ -238,28 +230,25 @@ function WidgetCell({
  * was removed 2026-08-08 — see docs/DECISIONS.md's entry for why (unfinished
  * placeholders shown on every visit, no real logic behind them).
  *
- * Row -1 (Daily Digest, Memory Roadmap M2 — docs/MEMORY_ROADMAP.md):
- * directly under the hero banner, above Body & Health — a cross-widget
- * rollup of today's memory events (the same `memories` table the
- * Timeline page reads), grouped by source. Alone in its row rather than
- * folded into an existing one: it's conceptually different from every
- * other card here (a summary *of* other widgets, not its own data
- * source), and every existing row is already at capacity.
- *
- * Row 0 (Body & Health, docs/DECISIONS.md's Body & Health entry): Weight,
- * Nutrition, Meals, directly under the hero banner — the "morning command
+ * Row 0 (Body & Health, docs/DECISIONS.md's Body & Health entry): Weight
+ * and Meals, directly under the hero banner — the "morning command
  * center" the pillar's request described is this row plus the existing
  * hero banner (Weather/Quote), not a new widget that re-fetches
  * hero/GitHub data itself. Workout has no card here on purpose: it's a
  * Phase 2 module with no real widget behind it yet, and this repo
  * deliberately doesn't ship placeholder cards for unbuilt features (see
- * the Habits removal above).
+ * the Habits removal above). Nutrition and Daily Digest were both
+ * removed entirely 2026-08-13 by explicit request — see
+ * docs/DECISIONS.md's matching-dated entry. Insights still reads
+ * `nutrition_logs`/`goals` directly (unaffected by the widget's removal,
+ * same as Weight/Meals' own tables), so nutrition goal-adherence
+ * observations keep working off whatever data already exists.
  *
  * Row 0.5 (Body & Health Phase 2, partial — Progress Photos/Workout
  * excluded by explicit request): Weekly Review and Insights, directly
  * below Row 0 rather than folded into it — that row is already full at
- * 3 of 3 columns. Insights only draws on Weight/Nutrition/Meals data;
- * no workout-related observation runs since that module doesn't exist.
+ * 3 of 3 columns. No workout-related observation runs since that module
+ * doesn't exist.
  */
 function WidgetGrid({ userId }: { userId: string }) {
   // See WidgetCell's own resetKey comment for why this is called here —
@@ -284,14 +273,11 @@ function WidgetGrid({ userId }: { userId: string }) {
   const rssWidget = nonHeroWidgets.find((widget) => widget.id === RSS_WIDGET_ID);
   const readingWidget = nonHeroWidgets.find((widget) => widget.id === READING_WIDGET_ID);
   const weightWidget = nonHeroWidgets.find((widget) => widget.id === WEIGHT_WIDGET_ID);
-  const nutritionWidget = nonHeroWidgets.find((widget) => widget.id === NUTRITION_WIDGET_ID);
   const mealsWidget = nonHeroWidgets.find((widget) => widget.id === MEALS_WIDGET_ID);
   const weeklyReviewWidget = nonHeroWidgets.find((widget) => widget.id === WEEKLY_REVIEW_WIDGET_ID);
   const insightsWidget = nonHeroWidgets.find((widget) => widget.id === INSIGHTS_WIDGET_ID);
-  const dailyDigestWidget = nonHeroWidgets.find((widget) => widget.id === DAILY_DIGEST_WIDGET_ID);
 
-  const rowDigestWidgets = [dailyDigestWidget].filter((widget): widget is Widget => Boolean(widget));
-  const rowHealthWidgets = [weightWidget, nutritionWidget, mealsWidget].filter(
+  const rowHealthWidgets = [weightWidget, mealsWidget].filter(
     (widget): widget is Widget => Boolean(widget),
   );
   const rowHealthWidgets2 = [weeklyReviewWidget, insightsWidget].filter(
@@ -317,14 +303,6 @@ function WidgetGrid({ userId }: { userId: string }) {
         </div>
       )}
       <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-5 px-4 pb-4 sm:gap-6 sm:px-6 sm:pb-6">
-        {rowDigestWidgets.length > 0 && (
-          <div className={ROW_GRID}>
-            {rowDigestWidgets.map((widget) => (
-              <WidgetCell key={widget.id} widget={widget} userId={userId} resetKey={resetKey} />
-            ))}
-          </div>
-        )}
-
         {rowHealthWidgets.length > 0 && (
           <div className={ROW_GRID}>
             {rowHealthWidgets.map((widget) => (

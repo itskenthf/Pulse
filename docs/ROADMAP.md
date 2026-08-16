@@ -618,16 +618,21 @@ Growth), alongside the existing "External Life" widgets above.
   (no unique constraint — every weigh-in is its own row), trend graph +
   progress ring toward an active goal, `/health/weight` page with full
   history and goal creation.
-- [x] Nutrition — `packages/widgets/nutrition`, one-tap calorie/protein/
-  water/milk logging against a daily-rollup `nutrition_logs` row,
-  `/health/nutrition` page with exact-amount corrections and a 14-day
-  history table.
+- [removed] Nutrition — `packages/widgets/nutrition` (one-tap
+  calorie/protein/water/milk logging, `/health/nutrition` page) **removed
+  entirely 2026-08-13 by explicit request** — see `docs/DECISIONS.md`'s
+  matching-dated entry. The `nutrition_logs` table and any existing
+  nutrition `goals` rows are left in place (Insights' goal-adherence
+  check still reads them), but nothing writes to `nutrition_logs` going
+  forward.
 - [x] Meals — `packages/widgets/meals`, breakfast/lunch/dinner/snack
   checkmarks against a daily `meal_checks` row, `/health/meals` page with
   a compact history table.
-- [x] Daily Dashboard integration — a new row under the hero banner for
-  the three cards above; no Workout placeholder (see
-  `docs/DECISIONS.md`'s entry for why).
+- [x] Daily Dashboard integration — Insights, Weekly Review, Meals, and
+  Weight now render as one compact row directly under the hero banner
+  (collapsed from two stacked rows 2026-08-13, see
+  `docs/DECISIONS.md`'s matching-dated entry); no Workout placeholder
+  (see `docs/DECISIONS.md`'s earlier entry for why).
 - [x] `goals` table — generic `metric`/`comparator`/`target_value`/
   `cadence` model, shared by Weight/Nutrition/Meals now and Workout/
   Photos later.
@@ -647,8 +652,11 @@ see `docs/DECISIONS.md`'s second 2026-08-09 entry):
 - [x] Insights — `packages/widgets/insights`, no table of its own
   (reads `weight_logs`/`nutrition_logs`/`meal_checks`/`goals` directly,
   as originally planned). Three deterministic rules: weight trend,
-  meal-skip-by-weekday pattern, nutrition goal adherence. No
-  workout-consistency insight — no `workouts` table exists to read.
+  meal-skip-by-weekday pattern, nutrition goal adherence — the last of
+  these now surfaces one insight per active nutrition goal rather than
+  just the first one found (bug fixed 2026-08-13, see
+  `docs/DECISIONS.md`'s matching-dated entry). No workout-consistency
+  insight — no `workouts` table exists to read.
 - [ ] Progress Photos — front/side/back monthly uploads, before/after
   slider, Supabase Storage (this repo's first use of Storage). Still
   not built.
@@ -664,12 +672,12 @@ reflection) and M2 (a closer match for "weekly summaries" than
 anything Phase 3 itself specified), so rather than build something
 redundant, this phase became: ship M2, skip the rest.
 
-- [x] Daily Digest — `packages/widgets/daily-digest`, no table of its
-  own (reads the existing `memories` table directly), a cross-widget
-  rollup of today's activity grouped by source. Scoped to counts/titles
-  only, not the richer quantified version M2's own illustrative example
-  implied — see `docs/MEMORY_ROADMAP.md`'s updated M2 entry for why.
-  Daily cadence, own dashboard row directly under the hero banner.
+- [removed] Daily Digest — `packages/widgets/daily-digest` (cross-widget
+  rollup of the day's `memories` activity, grouped by source) shipped
+  scoped to counts/titles only (see `docs/MEMORY_ROADMAP.md`'s updated M2
+  entry for why), then **removed entirely 2026-08-13 by explicit
+  request** — see `docs/DECISIONS.md`'s matching-dated entry. M2's status
+  in `docs/MEMORY_ROADMAP.md` should be re-checked against this removal.
 - GitHub's streak computation (current/longest,
   `packages/widgets/github/src/streaks.ts`) was already early
   analytics-flavored work underway outside this phase's formal

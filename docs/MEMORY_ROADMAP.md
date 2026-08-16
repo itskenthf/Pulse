@@ -50,11 +50,14 @@ table. See the 2026-07-27 DECISIONS.md entry for the full reasoning.
 AI assistant. Adding a new widget after M1 ships means adding its own
 `deriveMemories` — no other plumbing changes.
 
-## M2 — Daily / weekly summaries (shipped, scoped down)
+## M2 — Daily / weekly summaries (shipped, then removed)
 
 Shipped as **Daily Digest** (`packages/widgets/daily-digest`) — a
 dashboard card reading M1's `memories` table directly (no new table),
 grouped by source, computed on read at fetch time (no scheduled job).
+**Removed entirely 2026-08-13 by explicit request** — see
+`docs/DECISIONS.md`'s matching-dated entry. M2 is back to not-built;
+revisiting it is a real option, not ruled out, just not active.
 
 **Scoped down from the original pitch**, by explicit request: the
 illustrative "listened to Spotify for 2 hours" implies structured

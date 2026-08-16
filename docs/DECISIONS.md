@@ -5151,6 +5151,33 @@ errors) — the same live-verification limitation as the previous entry
 applies to the actual widget forms these touch, since signing in isn't
 possible in this environment.
 
+## 2026-08-13 — Remove Nutrition and Daily Digest widgets; fix Insights multi-goal bug; Timeline gap
+
+Explicit request. `packages/widgets/nutrition` (calorie/protein/water/milk
+logging, `/health/nutrition` page, `nutrition_logs` write paths) and
+`packages/widgets/daily-digest` (cross-widget rollup of the day's
+`memories` rows) are removed entirely — packages deleted, dashboard rows
+removed from `page.tsx`, both dropped from `register-widgets.ts`. Not a
+deferral: the tables (`nutrition_logs`, `goals` rows with nutrition
+metrics) are left in place since Insights' goal-adherence check still
+reads them for any goals a user already created, but no widget writes to
+`nutrition_logs` going forward.
+
+Two real bugs fixed alongside the removal, surfaced while touching
+adjacent code:
+
+- **Insights' nutrition-goal-adherence check silently dropped goals**:
+  `goals.find()` picked at most one active nutrition-metric goal, so a
+  user with both a calorie goal and a water goal active only ever saw an
+  insight for whichever one `.find` happened to return first. Changed to
+  `goals.filter()` + `.map()` so every active nutrition goal gets its own
+  adherence insight (`packages/widgets/insights/src/fetch.ts`).
+- **Timeline/memory-source gap**: Weight log entries had no source-icon
+  mapping in `apps/web/src/lib/memory-sources.tsx` — they rendered in the
+  Timeline with no icon/label and no click-through link. Added a `Weight`
+  entry (`Scale` icon, links to `/health/weight`) alongside the existing
+  Tasks/Notes/Notebook/GitHub/Steam mappings.
+
 ## 2026-08-13 — Body & Health: Insights/Weekly Review/Meals/Weight collapsed into one compact row
 
 Explicit request, following the Nutrition/Daily Digest removal above:

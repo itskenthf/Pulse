@@ -1,10 +1,13 @@
-import { Book, CheckSquare, NotebookPen, Scale } from "lucide-react";
+import { Book, BookOpen, CalendarCheck, CheckSquare, NotebookPen, Scale, Utensils } from "lucide-react";
 import type { ReactNode } from "react";
 import { GitHubIcon, WIDGET_ID as GITHUB_WIDGET_ID } from "@pulse/widget-github";
+import { MEALS_WIDGET_ID } from "@pulse/widget-meals";
 import { NOTEBOOK_WIDGET_ID } from "@pulse/widget-notebook";
 import { NOTES_WIDGET_ID } from "@pulse/widget-notes";
+import { READING_WIDGET_ID } from "@pulse/widget-reading";
 import { SteamIcon, WIDGET_ID as STEAM_WIDGET_ID } from "@pulse/widget-steam";
 import { TASKS_WIDGET_ID } from "@pulse/widget-tasks";
+import { WEEKLY_REVIEW_WIDGET_ID } from "@pulse/widget-weekly-review";
 import { WEIGHT_WIDGET_ID } from "@pulse/widget-weight";
 
 interface SourceMeta {
@@ -33,6 +36,18 @@ export const MEMORY_SOURCE_META: Record<string, SourceMeta> = {
     label: "Weight",
     icon: <Scale className="h-full w-full" aria-hidden="true" />,
   },
+  [MEALS_WIDGET_ID]: {
+    label: "Meals",
+    icon: <Utensils className="h-full w-full" aria-hidden="true" />,
+  },
+  [WEEKLY_REVIEW_WIDGET_ID]: {
+    label: "Weekly Review",
+    icon: <CalendarCheck className="h-full w-full" aria-hidden="true" />,
+  },
+  [READING_WIDGET_ID]: {
+    label: "Reading",
+    icon: <BookOpen className="h-full w-full" aria-hidden="true" />,
+  },
 };
 
 /**
@@ -53,6 +68,9 @@ export function memoryHref(source: string, metadata: Record<string, unknown>): s
   if (source === NOTES_WIDGET_ID) return "/notes";
   if (source === TASKS_WIDGET_ID) return "/tasks";
   if (source === WEIGHT_WIDGET_ID) return "/health/weight";
+  if (source === MEALS_WIDGET_ID) return "/health/meals";
+  if (source === WEEKLY_REVIEW_WIDGET_ID) return "/health/weekly-review";
+  if (source === READING_WIDGET_ID) return "/reading";
   return null;
 }
 

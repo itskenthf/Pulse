@@ -5151,6 +5151,33 @@ errors) — the same live-verification limitation as the previous entry
 applies to the actual widget forms these touch, since signing in isn't
 possible in this environment.
 
+## 2026-08-13 — Remove Nutrition and Daily Digest widgets; fix Insights multi-goal bug; Timeline gap
+
+Explicit request. `packages/widgets/nutrition` (calorie/protein/water/milk
+logging, `/health/nutrition` page, `nutrition_logs` write paths) and
+`packages/widgets/daily-digest` (cross-widget rollup of the day's
+`memories` rows) are removed entirely — packages deleted, dashboard rows
+removed from `page.tsx`, both dropped from `register-widgets.ts`. Not a
+deferral: the tables (`nutrition_logs`, `goals` rows with nutrition
+metrics) are left in place since Insights' goal-adherence check still
+reads them for any goals a user already created, but no widget writes to
+`nutrition_logs` going forward.
+
+Two real bugs fixed alongside the removal, surfaced while touching
+adjacent code:
+
+- **Insights' nutrition-goal-adherence check silently dropped goals**:
+  `goals.find()` picked at most one active nutrition-metric goal, so a
+  user with both a calorie goal and a water goal active only ever saw an
+  insight for whichever one `.find` happened to return first. Changed to
+  `goals.filter()` + `.map()` so every active nutrition goal gets its own
+  adherence insight (`packages/widgets/insights/src/fetch.ts`).
+- **Timeline/memory-source gap**: Weight log entries had no source-icon
+  mapping in `apps/web/src/lib/memory-sources.tsx` — they rendered in the
+  Timeline with no icon/label and no click-through link. Added a `Weight`
+  entry (`Scale` icon, links to `/health/weight`) alongside the existing
+  Tasks/Notes/Notebook/GitHub/Steam mappings.
+
 ## 2026-08-13 — Body & Health: Insights/Weekly Review/Meals/Weight collapsed into one compact row
 
 Explicit request, following the Nutrition/Daily Digest removal above:
@@ -5171,3 +5198,73 @@ already use, just applied to four cards instead of two or three.
 `docs/DESIGN_SYSTEM.md`'s Layout section updated with the same
 reasoning: card width should track how much a widget needs to show,
 not a uniform column share.
+
+## 2026-08-17 — Habits, Progress Photos, and Workout permanently removed from scope
+
+Explicit request: the user does not want these three built and does not
+want them raised again as options. All three are now removed from scope
+outright, not deferred or left as backlog:
+
+- **Habits** — was already down to a "Coming soon" placeholder (removed
+  2026-08-08) with no real widget ever built. Now struck from the Phase 1
+  rescoped list and Phase 2's target list in `docs/ROADMAP.md`, and from
+  §12's phase roadmap in `docs/PROJECT_REFERENCE.md`.
+- **Progress Photos** and **Workout** — both were named backlog items
+  under the Body & Health pillar's Phase 2 (`docs/ROADMAP.md`), never
+  started. Removed from that list entirely.
+
+Nothing to revert in code — none of the three had a live widget, table,
+or route. Per the user's instruction, these should not be surfaced again
+in status summaries or future-work suggestions; if the user wants any of
+them later, they'll raise it themselves.
+
+## 2026-08-17 — Client-side offline widget cache (infra only) + full deriveMemories coverage
+
+Two independent pieces of work, first steps out of the architecture
+assessment's "offline mode / desktop / mobile / PWA / plugin ecosystem /
+local-first / AI assistant / analytics / background sync" review — see
+that review's recommendation ordering for why these two were picked
+first (the client cache is the one true prerequisite for everything else
+offline-adjacent; the memories coverage gap was cheap and independent).
+
+**Client-side widget data cache (infra only)**: added the first
+browser-callable JSON endpoint in the app, `GET /api/widgets/snapshot`
+(`apps/web/src/app/api/widgets/snapshot/route.ts`), auth-gated, returning
+every registered widget's current `widget_cache` row for the signed-in
+user via `readWidgetCache` directly (not the `unstable_cache`-wrapped
+read `WidgetSlot` uses — this route doesn't need that tag-based
+revalidation). A new client-only module, `apps/web/src/lib/offline-cache.ts`,
+persists that snapshot into IndexedDB (via the `idb` package — a ~1.2kB
+Promise wrapper, chosen over hand-rolling raw IndexedDB's
+callback/transaction-lifetime footguns) keyed by widget id. A new
+`HydrateOfflineCache` client component (`apps/web/src/app/hydrate-offline-cache.tsx`,
+mirroring `RegisterServiceWorker`'s shape) fetches the snapshot once per
+page load and writes it into IndexedDB, silently, with no polling.
+
+Deliberately infra only: nothing reads this cache back yet, no offline
+UI, no offline detection beyond a `navigator.onLine` pre-check, no
+service worker changes. Every function in `offline-cache.ts` fails soft
+(try/catch, safe fallback, `console.warn`) rather than throwing — Safari
+private browsing and disabled storage are real cases where `openDB`
+itself rejects even though `indexedDB` exists as a global. This is
+explicitly the first step toward offline mode/background sync/local-first
+writes, not those features themselves — see the architecture assessment
+for the fuller reasoning on why those are scoped as later, separate work.
+
+**`deriveMemories` coverage gap closed**: `memories` (Memory Roadmap M1)
+already had 6 of 9 write-back-capable widgets covered — GitHub, Steam,
+Tasks, Notes, Notebook, Weight. Meals, Weekly Review, and Reading didn't
+implement the hook, so their activity never appeared in Timeline. Added
+`derive-memories.ts` to each, following the two established diffing
+sub-patterns exactly (state-transition, like Tasks'
+completed-false-to-true; new-item, like Notes' new-id-appeared): Meals
+fires per meal checked off (guarded against firing spuriously on a
+`loggedOn` day rollover), Weekly Review fires once per week on first
+save (not on every re-save before Sunday, since `saveReviewAction`
+upserts), Reading fires both on a new book added and on a book's status
+flipping to `"finished"`. `apps/web/src/lib/memory-sources.tsx` — the
+Timeline's icon/label/href lookup — updated with entries for all three,
+matching the pattern used when Weight's own Timeline gap was closed.
+
+No change to `widget_events` — confirmed still a separate, deliberately
+unbuilt concept per the 2026-07-27 entry above; not touched or repurposed.

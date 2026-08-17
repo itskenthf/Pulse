@@ -20,11 +20,14 @@ describe("memoryHref", () => {
     expect(memoryHref("steam", {})).toBeNull();
   });
 
-  it("links Notebook/Notes/Tasks/Weight memories to their list pages regardless of metadata", () => {
+  it("links Notebook/Notes/Tasks/Weight/Meals/Weekly Review/Reading memories to their list pages regardless of metadata", () => {
     expect(memoryHref("notebook", {})).toBe("/notebook");
     expect(memoryHref("notes", {})).toBe("/notes");
     expect(memoryHref("tasks", {})).toBe("/tasks");
     expect(memoryHref("weight", {})).toBe("/health/weight");
+    expect(memoryHref("meals", {})).toBe("/health/meals");
+    expect(memoryHref("weekly-review", {})).toBe("/health/weekly-review");
+    expect(memoryHref("reading", {})).toBe("/reading");
   });
 
   it("returns null for an unknown source", () => {

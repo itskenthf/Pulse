@@ -2,6 +2,7 @@ import type { Widget } from "@pulse/sdk";
 import type { ReadingWidgetActions } from "./actions";
 import { WIDGET_ID, WIDGET_NAME } from "./constants";
 import { ReadingComponent } from "./component";
+import { deriveReadingMemories } from "./derive-memories";
 import { fetchReadingData } from "./fetch";
 import { readingDataSchema, type ReadingData } from "./types";
 
@@ -14,4 +15,5 @@ export const readingWidget: Widget<ReadingData, Record<string, unknown>, Reading
   dataSchema: readingDataSchema,
   render: ReadingComponent,
   permissions: () => [],
+  deriveMemories: deriveReadingMemories,
 };

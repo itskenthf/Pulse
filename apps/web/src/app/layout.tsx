@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Lora } from "next/font/google";
 import "./globals.css";
+import { HydrateOfflineCache } from "./hydrate-offline-cache";
 import { RegisterServiceWorker } from "./register-service-worker";
 
 const cormorantGaramond = Cormorant_Garamond({
@@ -46,6 +47,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         {children}
         <RegisterServiceWorker />
+        <HydrateOfflineCache />
       </body>
     </html>
   );

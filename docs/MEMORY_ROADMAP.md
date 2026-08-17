@@ -23,7 +23,7 @@ reactions (e.g. starting a focus session pausing Spotify), deferred
 until 2-3 widgets need it. Memory events live in their own `memories`
 table. See the 2026-07-27 DECISIONS.md entry for the full reasoning.
 
-## M1 — Event log + Timeline page (in progress / this pass)
+## M1 — Event log + Timeline page (shipped)
 
 - `memories` table (`supabase/migrations/0003_memories_table.sql`):
   id, user_id, source, title, description, metadata (jsonb), created_at.
@@ -35,14 +35,19 @@ table. See the 2026-07-27 DECISIONS.md entry for the full reasoning.
 - Wired into `refreshWidget` (`apps/web/src/lib/refresh-widget.ts`) — the
   single choke point already shared by cron, manual refresh, and
   settings-save, so every refresh path gets memory generation for free.
-- Initial coverage: GitHub (new repos, PRs opened, PRs merged — see
-  docs/DECISIONS.md's 2026-08-02 entry; a commit-count signal was
-  considered but dropped, also per DECISIONS.md), Steam (new games,
-  meaningful playtime sessions), Tasks/Notes/Notebook (new items).
-  Spotify emitted top-artist-change events too until it was removed
-  entirely 2026-08-12 — see docs/DECISIONS.md. Hero deliberately has no
-  `deriveMemories`
-  — greeting/weather/quote aren't memory-worthy content.
+- **Full coverage of every write-back-capable widget** (as of
+  2026-08-17, see docs/DECISIONS.md's matching entry): GitHub (new repos,
+  PRs opened, PRs merged — see docs/DECISIONS.md's 2026-08-02 entry; a
+  commit-count signal was considered but dropped, also per
+  DECISIONS.md), Steam (new games, meaningful playtime sessions),
+  Tasks/Notes/Notebook (new items), Weight (goal reached), Meals (a meal
+  checked off, guarded against firing on a day rollover), Weekly Review
+  (first save of the week, not every re-save), Reading (a book added or
+  finished). Spotify emitted top-artist-change events too until it was
+  removed entirely 2026-08-12 — see docs/DECISIONS.md. Hero/Insights/RSS
+  deliberately have no `deriveMemories` — greeting/weather/quote,
+  computed-on-read insights, and external RSS items aren't
+  user-authored/memory-worthy in the same sense.
 - Timeline page (`apps/web/src/app/timeline/page.tsx`), grouped Today /
   Yesterday / Last Week / by month, linked from the profile menu.
 

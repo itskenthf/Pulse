@@ -5217,3 +5217,54 @@ Nothing to revert in code — none of the three had a live widget, table,
 or route. Per the user's instruction, these should not be surfaced again
 in status summaries or future-work suggestions; if the user wants any of
 them later, they'll raise it themselves.
+
+## 2026-08-17 — Client-side offline widget cache (infra only) + full deriveMemories coverage
+
+Two independent pieces of work, first steps out of the architecture
+assessment's "offline mode / desktop / mobile / PWA / plugin ecosystem /
+local-first / AI assistant / analytics / background sync" review — see
+that review's recommendation ordering for why these two were picked
+first (the client cache is the one true prerequisite for everything else
+offline-adjacent; the memories coverage gap was cheap and independent).
+
+**Client-side widget data cache (infra only)**: added the first
+browser-callable JSON endpoint in the app, `GET /api/widgets/snapshot`
+(`apps/web/src/app/api/widgets/snapshot/route.ts`), auth-gated, returning
+every registered widget's current `widget_cache` row for the signed-in
+user via `readWidgetCache` directly (not the `unstable_cache`-wrapped
+read `WidgetSlot` uses — this route doesn't need that tag-based
+revalidation). A new client-only module, `apps/web/src/lib/offline-cache.ts`,
+persists that snapshot into IndexedDB (via the `idb` package — a ~1.2kB
+Promise wrapper, chosen over hand-rolling raw IndexedDB's
+callback/transaction-lifetime footguns) keyed by widget id. A new
+`HydrateOfflineCache` client component (`apps/web/src/app/hydrate-offline-cache.tsx`,
+mirroring `RegisterServiceWorker`'s shape) fetches the snapshot once per
+page load and writes it into IndexedDB, silently, with no polling.
+
+Deliberately infra only: nothing reads this cache back yet, no offline
+UI, no offline detection beyond a `navigator.onLine` pre-check, no
+service worker changes. Every function in `offline-cache.ts` fails soft
+(try/catch, safe fallback, `console.warn`) rather than throwing — Safari
+private browsing and disabled storage are real cases where `openDB`
+itself rejects even though `indexedDB` exists as a global. This is
+explicitly the first step toward offline mode/background sync/local-first
+writes, not those features themselves — see the architecture assessment
+for the fuller reasoning on why those are scoped as later, separate work.
+
+**`deriveMemories` coverage gap closed**: `memories` (Memory Roadmap M1)
+already had 6 of 9 write-back-capable widgets covered — GitHub, Steam,
+Tasks, Notes, Notebook, Weight. Meals, Weekly Review, and Reading didn't
+implement the hook, so their activity never appeared in Timeline. Added
+`derive-memories.ts` to each, following the two established diffing
+sub-patterns exactly (state-transition, like Tasks'
+completed-false-to-true; new-item, like Notes' new-id-appeared): Meals
+fires per meal checked off (guarded against firing spuriously on a
+`loggedOn` day rollover), Weekly Review fires once per week on first
+save (not on every re-save before Sunday, since `saveReviewAction`
+upserts), Reading fires both on a new book added and on a book's status
+flipping to `"finished"`. `apps/web/src/lib/memory-sources.tsx` — the
+Timeline's icon/label/href lookup — updated with entries for all three,
+matching the pattern used when Weight's own Timeline gap was closed.
+
+No change to `widget_events` — confirmed still a separate, deliberately
+unbuilt concept per the 2026-07-27 entry above; not touched or repurposed.

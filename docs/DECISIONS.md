@@ -5198,3 +5198,22 @@ already use, just applied to four cards instead of two or three.
 `docs/DESIGN_SYSTEM.md`'s Layout section updated with the same
 reasoning: card width should track how much a widget needs to show,
 not a uniform column share.
+
+## 2026-08-17 — Habits, Progress Photos, and Workout permanently removed from scope
+
+Explicit request: the user does not want these three built and does not
+want them raised again as options. All three are now removed from scope
+outright, not deferred or left as backlog:
+
+- **Habits** — was already down to a "Coming soon" placeholder (removed
+  2026-08-08) with no real widget ever built. Now struck from the Phase 1
+  rescoped list and Phase 2's target list in `docs/ROADMAP.md`, and from
+  §12's phase roadmap in `docs/PROJECT_REFERENCE.md`.
+- **Progress Photos** and **Workout** — both were named backlog items
+  under the Body & Health pillar's Phase 2 (`docs/ROADMAP.md`), never
+  started. Removed from that list entirely.
+
+Nothing to revert in code — none of the three had a live widget, table,
+or route. Per the user's instruction, these should not be surfaced again
+in status summaries or future-work suggestions; if the user wants any of
+them later, they'll raise it themselves.

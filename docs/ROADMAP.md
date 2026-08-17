@@ -123,8 +123,10 @@ on building them in order:
   2026-08-01**, not just deferred; a decision against ever building it.
 - [removed] Focus timer — **permanently removed from scope 2026-08-01**,
   not just dropped-for-now; a decision against ever building it.
-- [~] Habits — dropped (reopened 2026-07-26 as a "Coming soon" placeholder
-  only, not a real widget yet — see `docs/DECISIONS.md`)
+- [removed] Habits — **permanently removed from scope 2026-08-17**, not
+  just dropped-for-now; a decision against ever building it. (Was
+  reopened 2026-07-26 as a "Coming soon" placeholder, then that
+  placeholder itself was removed 2026-08-08 — see `docs/DECISIONS.md`.)
 - [removed] YouTube — **permanently removed from scope 2026-08-01**, not
   just blocked; a decision against ever building it.
 - [removed] Calendar (Google) — **permanently removed from scope
@@ -595,9 +597,9 @@ Phase 1 usage first. Real status:
   handles adding books, updating progress, marking finished, and
   deleting, each row with the same undo-window safety net Tasks/Notes
   use. No cover art.
-- [ ] Habit check-ins logged to `habits` — not started; the "Coming
-  soon" placeholder card was removed from the dashboard 2026-08-08, not
-  built — see docs/DECISIONS.md
+Habit check-ins (originally planned for this phase) are **permanently
+removed from scope 2026-08-17** — see `docs/DECISIONS.md`'s
+matching-dated entry.
 
 Focus-session start/stop (originally planned for this phase) was removed
 along with the rest of the focus-timer target — see the "Documentation
@@ -609,8 +611,8 @@ accuracy pass" entry below.
 §10's "don't build weight tracker until MVP daily-use gate closes" backlog
 note** — see `docs/DECISIONS.md`'s 2026-08-09 Body & Health entry for the
 full reasoning. The first concrete slice of "Internal Life" (Body, Health,
-Fitness, Habits, Mood, Sleep, Nutrition, Goals, Weekly Review, Personal
-Growth), alongside the existing "External Life" widgets above.
+Fitness, Mood, Sleep, Nutrition, Goals, Weekly Review, Personal Growth),
+alongside the existing "External Life" widgets above.
 
 **Phase 1 — shipped:**
 
@@ -634,12 +636,9 @@ Growth), alongside the existing "External Life" widgets above.
   `docs/DECISIONS.md`'s matching-dated entry); no Workout placeholder
   (see `docs/DECISIONS.md`'s earlier entry for why).
 - [x] `goals` table — generic `metric`/`comparator`/`target_value`/
-  `cadence` model, shared by Weight/Nutrition/Meals now and Workout/
-  Photos later.
+  `cadence` model, shared by Weight/Nutrition/Meals.
 
-**Phase 2 — partial, by explicit request** (Progress Photos and Workout
-were deliberately excluded from this pass, not just not-yet-reached —
-see `docs/DECISIONS.md`'s second 2026-08-09 entry):
+**Phase 2 — partial:**
 
 - [x] Weekly Review — `packages/widgets/weekly-review`, own
   `weekly_reviews` table (`supabase/migrations/0010_weekly_reviews.sql`
@@ -655,12 +654,10 @@ see `docs/DECISIONS.md`'s second 2026-08-09 entry):
   meal-skip-by-weekday pattern, nutrition goal adherence — the last of
   these now surfaces one insight per active nutrition goal rather than
   just the first one found (bug fixed 2026-08-13, see
-  `docs/DECISIONS.md`'s matching-dated entry). No workout-consistency
-  insight — no `workouts` table exists to read.
-- [ ] Progress Photos — front/side/back monthly uploads, before/after
-  slider, Supabase Storage (this repo's first use of Storage). Still
-  not built.
-- [ ] Workout — upcoming workout, history, streak. Still not built.
+  `docs/DECISIONS.md`'s matching-dated entry).
+
+Progress Photos and Workout are **permanently removed from scope
+2026-08-17** — see `docs/DECISIONS.md`'s matching-dated entry.
 
 ## Phase 3 — personal analytics
 
